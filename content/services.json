@@ -1,0 +1,119 @@
+[
+  {
+    "id": "architectural-lighting",
+    "slug": "architectural-lighting",
+    "name": "Architectural Lighting",
+    "category": "lighting",
+    "summary": "Highlight architectural details and create dramatic nighttime curb appeal.",
+    "body": null,
+    "order": 1
+  },
+  {
+    "id": "palm-tree-lighting",
+    "slug": "palm-tree-lighting",
+    "name": "Palm & Tree Lighting",
+    "category": "lighting",
+    "summary": "Illuminate palms, mature trees and landscaping to create depth and visual impact.",
+    "body": null,
+    "order": 2
+  },
+  {
+    "id": "pathway-lighting",
+    "slug": "pathway-lighting",
+    "name": "Pathway Lighting",
+    "category": "lighting",
+    "summary": "Create inviting walkways while improving nighttime visibility.",
+    "body": null,
+    "order": 3
+  },
+  {
+    "id": "pool-patio-lighting",
+    "slug": "pool-patio-lighting",
+    "name": "Pool & Patio Lighting",
+    "category": "lighting",
+    "summary": "Transform outdoor living spaces into beautiful areas that can be enjoyed well after sunset.",
+    "body": null,
+    "order": 4
+  },
+  {
+    "id": "accent-lighting",
+    "slug": "accent-lighting",
+    "name": "Accent Lighting",
+    "category": "lighting",
+    "summary": "Highlight landscaping, walls, fountains, sculptures and unique property features.",
+    "body": null,
+    "order": 5
+  },
+  {
+    "id": "security-perimeter-lighting",
+    "slug": "security-perimeter-lighting",
+    "name": "Security & Perimeter Lighting",
+    "category": "lighting",
+    "summary": "Improve nighttime visibility around the property while maintaining a clean and intentional appearance.",
+    "body": null,
+    "order": 6
+  },
+  {
+    "id": "electrical-service-calls",
+    "slug": "electrical-service-calls",
+    "name": "Electrical Service Calls",
+    "category": "electrical",
+    "summary": "Troubleshooting and service for residential and commercial electrical issues.",
+    "body": null,
+    "order": 7
+  },
+  {
+    "id": "electrical-repairs",
+    "slug": "electrical-repairs",
+    "name": "Electrical Repairs",
+    "category": "electrical",
+    "summary": "Professional diagnosis and repair of electrical problems.",
+    "body": null,
+    "order": 8
+  },
+  {
+    "id": "panels-electrical-upgrades",
+    "slug": "panels-electrical-upgrades",
+    "name": "Panels & Electrical Upgrades",
+    "category": "electrical",
+    "summary": "Electrical panel, circuit and service-related upgrades where appropriate.",
+    "body": null,
+    "order": 9
+  },
+  {
+    "id": "residential-electrical",
+    "slug": "residential-electrical",
+    "name": "Residential Electrical",
+    "category": "electrical",
+    "summary": "Electrical services for homes, renovations and property improvements.",
+    "body": null,
+    "order": 10
+  },
+  {
+    "id": "high-voltage-electrical",
+    "slug": "high-voltage-electrical",
+    "name": "High-Voltage / Larger Electrical Work",
+    "category": "electrical",
+    "summary": "Larger electrical and higher-voltage project capabilities. Verified specifics to follow.",
+    "body": null,
+    "order": 11
+  },
+  {
+    "id": "lighting-service-maintenance",
+    "slug": "lighting-service-maintenance",
+    "name": "Lighting Service & Maintenance",
+    "category": "electrical",
+    "summary": "Installation, repair, troubleshooting and maintenance of residential and commercial lighting systems.",
+    "body": null,
+    "order": 12
+  },
+  {
+    "id": "commercial-electrical",
+    "slug": "commercial-electrical",
+    "name": "Commercial Electrical",
+    "category": "commercial",
+    "summary": "Electrical work for commercial properties, businesses, contractors and property managers.",
+    "body": null,
+    "order": 13
+  }
+]

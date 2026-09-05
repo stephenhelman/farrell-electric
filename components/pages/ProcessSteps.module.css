@@ -1,0 +1,41 @@
+.headline {
+  font-size: var(--text-heading-lg);
+  margin-bottom: var(--space-8);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  counter-reset: step;
+}
+
+@media (min-width: 768px) {
+  .list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stepNumber {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-accent);
+}
+
+.stepTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  letter-spacing: 0.02em;
+}
+
+.stepBody {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}

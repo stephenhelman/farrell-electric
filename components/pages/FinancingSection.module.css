@@ -1,0 +1,29 @@
+.wrap {
+  max-width: 65ch;
+}
+
+.headline {
+  font-size: var(--text-heading-xl);
+  white-space: pre-line;
+  margin-bottom: var(--space-5);
+}
+
+.body {
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-6);
+}
+
+.termsNotice {
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-6);
+}
+
+.terms {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
+}

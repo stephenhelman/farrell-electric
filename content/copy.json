@@ -1,0 +1,350 @@
+{
+  "siteSettings": {
+    "phone": "(954) 555-0100",
+    "textNumber": "(954) 555-0101",
+    "email": "info@example.com",
+    "logoPath": "/images/placeholders/farrell-electric-logo.svg",
+    "accentBlueHex": "#2f6fed",
+    "serviceAreaLine": "Serving Broward County and Palm Beach County",
+    "navItems": [
+      { "label": "HOME", "href": "/" },
+      { "label": "LANDSCAPE LIGHTING", "href": "/landscape-lighting" },
+      { "label": "PERMANENT LIGHTING", "href": "/permanent-lighting" },
+      { "label": "OUR WORK", "href": "/our-work" },
+      { "label": "FINANCING", "href": "/financing" },
+      { "label": "ELECTRICAL SERVICES", "href": "/electrical-services" },
+      { "label": "ABOUT US", "href": "/about" },
+      { "label": "CONTACT", "href": "/contact" }
+    ],
+    "primaryCta": { "label": "GET A FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
+    "secondaryCta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" }
+  },
+  "home": {
+    "hero": {
+      "headline": "LIGHT UP YOUR HOME.\nTRANSFORM YOUR PROPERTY.",
+      "subhead": "Custom Landscape & Permanent Lighting\nBacked by South Florida Electrical Experience Since 1993",
+      "supportingCopy": "Professionally designed outdoor lighting that transforms the way your property looks, feels and functions after dark.",
+      "primaryCta": { "label": "GET A FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
+      "secondaryCta": { "label": "VIEW OUR WORK", "href": "/our-work" },
+      "trustLine": "FARRELL ELECTRIC • SERVING SOUTH FLORIDA SINCE 1993",
+      "bgImage": "/images/placeholders/hero-bg.jpg"
+    },
+    "divisionCards": [
+      {
+        "id": "landscape-lighting",
+        "title": "LANDSCAPE LIGHTING",
+        "body": "Custom lighting designed around your home's architecture, landscaping, palms, pathways, pools and outdoor spaces.",
+        "image": "/images/placeholders/division-landscape.jpg",
+        "cta": { "label": "EXPLORE LANDSCAPE LIGHTING", "href": "/landscape-lighting" }
+      },
+      {
+        "id": "permanent-lighting",
+        "title": "PERMANENT LIGHTING",
+        "body": "Professionally installed permanent exterior lighting for holidays, special occasions and beautiful year-round architectural lighting.",
+        "image": "/images/placeholders/division-permanent.jpg",
+        "cta": { "label": "EXPLORE PERMANENT LIGHTING", "href": "/permanent-lighting" }
+      }
+    ],
+    "landscapeOverview": {
+      "headline": "YOUR HOME SHOULDN'T DISAPPEAR AFTER DARK.",
+      "body": [
+        "The right outdoor lighting completely changes the way your property looks and feels at night.",
+        "We design custom lighting systems around the architecture, landscaping and outdoor living spaces of each property to create depth, atmosphere, visibility and dramatic nighttime curb appeal.",
+        "Every property is different.",
+        "Every lighting design should be too."
+      ],
+      "serviceIds": [
+        "architectural-lighting",
+        "palm-tree-lighting",
+        "pathway-lighting",
+        "pool-patio-lighting",
+        "accent-lighting",
+        "security-perimeter-lighting"
+      ],
+      "cta": { "label": "DESIGN MY LIGHTING SYSTEM", "href": "/contact?intent=landscape-lighting" }
+    },
+    "permanentLighting": {
+      "headline": "PERMANENT LIGHTING.\nENDLESS POSSIBILITIES.",
+      "body": [
+        "Enjoy professionally installed permanent exterior lighting without hanging and removing lights every year.",
+        "Permanent lighting can provide everything from subtle warm-white architectural accents to vibrant customized colors for holidays and special occasions.",
+        "Designed to blend into your home's exterior during the day and completely transform it at night."
+      ],
+      "useCaseTags": [
+        "CHRISTMAS",
+        "HALLOWEEN",
+        "GAME DAYS",
+        "BIRTHDAYS",
+        "SPECIAL OCCASIONS",
+        "HOLIDAYS",
+        "WARM-WHITE ARCHITECTURAL LIGHTING",
+        "EVERYDAY ACCENT LIGHTING"
+      ],
+      "cta": { "label": "GET A PERMANENT LIGHTING QUOTE", "href": "/contact?intent=permanent-lighting" }
+    },
+    "beforeAfterTeaser": {
+      "headline": "SEE YOUR HOME IN A WHOLE NEW LIGHT.",
+      "beforeLabel": "Dark or unlit property",
+      "afterLabel": "Professionally illuminated property",
+      "cta": { "label": "VIEW OUR WORK", "href": "/our-work" }
+    },
+    "whyFarrell": {
+      "headline": "PREMIUM LIGHTING.\nBACKED BY OVER 30 YEARS OF ELECTRICAL EXPERIENCE.",
+      "body": [
+        "Farrell Electric has served South Florida since 1993.",
+        "Our lighting services combine modern outdoor lighting design with decades of real electrical contracting experience.",
+        "Customers shouldn't have to choose between an experienced electrical company and a premium lighting company.",
+        "With Farrell Electric, you get both."
+      ],
+      "cards": [
+        {
+          "id": "established-1993",
+          "title": "ESTABLISHED IN 1993",
+          "body": "Farrell Electric has served South Florida for more than three decades."
+        },
+        {
+          "id": "electrical-experience",
+          "title": "ELECTRICAL EXPERIENCE",
+          "body": "Our background goes far beyond simply installing fixtures. Electrical contracting has been at the core of Farrell Electric since the beginning."
+        },
+        {
+          "id": "custom-lighting-design",
+          "title": "CUSTOM LIGHTING DESIGN",
+          "body": "Every lighting system is designed specifically around the property rather than relying on one-size-fits-all packages."
+        },
+        {
+          "id": "service-after-installation",
+          "title": "SERVICE AFTER INSTALLATION",
+          "body": "We want to remain the electrical and lighting company customers can call after the project is complete."
+        }
+      ]
+    },
+    "electricalIntro": {
+      "headline": "MORE THAN LIGHTING.",
+      "body": [
+        "Farrell Electric has provided residential and commercial electrical services throughout South Florida since 1993.",
+        "In addition to landscape and permanent lighting, our electrical capabilities include service, repairs, upgrades, lighting, residential projects, commercial projects and larger electrical work."
+      ],
+      "serviceIds": [
+        "electrical-service-calls",
+        "electrical-repairs",
+        "panels-electrical-upgrades",
+        "residential-electrical",
+        "commercial-electrical",
+        "high-voltage-electrical",
+        "lighting-service-maintenance"
+      ],
+      "cta": { "label": "VIEW ALL ELECTRICAL SERVICES", "href": "/electrical-services" }
+    },
+    "finalCta": {
+      "headline": "READY TO SEE YOUR HOME\nIN A WHOLE NEW LIGHT?",
+      "body": "Schedule your complimentary lighting consultation and discover what professional outdoor lighting can do for your property.",
+      "primaryCta": { "label": "GET MY FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
+      "secondaryCta": { "label": "CALL NOW", "href": "tel:+19545550100" },
+      "electricalPrompt": "Need electrical service?",
+      "electricalCta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" },
+      "bgImage": "/images/placeholders/final-cta-bg.jpg"
+    }
+  },
+  "pages": {
+    "landscape-lighting": {
+      "slug": "landscape-lighting",
+      "headline": "YOUR HOME SHOULDN'T DISAPPEAR AFTER DARK.",
+      "body": [
+        "The right outdoor lighting completely changes the way your property looks and feels at night.",
+        "We design custom lighting systems around the architecture, landscaping and outdoor living spaces of each property to create depth, atmosphere, visibility and dramatic nighttime curb appeal.",
+        "Every property is different.",
+        "Every lighting design should be too."
+      ],
+      "serviceIds": [
+        "architectural-lighting",
+        "palm-tree-lighting",
+        "pathway-lighting",
+        "pool-patio-lighting",
+        "accent-lighting",
+        "security-perimeter-lighting"
+      ],
+      "sectionLabels": [],
+      "tags": [],
+      "processHeadline": "FROM DESIGN TO INSTALLATION.",
+      "process": [
+        {
+          "step": 1,
+          "title": "PROPERTY CONSULTATION",
+          "body": "We meet at the property, walk the exterior and discuss the look and atmosphere you're trying to create."
+        },
+        {
+          "step": 2,
+          "title": "CUSTOM LIGHTING DESIGN",
+          "body": "Fixture locations and lighting effects are planned around your home's architecture, landscaping and outdoor spaces."
+        },
+        {
+          "step": 3,
+          "title": "CLEAR PROJECT ESTIMATE",
+          "body": "You'll receive a proposal outlining the recommended lighting system and project scope."
+        },
+        {
+          "step": 4,
+          "title": "PROFESSIONAL INSTALLATION",
+          "body": "Your system is professionally installed with careful attention to fixture placement, wiring and the finished appearance."
+        },
+        {
+          "step": 5,
+          "title": "NIGHTTIME ADJUSTMENTS",
+          "body": "Fixture placement and direction can be fine-tuned after dark to achieve the intended final effect."
+        }
+      ],
+      "cta": { "label": "DESIGN MY LIGHTING SYSTEM", "href": "/contact?intent=landscape-lighting" },
+      "secondaryCta": { "label": "SCHEDULE MY CONSULTATION", "href": "/contact?intent=landscape-lighting" }
+    },
+    "permanent-lighting": {
+      "slug": "permanent-lighting",
+      "headline": "PERMANENT LIGHTING.\nENDLESS POSSIBILITIES.",
+      "body": [
+        "Enjoy professionally installed permanent exterior lighting without hanging and removing lights every year.",
+        "Permanent lighting can provide everything from subtle warm-white architectural accents to vibrant customized colors for holidays and special occasions.",
+        "Designed to blend into your home's exterior during the day and completely transform it at night."
+      ],
+      "serviceIds": [],
+      "sectionLabels": [],
+      "tags": [
+        "CHRISTMAS",
+        "HALLOWEEN",
+        "GAME DAYS",
+        "BIRTHDAYS",
+        "SPECIAL OCCASIONS",
+        "HOLIDAYS",
+        "WARM-WHITE ARCHITECTURAL LIGHTING",
+        "EVERYDAY ACCENT LIGHTING"
+      ],
+      "processHeadline": null,
+      "process": null,
+      "cta": { "label": "GET A PERMANENT LIGHTING QUOTE", "href": "/contact?intent=permanent-lighting" },
+      "secondaryCta": null
+    },
+    "outdoor-lighting": {
+      "slug": "outdoor-lighting",
+      "headline": "PREMIUM OUTDOOR LIGHTING.\nBACKED BY ELECTRICAL EXPERIENCE SINCE 1993.",
+      "body": [],
+      "serviceIds": [
+        "architectural-lighting",
+        "palm-tree-lighting",
+        "pathway-lighting",
+        "pool-patio-lighting",
+        "accent-lighting",
+        "security-perimeter-lighting"
+      ],
+      "sectionLabels": [],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": null,
+      "secondaryCta": null
+    },
+    "electrical-services": {
+      "slug": "electrical-services",
+      "headline": "ELECTRICAL EXPERIENCE YOU CAN COUNT ON.",
+      "body": [
+        "Since 1993, Farrell Electric has provided electrical services throughout South Florida for residential and commercial customers.",
+        "Whether the job involves troubleshooting, service, repairs, upgrades, lighting or larger electrical projects, we bring decades of electrical experience to every project."
+      ],
+      "serviceIds": [],
+      "sectionLabels": [
+        "Electrical Service Calls",
+        "Electrical Troubleshooting",
+        "Electrical Repairs",
+        "Panels",
+        "Electrical Upgrades",
+        "Dedicated Circuits",
+        "Outlets & Switches",
+        "Interior Lighting",
+        "Exterior Lighting",
+        "Lighting Repairs",
+        "Electrical Renovation Work",
+        "Residential Electrical",
+        "Commercial Electrical",
+        "Electrical Maintenance",
+        "Generator-Related Electrical Work",
+        "Higher-Voltage / Larger Electrical Work"
+      ],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" },
+      "secondaryCta": null
+    },
+    "residential-electrician": {
+      "slug": "residential-electrician",
+      "headline": "RESIDENTIAL ELECTRICAL",
+      "body": ["Electrical services for homes, renovations and property improvements."],
+      "serviceIds": ["residential-electrical"],
+      "sectionLabels": [],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" },
+      "secondaryCta": null
+    },
+    "commercial-electrician": {
+      "slug": "commercial-electrician",
+      "headline": "COMMERCIAL ELECTRICAL SOLUTIONS.",
+      "body": [
+        "Farrell Electric provides electrical service for businesses, commercial properties, contractors and property managers throughout South Florida.",
+        "From troubleshooting and maintenance to lighting, renovations, upgrades and larger electrical projects, our goal is to provide dependable electrical solutions while minimizing disruption to the property."
+      ],
+      "serviceIds": ["commercial-electrical"],
+      "sectionLabels": [
+        "COMMERCIAL SERVICE",
+        "COMMERCIAL LIGHTING",
+        "MAINTENANCE & REPAIRS",
+        "RENOVATIONS & BUILD-OUTS",
+        "ELECTRICAL UPGRADES",
+        "LARGER ELECTRICAL PROJECTS",
+        "HIGH-VOLTAGE WORK"
+      ],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": { "label": "REQUEST A COMMERCIAL ESTIMATE", "href": "/contact?intent=commercial" },
+      "secondaryCta": null
+    },
+    "electrical-service-calls": {
+      "slug": "electrical-service-calls",
+      "headline": "ELECTRICAL SERVICE CALLS",
+      "body": ["Troubleshooting and service for residential and commercial electrical issues."],
+      "serviceIds": ["electrical-service-calls"],
+      "sectionLabels": [],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" },
+      "secondaryCta": null
+    },
+    "about": {
+      "slug": "about",
+      "headline": "SERVING SOUTH FLORIDA SINCE 1993.",
+      "body": [
+        "Farrell Electric, Inc. was established in South Florida in 1993.",
+        "For more than three decades, the company has worked throughout the electrical industry, serving residential and commercial properties across South Florida.",
+        "Today, Farrell Electric continues to provide traditional electrical contracting services while expanding its focus on custom landscape lighting and permanent exterior lighting.",
+        "The goal is to combine decades of electrical experience with a modern approach to outdoor lighting design.",
+        "We're not trying to become another company that simply installs lights.",
+        "We're bringing the credibility and technical experience of an established electrical contractor into the premium outdoor lighting space."
+      ],
+      "serviceIds": [],
+      "sectionLabels": [],
+      "tags": [],
+      "processHeadline": null,
+      "process": null,
+      "cta": null,
+      "secondaryCta": null
+    }
+  },
+  "financing": {
+    "headline": "BUILD THE LIGHTING SYSTEM YOU WANT.\nPAY OVER TIME.",
+    "body": "Flexible financing options may be available for qualified homeowners, making it easier to complete the outdoor lighting project you want without paying the entire cost upfront.",
+    "cta": { "label": "ASK ABOUT FINANCING", "href": "/contact?intent=financing" },
+    "hasTerms": false,
+    "terms": null
+  }
+}

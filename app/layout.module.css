@@ -1,0 +1,9 @@
+.main {
+  padding-bottom: var(--mobile-bar-height);
+}
+
+@media (min-width: 1024px) {
+  .main {
+    padding-bottom: 0;
+  }
+}

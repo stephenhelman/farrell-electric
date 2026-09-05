@@ -1,0 +1,22 @@
+/*
+  Content is visible by default (no-JS, crawlers, prefers-reduced-motion all
+  see it immediately). JS only pre-hides an element already confirmed to be
+  below the fold at mount, then reveals it on scroll — never gates initial
+  visibility on the animation itself.
+*/
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal.pending {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--duration-reveal) var(--ease-out-quart),
+    transform var(--duration-reveal) var(--ease-out-quart);
+}

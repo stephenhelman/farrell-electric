@@ -1,0 +1,102 @@
+[
+  {
+    "id": "placeholder-landscape-01",
+    "title": "Landscape Lighting Placeholder",
+    "category": "landscape",
+    "image": "/images/placeholders/landscape-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-architectural-01",
+    "title": "Architectural Lighting Placeholder",
+    "category": "architectural",
+    "image": "/images/placeholders/architectural-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-palms-trees-01",
+    "title": "Palm & Tree Lighting Placeholder",
+    "category": "palms-trees",
+    "image": "/images/placeholders/palms-trees-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-pathways-01",
+    "title": "Pathway Lighting Placeholder",
+    "category": "pathways",
+    "image": "/images/placeholders/pathways-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-pools-patios-01",
+    "title": "Pool & Patio Lighting Placeholder",
+    "category": "pools-patios",
+    "image": "/images/placeholders/pools-patios-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-permanent-01",
+    "title": "Permanent Lighting Placeholder",
+    "category": "permanent",
+    "image": "/images/placeholders/permanent-01.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-permanent-02",
+    "title": "Permanent Lighting Placeholder",
+    "category": "permanent",
+    "image": "/images/placeholders/permanent-02.jpg",
+    "beforeImage": null,
+    "afterImage": null,
+    "isRealProject": false,
+    "caption": "Placeholder image — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-before-after-01",
+    "title": "Before & After Placeholder",
+    "category": "before-after",
+    "image": "/images/placeholders/before-after-01-after.jpg",
+    "beforeImage": "/images/placeholders/before-after-01-before.jpg",
+    "afterImage": "/images/placeholders/before-after-01-after.jpg",
+    "isRealProject": false,
+    "caption": "Placeholder before/after pair — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-before-after-02",
+    "title": "Before & After Placeholder",
+    "category": "before-after",
+    "image": "/images/placeholders/before-after-02-after.jpg",
+    "beforeImage": "/images/placeholders/before-after-02-before.jpg",
+    "afterImage": "/images/placeholders/before-after-02-after.jpg",
+    "isRealProject": false,
+    "caption": "Placeholder before/after pair — representative example, not a completed Farrell Electric project."
+  },
+  {
+    "id": "placeholder-before-after-03",
+    "title": "Before & After Placeholder",
+    "category": "before-after",
+    "image": "/images/placeholders/before-after-03-after.jpg",
+    "beforeImage": "/images/placeholders/before-after-03-before.jpg",
+    "afterImage": "/images/placeholders/before-after-03-after.jpg",
+    "isRealProject": false,
+    "caption": "Placeholder before/after pair — representative example, not a completed Farrell Electric project."
+  }
+]

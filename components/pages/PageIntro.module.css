@@ -1,0 +1,22 @@
+.wrap {
+  max-width: 65ch;
+}
+
+.headline {
+  font-size: var(--text-heading-xl);
+  white-space: pre-line;
+  margin-bottom: var(--space-5);
+}
+
+.body p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}

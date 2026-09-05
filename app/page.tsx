@@ -1,69 +1,40 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { getHome, getServicesByIds, getProjects } from "@/lib/content";
+import { Hero } from "@/components/home/Hero";
+import { DivisionCards } from "@/components/home/DivisionCards";
+import { ServiceGridSection } from "@/components/home/ServiceGridSection";
+import { PermanentLighting } from "@/components/home/PermanentLighting";
+import { BeforeAfterTeaser } from "@/components/home/BeforeAfterTeaser";
+import { WhyFarrell } from "@/components/home/WhyFarrell";
+import { FinalCta } from "@/components/home/FinalCta";
 
 export default function Home() {
+  const home = getHome();
+  const beforeAfterPair = getProjects({ category: "before-after" })[0];
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <>
+      <Hero hero={home.hero} />
+      <DivisionCards cards={home.divisionCards} />
+      <ServiceGridSection
+        headline={home.landscapeOverview.headline}
+        body={home.landscapeOverview.body}
+        services={getServicesByIds(home.landscapeOverview.serviceIds)}
+        cta={home.landscapeOverview.cta}
+        ctaVariant="primary"
+        surface="base"
+      />
+      <PermanentLighting section={home.permanentLighting} />
+      <BeforeAfterTeaser teaser={home.beforeAfterTeaser} pair={beforeAfterPair} />
+      <WhyFarrell section={home.whyFarrell} />
+      <ServiceGridSection
+        headline={home.electricalIntro.headline}
+        body={home.electricalIntro.body}
+        services={getServicesByIds(home.electricalIntro.serviceIds)}
+        cta={home.electricalIntro.cta}
+        ctaVariant="outline"
+        surface="raised"
+      />
+      <FinalCta section={home.finalCta} />
+    </>
   );
 }

@@ -1,0 +1,23 @@
+.section {
+  width: 100%;
+  padding: var(--space-12) var(--space-5);
+}
+
+.inner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.surfaceBase {
+  background: var(--color-surface-base);
+}
+
+.surfaceRaised {
+  background: var(--color-surface-raised);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: var(--space-16) var(--space-8);
+  }
+}

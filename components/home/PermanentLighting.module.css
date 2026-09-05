@@ -1,0 +1,32 @@
+.header {
+  max-width: 60ch;
+  margin-bottom: var(--space-6);
+}
+
+.headline {
+  font-size: var(--text-heading-lg);
+  white-space: pre-line;
+  margin-bottom: var(--space-4);
+}
+
+.body p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.tag {
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}

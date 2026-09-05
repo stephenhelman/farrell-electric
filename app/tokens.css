@@ -1,0 +1,84 @@
+/*
+  Design tokens for Farrell Electric.
+  Dark charcoal / near-black surfaces, white text, single blue accent from the logo.
+  All theming flows through these CSS variables — components never hardcode raw values.
+*/
+
+:root {
+  /* Surfaces */
+  --color-surface-base: #0a0a0c;
+  --color-surface-raised: #141417;
+  --color-surface-overlay: #1c1c20;
+  --color-border: #2a2a2f;
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b5b5bd;
+  /* 4.27:1 at #7a7a82 fails WCAG AA body text (4.5:1) against --color-surface-base; lightened to ~5.5:1. */
+  --color-text-muted: #8c8c94;
+
+  /* Accent — PLACEHOLDER, replace with real Farrell logo blue */
+  --color-accent: #2f6fed;
+  --color-accent-hover: #4c85f2;
+  --color-accent-contrast: #ffffff;
+
+  /* Status (used sparingly, e.g. form feedback) */
+  --color-success: #3fb872;
+  --color-error: #e5484d;
+
+  /* Fonts */
+  --font-display: var(--font-display-face), "Helvetica Neue", Arial, sans-serif;
+  --font-text: var(--font-text-face), "Helvetica Neue", Arial, sans-serif;
+
+  /* Type scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 3.75rem;
+  --text-6xl: 4.75rem;
+
+  /* Fluid display headings — scale smoothly between breakpoints instead of
+     jumping at a single media-query step. Ceilings stay well under the 6rem
+     "shouting" limit. */
+  --text-heading-sm: clamp(1.5rem, 1.1rem + 1.6vw, 1.75rem);
+  --text-heading-md: clamp(1.75rem, 1.2rem + 2.2vw, 2.25rem);
+  --text-heading-lg: clamp(2rem, 1.2rem + 3.2vw, 3rem);
+  --text-heading-xl: clamp(2.25rem, 1rem + 5vw, 4rem);
+  --text-heading-2xl: clamp(2.5rem, 0.5rem + 7.5vw, 4.75rem);
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
+  --space-16: 8rem;
+
+  /* Layout */
+  --content-max-width: 1280px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 150ms;
+  --duration-standard: 300ms;
+  --duration-reveal: 500ms;
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 2px var(--color-surface-base), 0 0 0 4px var(--color-accent);
+
+  /* Mobile action bar */
+  --mobile-bar-height: 64px;
+}
