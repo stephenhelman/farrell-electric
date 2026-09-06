@@ -1,0 +1,53 @@
+.trigger {
+  white-space: nowrap;
+}
+
+.dialog {
+  /* The global `* { margin: 0 }` reset wipes the UA stylesheet's default
+     `margin: auto` centering on <dialog>, so it's restored explicitly here. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  padding: 0;
+  width: min(420px, calc(100vw - var(--space-8)));
+  height: fit-content;
+}
+
+.dialog::backdrop {
+  background: rgba(10, 10, 12, 0.7);
+}
+
+.inner {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.headline {
+  font-size: var(--text-xl);
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.closeButton {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  margin: var(--space-3) var(--space-3) calc(-1 * var(--space-3)) 0;
+}

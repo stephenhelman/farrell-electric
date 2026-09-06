@@ -1,17 +1,18 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getSiteSettings } from "@/lib/content";
-import { Button } from "@/components/ui/Button";
+import { HeaderCtaModal } from "./HeaderCtaModal";
 import { MobileMenu } from "./MobileMenu";
 import styles from "./SiteHeader.module.css";
 
 export function SiteHeader() {
-  const { navItems, primaryCta, secondaryCta } = getSiteSettings();
+  const { navItems, primaryCta, secondaryCta, logoPath } = getSiteSettings();
 
   return (
     <header className={styles.header}>
       <div className={styles.bar}>
         <Link href="/" className={styles.logo}>
-          FARRELL ELECTRIC
+          <Image src={logoPath} alt="Farrell Electric" width={160} height={135} priority />
         </Link>
 
         <nav className={styles.desktopNav}>
@@ -22,13 +23,8 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className={styles.desktopCtas}>
-          <Button href={secondaryCta.href} variant="secondary">
-            {secondaryCta.label}
-          </Button>
-          <Button href={primaryCta.href} variant="primary">
-            {primaryCta.label}
-          </Button>
+        <div className={styles.desktopCta}>
+          <HeaderCtaModal primaryCta={primaryCta} secondaryCta={secondaryCta} />
         </div>
 
         <MobileMenu navItems={navItems} primaryCta={primaryCta} secondaryCta={secondaryCta} />

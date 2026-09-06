@@ -1,0 +1,43 @@
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 260px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(10, 10, 12, 0.92) 40%, rgba(10, 10, 12, 0.35) 100%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-6);
+  max-width: 52ch;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: var(--text-heading-sm);
+  margin-bottom: var(--space-3);
+}
+
+.body {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-5);
+}

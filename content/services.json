@@ -54,6 +54,15 @@
     "order": 6
   },
   {
+    "id": "architectural-soffit-lighting",
+    "slug": "architectural-soffit-lighting",
+    "name": "Architectural Soffit Lighting",
+    "category": "electrical",
+    "summary": "Premium line-voltage recessed lighting installed in the home's soffit by our electrical division — real electrical work behind exterior lighting that elevates curb appeal.",
+    "body": null,
+    "order": 6.5
+  },
+  {
     "id": "electrical-service-calls",
     "slug": "electrical-service-calls",
     "name": "Electrical Service Calls",

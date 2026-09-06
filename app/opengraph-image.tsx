@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Farrell Electric — Premium Outdoor Lighting, Backed by Electrical Experience Since 1993";
+export const alt = "Farrell Electric — Premium Outdoor Lighting, Backed by Electrical Experience Since 1980";
 
 export default async function OpengraphImage() {
   return new ImageResponse(
@@ -24,8 +24,8 @@ export default async function OpengraphImage() {
         <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 1.1, maxWidth: 900 }}>
           Premium Outdoor Lighting
         </div>
-        <div style={{ fontSize: 40, fontWeight: 500, color: "#2f6fed", marginTop: 12 }}>
-          Backed by Electrical Experience Since 1993
+        <div style={{ fontSize: 40, fontWeight: 500, color: "#557bb5", marginTop: 12 }}>
+          Backed by Electrical Experience Since 1980
         </div>
       </div>
     ),

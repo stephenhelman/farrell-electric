@@ -6,15 +6,15 @@ function digitsOnly(value: string): string {
 }
 
 export function MobileActionBar() {
-  const { phone, textNumber, primaryCta } = getSiteSettings();
+  const { cellPhone, primaryCta } = getSiteSettings();
 
   return (
     <div className={styles.bar}>
-      <a className={styles.action} href={`tel:${digitsOnly(phone)}`}>
+      <a className={styles.action} href={`tel:${digitsOnly(cellPhone)}`}>
         <span aria-hidden="true">📞</span>
         Call
       </a>
-      <a className={styles.action} href={`sms:${digitsOnly(textNumber)}`}>
+      <a className={styles.action} href={`sms:${digitsOnly(cellPhone)}`}>
         <span aria-hidden="true">💬</span>
         Text
       </a>

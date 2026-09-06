@@ -17,9 +17,14 @@
   /* 4.27:1 at #7a7a82 fails WCAG AA body text (4.5:1) against --color-surface-base; lightened to ~5.5:1. */
   --color-text-muted: #8c8c94;
 
-  /* Accent — PLACEHOLDER, replace with real Farrell logo blue */
-  --color-accent: #2f6fed;
-  --color-accent-hover: #4c85f2;
+  /* Brand source of truth — the real Farrell logo blue. Low-contrast (~2.5:1)
+     directly on --color-surface-base, so on-dark UI uses a lighter tint
+     derived from it below rather than this value directly. */
+  --color-brand-blue: #1c4f9c;
+  /* Accent — tint of --color-brand-blue lightened toward white for ~4.6:1
+     contrast on --color-surface-base (passes WCAG AA for UI/large text). */
+  --color-accent: #557bb5;
+  --color-accent-hover: #6b8dbf;
   --color-accent-contrast: #ffffff;
 
   /* Status (used sparingly, e.g. form feedback) */
@@ -65,6 +70,10 @@
 
   /* Layout */
   --content-max-width: 1280px;
+  /* Header/footer chrome can use more of a wide monitor than the 1280px
+     content column — capping it to content-max-width was why the nav still
+     looked cramped on an ultra-wide display. */
+  --chrome-max-width: 1680px;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;

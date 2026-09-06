@@ -29,14 +29,24 @@ export const metadata: Metadata = {
     template: "%s | Farrell Electric",
   },
   description:
-    "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1993. Serving Broward and Palm Beach County.",
+    "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [
+      { url: "/brand/favicon.ico", sizes: "any" },
+      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/brand/favicon-180.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Farrell Electric | Premium Outdoor Lighting, South Florida",
     description:
-      "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1993. Serving Broward and Palm Beach County.",
+      "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
     url: "/",
     siteName: "Farrell Electric",
     type: "website",
@@ -45,7 +55,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Farrell Electric | Premium Outdoor Lighting, South Florida",
     description:
-      "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1993. Serving Broward and Palm Beach County.",
+      "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
   },
 };
 

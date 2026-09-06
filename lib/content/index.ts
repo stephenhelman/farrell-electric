@@ -64,6 +64,7 @@ export type {
   Home,
   HeroSection,
   DivisionCard,
+  SoffitLightingBridgeSection,
   LandscapeOverviewSection,
   PermanentLightingSection,
   BeforeAfterTeaserSection,

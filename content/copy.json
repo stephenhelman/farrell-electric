@@ -1,10 +1,11 @@
 {
   "siteSettings": {
-    "phone": "(954) 555-0100",
-    "textNumber": "(954) 555-0101",
-    "email": "info@example.com",
-    "logoPath": "/images/placeholders/farrell-electric-logo.svg",
-    "accentBlueHex": "#2f6fed",
+    "phone": "(954) 484-1400",
+    "cellPhone": "(954) 303-5579",
+    "email": "sales@farrellelectric.com",
+    "logoPath": "/brand/farrell-logo-white.png",
+    "logoPathLight": "/brand/farrell-logo-blue.png",
+    "accentBlueHex": "#1C4F9C",
     "serviceAreaLine": "Serving Broward County and Palm Beach County",
     "navItems": [
       { "label": "HOME", "href": "/" },
@@ -22,7 +23,7 @@
   "home": {
     "hero": {
       "headline": "LIGHT UP YOUR HOME.\nTRANSFORM YOUR PROPERTY.",
-      "subhead": "Custom Landscape & Permanent Lighting\nBacked by South Florida Electrical Experience Since 1993",
+      "subhead": "Custom Landscape & Permanent Lighting\nBacked by Electrical Experience Since 1980",
       "supportingCopy": "Professionally designed outdoor lighting that transforms the way your property looks, feels and functions after dark.",
       "primaryCta": { "label": "GET A FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
       "secondaryCta": { "label": "VIEW OUR WORK", "href": "/our-work" },
@@ -45,6 +46,12 @@
         "cta": { "label": "EXPLORE PERMANENT LIGHTING", "href": "/permanent-lighting" }
       }
     ],
+    "soffitLightingBridge": {
+      "headline": "ARCHITECTURAL SOFFIT LIGHTING",
+      "body": "Premium line-voltage recessed lighting installed in your home's soffit by our electrical division — a polished, code-correct alternative to bolt-on landscape fixtures.",
+      "image": "/images/placeholders/soffit-lighting-bridge.jpg",
+      "cta": { "label": "ASK ABOUT SOFFIT LIGHTING", "href": "/contact?intent=electrical" }
+    },
     "landscapeOverview": {
       "headline": "YOUR HOME SHOULDN'T DISAPPEAR AFTER DARK.",
       "body": [
@@ -89,10 +96,10 @@
       "cta": { "label": "VIEW OUR WORK", "href": "/our-work" }
     },
     "whyFarrell": {
-      "headline": "PREMIUM LIGHTING.\nBACKED BY OVER 30 YEARS OF ELECTRICAL EXPERIENCE.",
+      "headline": "PREMIUM LIGHTING.\nBACKED BY ELECTRICAL EXPERIENCE SINCE 1980.",
       "body": [
-        "Farrell Electric has served South Florida since 1993.",
-        "Our lighting services combine modern outdoor lighting design with decades of real electrical contracting experience.",
+        "Farrell Electric, established in 1993, has served South Florida for more than three decades.",
+        "Our lighting services combine modern outdoor lighting design with over four decades of real electrical contracting experience dating back to 1980.",
         "Customers shouldn't have to choose between an experienced electrical company and a premium lighting company.",
         "With Farrell Electric, you get both."
       ],
@@ -104,8 +111,8 @@
         },
         {
           "id": "electrical-experience",
-          "title": "ELECTRICAL EXPERIENCE",
-          "body": "Our background goes far beyond simply installing fixtures. Electrical contracting has been at the core of Farrell Electric since the beginning."
+          "title": "ELECTRICAL EXPERIENCE SINCE 1980",
+          "body": "Our background goes far beyond simply installing fixtures. Electrical contracting experience at the core of Farrell Electric dates back to 1980."
         },
         {
           "id": "custom-lighting-design",
@@ -140,7 +147,7 @@
       "headline": "READY TO SEE YOUR HOME\nIN A WHOLE NEW LIGHT?",
       "body": "Schedule your complimentary lighting consultation and discover what professional outdoor lighting can do for your property.",
       "primaryCta": { "label": "GET MY FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
-      "secondaryCta": { "label": "CALL NOW", "href": "tel:+19545550100" },
+      "secondaryCta": { "label": "CALL NOW", "href": "tel:+19543035579" },
       "electricalPrompt": "Need electrical service?",
       "electricalCta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" },
       "bgImage": "/images/placeholders/final-cta-bg.jpg"
@@ -224,7 +231,7 @@
     },
     "outdoor-lighting": {
       "slug": "outdoor-lighting",
-      "headline": "PREMIUM OUTDOOR LIGHTING.\nBACKED BY ELECTRICAL EXPERIENCE SINCE 1993.",
+      "headline": "PREMIUM OUTDOOR LIGHTING.\nBACKED BY ELECTRICAL EXPERIENCE SINCE 1980.",
       "body": [],
       "serviceIds": [
         "architectural-lighting",
@@ -245,8 +252,8 @@
       "slug": "electrical-services",
       "headline": "ELECTRICAL EXPERIENCE YOU CAN COUNT ON.",
       "body": [
-        "Since 1993, Farrell Electric has provided electrical services throughout South Florida for residential and commercial customers.",
-        "Whether the job involves troubleshooting, service, repairs, upgrades, lighting or larger electrical projects, we bring decades of electrical experience to every project."
+        "Since establishing the company in 1993, Farrell Electric has provided electrical services throughout South Florida for residential and commercial customers.",
+        "Whether the job involves troubleshooting, service, repairs, upgrades, lighting or larger electrical projects, we bring electrical experience dating back to 1980 to every project."
       ],
       "serviceIds": [],
       "sectionLabels": [
@@ -259,6 +266,7 @@
         "Outlets & Switches",
         "Interior Lighting",
         "Exterior Lighting",
+        "Architectural Soffit Lighting",
         "Lighting Repairs",
         "Electrical Renovation Work",
         "Residential Electrical",
@@ -324,10 +332,10 @@
       "slug": "about",
       "headline": "SERVING SOUTH FLORIDA SINCE 1993.",
       "body": [
-        "Farrell Electric, Inc. was established in South Florida in 1993.",
-        "For more than three decades, the company has worked throughout the electrical industry, serving residential and commercial properties across South Florida.",
+        "Farrell Electric, Inc. was established and opened its doors in South Florida in 1993.",
+        "The company's electrical experience dates back even further, to 1980, and for more than three decades Farrell Electric has served residential and commercial properties across South Florida.",
         "Today, Farrell Electric continues to provide traditional electrical contracting services while expanding its focus on custom landscape lighting and permanent exterior lighting.",
-        "The goal is to combine decades of electrical experience with a modern approach to outdoor lighting design.",
+        "The goal is to combine over four decades of electrical experience with a modern approach to outdoor lighting design.",
         "We're not trying to become another company that simply installs lights.",
         "We're bringing the credibility and technical experience of an established electrical contractor into the premium outdoor lighting space."
       ],

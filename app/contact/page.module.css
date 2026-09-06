@@ -1,0 +1,15 @@
+.phoneLines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  color: var(--color-text-secondary);
+}
+
+.phoneLines a {
+  color: inherit;
+}
+
+.phoneLines a:hover {
+  color: var(--color-accent);
+}

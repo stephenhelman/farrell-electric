@@ -15,10 +15,15 @@ export interface NavItem {
 }
 
 export interface SiteSettings {
+  /** Office / display line, e.g. "(954) 484-1400". */
   phone: string;
-  textNumber: string;
+  /** Direct cell — Call/Text CTAs and the mobile action bar route here. */
+  cellPhone: string;
   email: string;
+  /** White logo for dark surfaces (header/footer). */
   logoPath: string;
+  /** Blue logo for light surfaces. */
+  logoPathLight: string;
   accentBlueHex: string;
   serviceAreaLine: string;
   navItems: NavItem[];
@@ -55,6 +60,13 @@ export interface PermanentLightingSection {
   headline: string;
   body: string[];
   useCaseTags: string[];
+  cta: Cta;
+}
+
+export interface SoffitLightingBridgeSection {
+  headline: string;
+  body: string;
+  image: string;
   cta: Cta;
 }
 
@@ -97,6 +109,7 @@ export interface FinalCtaSection {
 export interface Home {
   hero: HeroSection;
   divisionCards: DivisionCard[];
+  soffitLightingBridge: SoffitLightingBridgeSection;
   landscapeOverview: LandscapeOverviewSection;
   permanentLighting: PermanentLightingSection;
   beforeAfterTeaser: BeforeAfterTeaserSection;

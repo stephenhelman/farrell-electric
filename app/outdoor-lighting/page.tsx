@@ -10,7 +10,7 @@ import { buildMetadata } from "@/lib/seo/metadata";
 export const metadata: Metadata = buildMetadata({
   title: "Outdoor Lighting",
   description:
-    "Premium outdoor lighting — landscape and permanent lighting divisions — backed by electrical experience since 1993. Serving Broward and Palm Beach County.",
+    "Premium outdoor lighting — landscape and permanent lighting divisions — backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
   path: "/outdoor-lighting",
 });
 

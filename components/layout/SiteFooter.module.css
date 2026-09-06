@@ -26,8 +26,8 @@
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
+  height: 56px;
+  width: auto;
   margin-bottom: var(--space-3);
 }
 

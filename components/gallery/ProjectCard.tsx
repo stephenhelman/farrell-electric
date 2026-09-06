@@ -13,14 +13,18 @@ export function ProjectCard({ project }: { project: Project }) {
 
   return (
     <div className={styles.card}>
-      {hasBeforeAfter ? (
-        <BeforeAfterSlider beforeImage={project.beforeImage!} afterImage={project.afterImage!} />
-      ) : (
-        <div className={styles.frame}>
-          <Image src={project.image} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />
-          {!project.isRealProject && <span className={styles.badge}>Representative Example</span>}
-        </div>
-      )}
+      <div className={styles.mediaWrap}>
+        {hasBeforeAfter ? (
+          <BeforeAfterSlider beforeImage={project.beforeImage!} afterImage={project.afterImage!} />
+        ) : (
+          <div className={styles.frame}>
+            <Image src={project.image} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />
+          </div>
+        )}
+        {!project.isRealProject && (
+          <span className={styles.badge}>Representative imagery — actual project photos coming soon</span>
+        )}
+      </div>
 
       {project.isRealProject ? (
         <h3 className={styles.title}>{project.title}</h3>

@@ -3,6 +3,8 @@ import { Section } from "@/components/ui/Section";
 import { ContactForm } from "@/components/contact/ContactForm";
 import type { LeadIntent } from "@/lib/leads/types";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { getSiteSettings } from "@/lib/content";
+import styles from "./page.module.css";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact",
@@ -23,9 +25,15 @@ export default async function ContactPage({
 }) {
   const params = await searchParams;
   const initialIntent = parseIntent(params.intent);
+  const { phone, cellPhone, email } = getSiteSettings();
 
   return (
     <Section>
+      <div className={styles.phoneLines}>
+        <a href={`tel:${phone.replace(/[^\d+]/g, "")}`}>Office: {phone}</a>
+        <a href={`tel:${cellPhone.replace(/[^\d+]/g, "")}`}>Direct: {cellPhone}</a>
+        <a href={`mailto:${email}`}>{email}</a>
+      </div>
       <ContactForm initialIntent={initialIntent} />
     </Section>
   );
