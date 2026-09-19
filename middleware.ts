@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { logEnvWarningsOnce } from "@/lib/env";
 
 const APP_HOST = process.env.NEXT_PUBLIC_APP_HOST ?? "app.farrellelectric.com";
 const DEV_APP_HOST = "app.localhost:3000";
@@ -16,6 +17,10 @@ function isAppHost(host: string | null): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // Runtime-only, soft-validated env check (Task 11) — logs at most once per
+  // process, never throws, never runs during `next build`.
+  logEnvWarningsOnce();
+
   const host = request.headers.get("host");
   const onAppHost = isAppHost(host);
   const { pathname } = request.nextUrl;
