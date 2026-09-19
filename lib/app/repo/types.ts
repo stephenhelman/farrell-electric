@@ -4,6 +4,7 @@
  * callers, same incremental spirit as lib/content's accessor.
  */
 import type { CalcType, UnitOfMeasure } from "@/lib/app/catalog/normalized-seed";
+import type { OptionInputType } from "@/lib/app/options/normalized-seed";
 
 export type AppRole = "OWNER" | "STAFF";
 
@@ -31,6 +32,26 @@ export interface RepoCatalogItem {
   isSuspectedDuplicate: boolean;
   needsReview: boolean;
   reviewNotes: string | null;
+}
+
+export interface RepoOptionComponent {
+  id: string;
+  catalogItemId: string;
+  catalogItemName: string;
+  qtyPerUnit: number;
+}
+
+export interface RepoOption {
+  id: string;
+  name: string;
+  customerDescription: string;
+  inputType: OptionInputType;
+  /** TODO(owner): package pricing per unit — null until provided. */
+  defaultUnitPrice: number | null;
+  /** TODO(owner): labor cost/time per unit — null until provided. */
+  laborPerUnit: number | null;
+  active: boolean;
+  components: RepoOptionComponent[];
 }
 
 export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED";
@@ -112,6 +133,7 @@ export interface SaveQuoteInput {
 export interface Repo {
   getUserByEmail(email: string): Promise<RepoUser | null>;
   listCatalogItems(): Promise<RepoCatalogItem[]>;
+  listOptions(): Promise<RepoOption[]>;
   listQuotes(): Promise<RepoQuote[]>;
   listJobs(): Promise<RepoJob[]>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;

@@ -74,6 +74,29 @@ export const prismaRepo: Repo = {
     }));
   },
 
+  async listOptions() {
+    const options = await prisma.option.findMany({
+      include: { components: { include: { catalogItem: true } } },
+      orderBy: { name: "asc" },
+    });
+
+    return options.map((option) => ({
+      id: option.id,
+      name: option.name,
+      customerDescription: option.customerDescription,
+      inputType: option.inputType,
+      defaultUnitPrice: option.defaultUnitPrice ? Number(option.defaultUnitPrice) : null,
+      laborPerUnit: option.laborPerUnit ? Number(option.laborPerUnit) : null,
+      active: option.active,
+      components: option.components.map((component) => ({
+        id: component.id,
+        catalogItemId: component.catalogItemId,
+        catalogItemName: component.catalogItem.name,
+        qtyPerUnit: Number(component.qtyPerUnit),
+      })),
+    }));
+  },
+
   async listQuotes() {
     const quotes = await prisma.quote.findMany({ orderBy: { number: "desc" } });
 

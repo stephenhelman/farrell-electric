@@ -1,4 +1,5 @@
 import type { CalcType, UnitOfMeasure } from "./normalized-seed";
+import type { OptionInputType } from "@/lib/app/options/normalized-seed";
 
 function titleCase(value: string): string {
   return value
@@ -15,4 +16,9 @@ export function formatCalcType(calcType: CalcType): string {
 export function formatUnitOfMeasure(unit: UnitOfMeasure): string {
   if (unit === "LINEAR_FT") return "Linear Ft";
   return titleCase(unit);
+}
+
+export function formatOptionInputType(inputType: OptionInputType): string {
+  if (inputType === "LINEAR_FT") return "Linear Ft";
+  return titleCase(inputType);
 }

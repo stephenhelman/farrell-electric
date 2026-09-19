@@ -17,6 +17,10 @@ export const memoryRepo: Repo = {
     return memoryStore.catalogItems;
   },
 
+  async listOptions() {
+    return memoryStore.options;
+  },
+
   async listQuotes() {
     return [...memoryStore.quotes].sort((a, b) => b.number - a.number);
   },

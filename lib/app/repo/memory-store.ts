@@ -1,5 +1,6 @@
 import { normalizedCatalogSeed } from "@/lib/app/catalog/normalized-seed";
-import type { RepoCatalogItem, RepoJob, RepoQuoteDetail, RepoUser } from "./types";
+import { normalizedOptionSeed } from "@/lib/app/options/normalized-seed";
+import type { RepoCatalogItem, RepoJob, RepoOption, RepoQuoteDetail, RepoUser } from "./types";
 
 /**
  * Seeds the same admin identity the Prisma seed script (prisma/seed.ts)
@@ -18,9 +19,38 @@ function seedCatalogItems(): RepoCatalogItem[] {
   return normalizedCatalogSeed.map((item) => ({ id: `catalog-${item.sourceId}`, ...item }));
 }
 
+function seedOptions(catalogItems: RepoCatalogItem[]): RepoOption[] {
+  return normalizedOptionSeed.map((option) => ({
+    id: `option-${option.key}`,
+    name: option.name,
+    customerDescription: option.customerDescription,
+    inputType: option.inputType,
+    defaultUnitPrice: option.defaultUnitPrice,
+    laborPerUnit: option.laborPerUnit,
+    active: true,
+    components: option.components.map((component) => {
+      const catalogItem = catalogItems.find((item) => item.sourceId === component.catalogSourceId);
+      if (!catalogItem) {
+        throw new Error(
+          `Option "${option.name}" references unknown catalog sourceId ${component.catalogSourceId}`,
+        );
+      }
+      return {
+        id: `option-component-${option.key}-${component.catalogSourceId}`,
+        catalogItemId: catalogItem.id,
+        catalogItemName: catalogItem.name,
+        qtyPerUnit: component.qtyPerUnit,
+      };
+    }),
+  }));
+}
+
+const catalogItems = seedCatalogItems();
+
 export const memoryStore = {
   users: seedAdminUser(),
-  catalogItems: seedCatalogItems(),
+  catalogItems,
+  options: seedOptions(catalogItems),
   // Quotes/jobs have no seed data — they're created through the builder.
   // This array is the entire "database" on the in-memory path: it does not
   // survive a process restart, which is expected until DATABASE_URL is set.
