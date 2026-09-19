@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CalcType" ADD VALUE 'DOWNLIGHT';

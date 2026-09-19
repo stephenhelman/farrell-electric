@@ -32,6 +32,7 @@ export type CalcType =
   | "SERVICE"
   | "LABOR"
   | "MATERIAL"
+  | "DOWNLIGHT"
   | "OTHER";
 
 export interface CatalogItemSeed {
@@ -51,23 +52,8 @@ export interface CatalogItemSeed {
   reviewNotes: string | null;
 }
 
-const DUP_3_64 =
-  "Same PAR36 / 15W / 1500-lumen / 60° beam / 5-yr-warranty spec as the other item in this pair, listed under a different fixture type (Well vs Spot). Kept as separate rows per instruction — confirm whether this is one physical bulb sold under two catalog entries or two distinct SKUs.";
-
-const DUP_6_7 =
-  "Suspected duplicate of the other 'WAC Colorscaping Grand Accent 24 Watt' entry — nearly identical name ('24 Watt' vs '24 - Watt'), identical price, different description text. Kept as separate rows per instruction — confirm which is authoritative or if both are intentional.";
-
-const DUP_49_63 =
-  "Same fixture spec (180° beam spread, directional L-shaped pathway light, 6.5W) as the other item in this pair, at a different price/cost and without the WAC/Balance/3000k branding. Kept as separate rows per instruction — confirm whether these are the same physical fixture listed twice or genuinely different SKUs.";
-
-const BULLET_NOTE =
-  "'Bullet' fixtures are conventionally uplights in landscape lighting trade parlance, but no UPLIGHT keyword appears in the name/description — mapped by convention, not stated. Confirm.";
-
-const SPOT_NOTE =
-  "'Spot Light' has no dedicated calcType in the schema — mapped to ACCENT as the closest fit. This is a judgment call, not a textual match.";
-
-const TIMER_BUNDLE_NOTE =
-  "Bundles a transformer and a digital timer into one SKU — modeled as a single TRANSFORMER item for now; the timer isn't separately represented. Confirm whether this should decompose into two line items via an Option in Task 6.";
+const DEACTIVATED_63_NOTE =
+  "Deactivated (not deleted) — owner confirmed this is the same fixture as the WAC-branded id 49, which survives as the canonical entry. Kept inactive rather than removed since the option seed and any historical quotes still reference this sourceId.";
 
 export const normalizedCatalogSeed: CatalogItemSeed[] = [
   {
@@ -115,9 +101,9 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     taxable: true,
     active: true,
     isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: DUP_3_64,
+    isSuspectedDuplicate: false,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 4,
@@ -164,26 +150,9 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     taxable: true,
     active: true,
     isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: DUP_6_7,
-  },
-  {
-    sourceId: 7,
-    name: "WAC Colorscaping Grand Accent 24 - Watt Adjustable Beam Spread",
-    description:
-      "1 Million Colors Fully Programable + 2700k-6500K Whites, 15 Year Warranty on Entire Fixture",
-    unitOfMeasure: "EACH",
-    calcType: "ACCENT",
-    wattage: 24,
-    price: 550,
-    cost: 0,
-    taxable: true,
-    active: true,
-    isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: DUP_6_7,
+    isSuspectedDuplicate: false,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 8,
@@ -296,7 +265,7 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     isPlaceholder: false,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes: `${SPOT_NOTE} No wattage stated in name/description.`,
+    reviewNotes: "No wattage stated in name/description.",
   },
   {
     sourceId: 15,
@@ -484,18 +453,17 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     sourceId: 26,
     name: "Fixture Cleaning",
     description: "Fixtures scrubbed with solution to remove lime/buildup on fixtures",
-    unitOfMeasure: "EACH",
+    unitOfMeasure: "JOB",
     calcType: "SERVICE",
     wattage: null,
-    price: 65,
+    price: 200,
     cost: 0,
     taxable: true,
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes:
-      "Unit guessed as EACH (per fixture) but could be billed per visit (JOB) covering multiple fixtures — confirm billing model.",
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 27,
@@ -510,9 +478,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes:
-      "Flat price suggests a per-job (whole-property) charge rather than per-fixture or per-linear-foot — confirm unit.",
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 28,
@@ -528,8 +495,7 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     isPlaceholder: true,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes:
-      "$0 price suggests this varies by tree height/size and is quoted per tree at estimate time — confirm whether a size-tiered SKU structure (like 'Large Tree Wrapping', id 57) should exist instead of one $0 catch-all.",
+    reviewNotes: "Height-based pricing model TBD by owner.",
   },
   {
     sourceId: 29,
@@ -672,12 +638,12 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     price: 0,
     cost: 0,
     taxable: true,
-    active: true,
+    active: false,
     isPlaceholder: true,
     isSuspectedDuplicate: false,
     needsReview: true,
     reviewNotes:
-      "This is a percentage-based processing fee, not a fixture/service with a natural per-unit quantity — the EACH unit is a placeholder only. Confirm how this should actually be modeled (e.g. computed from the quote total rather than a line item at all).",
+      "Deactivated — this is a percentage-based processing fee, not a catalog item with a natural per-unit quantity. To be modeled as a quote-level surcharge in a separate task. Do not delete this row in the meantime.",
   },
   {
     sourceId: 38,
@@ -724,8 +690,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: BULLET_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 41,
@@ -756,8 +722,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: TIMER_BUNDLE_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 43,
@@ -806,8 +772,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: TIMER_BUNDLE_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 46,
@@ -870,9 +836,9 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     taxable: true,
     active: true,
     isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: DUP_49_63,
+    isSuspectedDuplicate: false,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 50,
@@ -887,8 +853,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: BULLET_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 51,
@@ -919,8 +885,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: BULLET_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 53,
@@ -962,7 +928,7 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     description:
       "Slim, weather-resistant LED fixtures mounted in soffits to provide clean, even illumination along the home’s exterior. Designed for durability, low maintenance, and a high-end architectural look",
     unitOfMeasure: "EACH",
-    calcType: "WALL_WASH",
+    calcType: "DOWNLIGHT",
     wattage: null,
     price: 299,
     cost: 0,
@@ -970,9 +936,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes:
-      "Soffit-mounted linear LED washing down a home's exterior — guessed WALL_WASH for the wash effect, but this may really be its own category or priced per linear foot of soffit run rather than a flat EACH price. No wattage stated. Confirm.",
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 56,
@@ -988,9 +953,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes:
-      "Unit inferred as LINEAR_FT from 'custom cut to fit your roofline' and the low per-unit price — not explicitly stated as a per-foot price in the description. Confirm.",
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 57,
@@ -1072,8 +1036,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: TIMER_BUNDLE_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 62,
@@ -1101,11 +1065,11 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     price: 259,
     cost: 95,
     taxable: true,
-    active: true,
+    active: false,
     isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: DUP_49_63,
+    isSuspectedDuplicate: false,
+    needsReview: false,
+    reviewNotes: DEACTIVATED_63_NOTE,
   },
   {
     sourceId: 64,
@@ -1119,9 +1083,9 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     taxable: true,
     active: true,
     isPlaceholder: false,
-    isSuspectedDuplicate: true,
-    needsReview: true,
-    reviewNotes: `${DUP_3_64} ${SPOT_NOTE}`,
+    isSuspectedDuplicate: false,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 65,
@@ -1168,8 +1132,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     active: true,
     isPlaceholder: false,
     isSuspectedDuplicate: false,
-    needsReview: true,
-    reviewNotes: TIMER_BUNDLE_NOTE,
+    needsReview: false,
+    reviewNotes: null,
   },
   {
     sourceId: 68,
@@ -1228,15 +1192,14 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     unitOfMeasure: "HOUR",
     calcType: "LABOR",
     wattage: null,
-    price: 350,
+    price: 0,
     cost: 0,
     taxable: true,
     active: true,
-    isPlaceholder: false,
+    isPlaceholder: true,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes:
-      "Unit guessed as HOUR (labor is conventionally billed hourly), but the flat $350 price could represent a fixed labor block instead — confirm rate structure.",
+    reviewNotes: "Owner setting rate after first installs.",
   },
   {
     sourceId: 72,
@@ -1253,7 +1216,8 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     isPlaceholder: false,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes: `${BULLET_NOTE} Wattage is an adjustable 1-6W RGB LED module range, not a single value — left null.`,
+    reviewNotes:
+      "Wattage is an adjustable 1-6W RGB LED module range, not a single value — left null.",
   },
   {
     sourceId: 73,
@@ -1270,7 +1234,7 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     isPlaceholder: false,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes: `${SPOT_NOTE} Only lumens are given, no wattage.`,
+    reviewNotes: "Only lumens are given, no wattage.",
   },
   {
     sourceId: 74,
@@ -1287,8 +1251,7 @@ export const normalizedCatalogSeed: CatalogItemSeed[] = [
     isPlaceholder: false,
     isSuspectedDuplicate: false,
     needsReview: true,
-    reviewNotes:
-      "Dock/marine lighting doesn't map to any existing calcType — no close fit among uplight/path/well/wall-wash/underwater/deck. Also a 3-light kit sold as one SKU — confirm whether it should decompose into 3 individual line items instead. Note: cost equals price (0% margin) — worth confirming that's intentional and not a placeholder cost.",
+    reviewNotes: "Cost=price, 0% margin, owner to confirm against invoice.",
   },
   {
     sourceId: 75,

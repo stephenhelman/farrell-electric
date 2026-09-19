@@ -32,7 +32,32 @@ async function seedAdminUser() {
  * catalog to normalizedCatalogSeed's current contents rather than
  * duplicating rows.
  */
+/**
+ * sourceId 7 was merged into sourceId 6 (confirmed duplicate WAC Colorscaping
+ * Grand Accent 24W entries) and no longer appears in normalizedCatalogSeed.
+ * Upsert alone never deletes rows, so remove it explicitly on a database
+ * that still has it from an earlier seed run.
+ */
+async function pruneMergedCatalogItems() {
+  const merged = await prisma.catalogItem.findUnique({ where: { sourceId: 7 } });
+  if (!merged) return;
+
+  const [optionComponents, quoteLineItems] = await Promise.all([
+    prisma.optionComponent.count({ where: { catalogItemId: merged.id } }),
+    prisma.quoteLineItem.count({ where: { catalogItemId: merged.id } }),
+  ]);
+  if (optionComponents > 0 || quoteLineItems > 0) {
+    throw new Error(
+      `[seed] Refusing to remove merged catalog item sourceId 7 — it still has ${optionComponents} option component(s) and ${quoteLineItems} quote line item(s) referencing it.`,
+    );
+  }
+
+  await prisma.catalogItem.delete({ where: { sourceId: 7 } });
+  console.log("[seed] Removed merged catalog item sourceId 7 (duplicate of sourceId 6).");
+}
+
 async function seedCatalog() {
+  await pruneMergedCatalogItems();
   for (const item of normalizedCatalogSeed) {
     await prisma.catalogItem.upsert({
       where: { sourceId: item.sourceId },

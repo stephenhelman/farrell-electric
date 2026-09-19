@@ -45,6 +45,7 @@ enum CalcType {
   SERVICE
   LABOR
   MATERIAL
+  DOWNLIGHT
   OTHER
 }
 
