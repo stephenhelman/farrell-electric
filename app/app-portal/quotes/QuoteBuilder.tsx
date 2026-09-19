@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { RepoCatalogItem, RepoQuoteDetail } from "@/lib/app/repo/types";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
+import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
 import { formatMoney } from "@/lib/app/format";
 import { CatalogPicker } from "./CatalogPicker";
 import { saveQuoteAction } from "./actions";
@@ -51,8 +52,12 @@ export function QuoteBuilder({
   const [lineItems, setLineItems] = useState<DraftLineItem[]>(() =>
     initialQuote ? toDraftLineItems(initialQuote) : (initialLineItems ?? []),
   );
+  const [scopeOfWork, setScopeOfWork] = useState(
+    initialQuote?.scopeOfWork || generateScopeOfWork(initialLineItems ?? []),
+  );
 
   const totals = useMemo(() => calcQuoteTotals(lineItems, discount), [lineItems, discount]);
+  const sharePath = initialQuote?.publicToken ? `/q/${initialQuote.publicToken}` : null;
 
   const isLocked = initialQuote?.status === "ACCEPTED" || initialQuote?.status === "DECLINED";
 
@@ -111,6 +116,7 @@ export function QuoteBuilder({
         message,
         notes,
         discount,
+        scopeOfWork,
         lineItems: lineItems.map((line) => ({
           catalogItemId: line.catalogItemId,
           name: line.name,
@@ -154,6 +160,11 @@ export function QuoteBuilder({
         </p>
       ) : null}
       {error ? <p className={styles.error}>{error}</p> : null}
+      {sharePath ? (
+        <p className={styles.lockedNotice}>
+          Customer link: <a href={sharePath}>{sharePath}</a>
+        </p>
+      ) : null}
 
       <div className={styles.card}>
         <div className={styles.grid2}>
@@ -288,6 +299,30 @@ export function QuoteBuilder({
         <div className={styles.field} style={{ marginTop: "1rem" }}>
           <label htmlFor="notes">Internal Notes</label>
           <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isLocked} />
+        </div>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.header} style={{ marginBottom: "var(--space-3)" }}>
+          <h3 className={styles.cardTitle}>Scope of Work</h3>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={isLocked}
+            onClick={() => setScopeOfWork(generateScopeOfWork(lineItems))}
+          >
+            Regenerate from items
+          </button>
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="scopeOfWork">Customer-facing scope (editable)</label>
+          <textarea
+            id="scopeOfWork"
+            value={scopeOfWork}
+            onChange={(e) => setScopeOfWork(e.target.value)}
+            disabled={isLocked}
+            style={{ minHeight: "160px" }}
+          />
         </div>
       </div>
     </div>

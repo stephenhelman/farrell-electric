@@ -6,6 +6,10 @@ const DEV_APP_HOST = "app.localhost:3000";
 const PORTAL_PREFIX = "/app-portal";
 const SIGN_IN_PATH = "/sign-in";
 const AUTH_API_PREFIX = "/api/auth";
+// Task 8: public, tokenized quote-link route — replaces the retired
+// Cloudflare Worker. Unauthenticated by design, reachable on either host,
+// never rewritten into the auth-gated app-portal namespace.
+const PUBLIC_QUOTE_PREFIX = "/q/";
 
 function isAppHost(host: string | null): boolean {
   return host === APP_HOST || host === DEV_APP_HOST;
@@ -20,6 +24,10 @@ export async function middleware(request: NextRequest) {
   // under app-portal) and must stay reachable pre-auth — it's how a session
   // gets established in the first place.
   if (pathname.startsWith(AUTH_API_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(PUBLIC_QUOTE_PREFIX)) {
     return NextResponse.next();
   }
 

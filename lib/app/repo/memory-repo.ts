@@ -1,7 +1,27 @@
 import { randomUUID } from "node:crypto";
-import type { Repo, RepoQuoteDetail } from "./types";
+import type { PublicQuote, Repo, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
+
+function toPublicQuote(quote: RepoQuoteDetail): PublicQuote {
+  return {
+    number: quote.number,
+    status: quote.status,
+    customerName: quote.customerName,
+    customerAddress: quote.customerAddress,
+    message: quote.message,
+    scopeOfWork: quote.scopeOfWork,
+    discount: quote.discount,
+    subtotal: quote.subtotal,
+    total: quote.total,
+    lineItems: quote.lineItems.map((item) => ({
+      name: item.name,
+      description: item.description,
+      qty: item.qty,
+      unitPrice: item.unitPrice,
+    })),
+  };
+}
 
 /**
  * In-memory fallback used whenever DATABASE_URL is unset — the app builds,
@@ -35,6 +55,11 @@ export const memoryRepo: Repo = {
     return { ...quote, lineItems: quote.lineItems.map((item) => ({ ...item })) };
   },
 
+  async getQuoteByPublicToken(token) {
+    const quote = memoryStore.quotes.find((q) => q.publicToken === token);
+    return quote ? toPublicQuote(quote) : null;
+  },
+
   async saveQuote(input) {
     const totals = calcQuoteTotals(input.lineItems, input.discount);
     const lineItems = input.lineItems.map((item) => ({ id: randomUUID(), ...item }));
@@ -43,8 +68,11 @@ export const memoryRepo: Repo = {
       const index = memoryStore.quotes.findIndex((q) => q.id === input.id);
       if (index === -1) throw new Error(`Quote not found: ${input.id}`);
 
+      const existing = memoryStore.quotes[index];
+      const publicToken = input.status === "SENT" ? (existing.publicToken ?? randomUUID()) : existing.publicToken;
+
       const updated: RepoQuoteDetail = {
-        ...memoryStore.quotes[index],
+        ...existing,
         status: input.status,
         customerName: input.customerName,
         customerPhone: input.customerPhone,
@@ -53,6 +81,8 @@ export const memoryRepo: Repo = {
         message: input.message,
         notes: input.notes,
         discount: input.discount,
+        scopeOfWork: input.scopeOfWork,
+        publicToken,
         lineItems,
         ...totals,
       };
@@ -71,6 +101,8 @@ export const memoryRepo: Repo = {
       message: input.message,
       notes: input.notes,
       discount: input.discount,
+      scopeOfWork: input.scopeOfWork,
+      publicToken: input.status === "SENT" ? randomUUID() : null,
       lineItems,
       createdAt: new Date(),
       ...totals,

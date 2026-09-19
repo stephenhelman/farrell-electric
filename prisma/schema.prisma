@@ -132,6 +132,7 @@ model Quote {
   customerAddress  String
   ghlContactId     String?
   ghlOpportunityId String?
+  publicToken      String?     @unique
   message          String?
   notes            String?
   discount         Decimal     @default(0)

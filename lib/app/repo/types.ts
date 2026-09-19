@@ -105,6 +105,9 @@ export interface RepoQuoteDetail extends RepoQuote {
   cost: number;
   profit: number;
   margin: number;
+  scopeOfWork: string;
+  /** Set the moment a quote is first marked SENT; powers the public quote-link route. */
+  publicToken: string | null;
   lineItems: RepoQuoteLineItem[];
 }
 
@@ -131,7 +134,33 @@ export interface SaveQuoteInput {
   message: string;
   notes: string;
   discount: number;
+  scopeOfWork: string;
   lineItems: QuoteLineItemInput[];
+}
+
+/**
+ * Everything (and ONLY everything) a customer should see at the public,
+ * unauthenticated quote-link route. No cost/profit/margin, no catalogItemId,
+ * no internal notes, no contact info beyond the customer's own name/address.
+ */
+export interface PublicQuoteLineItem {
+  name: string;
+  description: string | null;
+  qty: number;
+  unitPrice: number;
+}
+
+export interface PublicQuote {
+  number: number;
+  status: QuoteStatus;
+  customerName: string;
+  customerAddress: string;
+  message: string;
+  scopeOfWork: string;
+  discount: number;
+  subtotal: number;
+  total: number;
+  lineItems: PublicQuoteLineItem[];
 }
 
 export interface Repo {
@@ -141,6 +170,7 @@ export interface Repo {
   listQuotes(): Promise<RepoQuote[]>;
   listJobs(): Promise<RepoJob[]>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;
+  getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   acceptQuote(id: string): Promise<void>;
   declineQuote(id: string): Promise<void>;

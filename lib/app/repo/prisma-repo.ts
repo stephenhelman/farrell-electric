@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
@@ -22,6 +23,8 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     total: Number(quote.total),
     profit: Number(quote.profit),
     margin: Number(quote.margin),
+    scopeOfWork: quote.scopeOfWork ?? "",
+    publicToken: quote.publicToken,
     createdAt: quote.createdAt,
     lineItems: quote.lineItems.map((item) => ({
       id: item.id,
@@ -140,6 +143,29 @@ export const prismaRepo: Repo = {
     return quote ? mapQuoteDetail(quote) : null;
   },
 
+  async getQuoteByPublicToken(token) {
+    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: { lineItems: true } });
+    if (!quote) return null;
+
+    return {
+      number: quote.number,
+      status: quote.status,
+      customerName: quote.customerName,
+      customerAddress: quote.customerAddress,
+      message: quote.message ?? "",
+      scopeOfWork: quote.scopeOfWork ?? "",
+      discount: Number(quote.discount),
+      subtotal: Number(quote.subtotal),
+      total: Number(quote.total),
+      lineItems: quote.lineItems.map((item) => ({
+        name: item.name,
+        description: item.description,
+        qty: Number(item.qty),
+        unitPrice: Number(item.unitPrice),
+      })),
+    };
+  },
+
   async saveQuote(input) {
     const totals = calcQuoteTotals(input.lineItems, input.discount);
     const lineItemsData = input.lineItems.map((item) => ({
@@ -156,6 +182,11 @@ export const prismaRepo: Repo = {
       // Simplest correct approach for a builder that always saves the full
       // line-item set: replace them wholesale rather than diffing.
       await prisma.quoteLineItem.deleteMany({ where: { quoteId: input.id } });
+
+      const existing = await prisma.quote.findUniqueOrThrow({ where: { id: input.id } });
+      const publicToken =
+        input.status === "SENT" ? (existing.publicToken ?? randomUUID()) : existing.publicToken;
+
       const updated = await prisma.quote.update({
         where: { id: input.id },
         data: {
@@ -167,6 +198,8 @@ export const prismaRepo: Repo = {
           message: input.message,
           notes: input.notes,
           discount: input.discount,
+          scopeOfWork: input.scopeOfWork,
+          publicToken,
           subtotal: totals.subtotal,
           cost: totals.cost,
           total: totals.total,
@@ -193,6 +226,8 @@ export const prismaRepo: Repo = {
         message: input.message,
         notes: input.notes,
         discount: input.discount,
+        scopeOfWork: input.scopeOfWork,
+        publicToken: input.status === "SENT" ? randomUUID() : null,
         subtotal: totals.subtotal,
         cost: totals.cost,
         total: totals.total,
