@@ -79,8 +79,8 @@ model User {
 
 // sourceId traces back to the mockup's seedCatalog ids during Task 3 normalization.
 model CatalogItem {
-  id            String   @id @default(cuid())
-  sourceId      Int?     @unique
+  id            String        @id @default(cuid())
+  sourceId      Int?          @unique
   name          String
   description   String?
   unitOfMeasure UnitOfMeasure
@@ -89,8 +89,8 @@ model CatalogItem {
   price         Decimal
   cost          Decimal
   taxable       Boolean
-  active        Boolean  @default(true)
-  isPlaceholder Boolean  @default(false)
+  active        Boolean       @default(true)
+  isPlaceholder Boolean       @default(false)
 
   // Task 3 normalization flags — surfaced for the owner, not auto-resolved.
   // isSuspectedDuplicate marks near-identical entries (e.g. mockup ids 6/7)
@@ -101,8 +101,8 @@ model CatalogItem {
   needsReview          Boolean @default(false)
   reviewNotes          String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   optionComponents OptionComponent[]
   quoteLineItems   QuoteLineItem[]
@@ -123,7 +123,7 @@ model Option {
 
 // qtyPerUnit: how many of the catalog-item atom per unit of the option's input.
 model OptionComponent {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   optionId      String
   catalogItemId String
   qtyPerUnit    Decimal
@@ -133,27 +133,28 @@ model OptionComponent {
 }
 
 model Quote {
-  id               String      @id @default(cuid())
-  number           Int         @unique
-  status           QuoteStatus @default(DRAFT)
-  customerName     String
-  customerPhone    String
-  customerEmail    String
-  customerAddress  String
-  ghlContactId     String?
-  ghlOpportunityId String?
-  publicToken      String?     @unique
-  message          String?
-  notes            String?
-  discount         Decimal     @default(0)
-  subtotal         Decimal     @default(0)
-  cost             Decimal     @default(0)
-  total            Decimal     @default(0)
-  profit           Decimal     @default(0)
-  margin           Decimal     @default(0)
-  scopeOfWork      String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                String      @id @default(cuid())
+  number            Int         @unique
+  status            QuoteStatus @default(DRAFT)
+  customerName      String
+  customerPhone     String
+  customerEmail     String
+  customerAddress   String
+  ghlContactId      String?
+  ghlOpportunityId  String?
+  ghlCustomObjectId String?     @unique
+  publicToken       String?     @unique
+  message           String?
+  notes             String?
+  discount          Decimal     @default(0)
+  subtotal          Decimal     @default(0)
+  cost              Decimal     @default(0)
+  total             Decimal     @default(0)
+  profit            Decimal     @default(0)
+  margin            Decimal     @default(0)
+  scopeOfWork       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   lineItems QuoteLineItem[]
   job       Job?
