@@ -103,6 +103,8 @@ export const memoryRepo: Repo = {
       discount: input.discount,
       scopeOfWork: input.scopeOfWork,
       publicToken: input.status === "SENT" ? randomUUID() : null,
+      ghlContactId: null,
+      ghlOpportunityId: null,
       lineItems,
       createdAt: new Date(),
       ...totals,
@@ -134,5 +136,12 @@ export const memoryRepo: Repo = {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return;
     quote.status = "DECLINED";
+  },
+
+  async updateQuoteGhlIds(id, ids) {
+    const quote = memoryStore.quotes.find((q) => q.id === id);
+    if (!quote) return;
+    quote.ghlContactId = ids.ghlContactId;
+    quote.ghlOpportunityId = ids.ghlOpportunityId;
   },
 };

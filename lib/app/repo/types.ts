@@ -108,6 +108,9 @@ export interface RepoQuoteDetail extends RepoQuote {
   scopeOfWork: string;
   /** Set the moment a quote is first marked SENT; powers the public quote-link route. */
   publicToken: string | null;
+  /** Set by Task 9's GHL sync — never user-editable, only ever written via updateQuoteGhlIds. */
+  ghlContactId: string | null;
+  ghlOpportunityId: string | null;
   lineItems: RepoQuoteLineItem[];
 }
 
@@ -163,6 +166,11 @@ export interface PublicQuote {
   lineItems: PublicQuoteLineItem[];
 }
 
+export interface GhlIdsInput {
+  ghlContactId: string | null;
+  ghlOpportunityId: string | null;
+}
+
 export interface Repo {
   getUserByEmail(email: string): Promise<RepoUser | null>;
   listCatalogItems(): Promise<RepoCatalogItem[]>;
@@ -174,4 +182,6 @@ export interface Repo {
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   acceptQuote(id: string): Promise<void>;
   declineQuote(id: string): Promise<void>;
+  /** Written only by the Task 9 GHL sync after a successful contact/opportunity upsert. */
+  updateQuoteGhlIds(id: string, ids: GhlIdsInput): Promise<void>;
 }

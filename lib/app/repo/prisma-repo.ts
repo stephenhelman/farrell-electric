@@ -25,6 +25,8 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     margin: Number(quote.margin),
     scopeOfWork: quote.scopeOfWork ?? "",
     publicToken: quote.publicToken,
+    ghlContactId: quote.ghlContactId,
+    ghlOpportunityId: quote.ghlOpportunityId,
     createdAt: quote.createdAt,
     lineItems: quote.lineItems.map((item) => ({
       id: item.id,
@@ -250,5 +252,12 @@ export const prismaRepo: Repo = {
 
   async declineQuote(id) {
     await prisma.quote.update({ where: { id }, data: { status: "DECLINED" } });
+  },
+
+  async updateQuoteGhlIds(id, ids) {
+    await prisma.quote.update({
+      where: { id },
+      data: { ghlContactId: ids.ghlContactId, ghlOpportunityId: ids.ghlOpportunityId },
+    });
   },
 };
