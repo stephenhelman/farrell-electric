@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AppRole {
+  OWNER
+  STAFF
+}
+
+enum UnitOfMeasure {
+  EACH
+  LINEAR_FT
+  HOUR
+  JOB
+}
+
+enum CalcType {
+  UPLIGHT
+  PATH
+  WELL
+  WALL_WASH
+  ACCENT
+  UNDERWATER
+  DECK
+  TRANSFORMER
+  WIRE
+  TIMER
+  HOLIDAY
+  SERVICE
+  LABOR
+  MATERIAL
+  OTHER
+}
+
+enum OptionInputType {
+  COUNT
+  LINEAR_FT
+  AREA
+  BOOLEAN
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
+enum JobStatus {
+  UNSCHEDULED
+  SCHEDULED
+  DONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         AppRole
+  createdAt    DateTime @default(now())
+}
+
+// sourceId traces back to the mockup's seedCatalog ids during Task 3 normalization.
+model CatalogItem {
+  id            String   @id @default(cuid())
+  sourceId      Int?     @unique
+  name          String
+  description   String?
+  unitOfMeasure UnitOfMeasure
+  calcType      CalcType
+  wattage       Decimal?
+  price         Decimal
+  cost          Decimal
+  taxable       Boolean
+  active        Boolean  @default(true)
+  isPlaceholder Boolean  @default(false)
+
+  // Task 3 normalization flags — surfaced for the owner, not auto-resolved.
+  // isSuspectedDuplicate marks near-identical entries (e.g. mockup ids 6/7)
+  // that were deliberately NOT merged. needsReview + reviewNotes cover any
+  // item whose unitOfMeasure/calcType/wattage couldn't be confidently
+  // inferred from the source name/description.
+  isSuspectedDuplicate Boolean @default(false)
+  needsReview          Boolean @default(false)
+  reviewNotes          String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  optionComponents OptionComponent[]
+  quoteLineItems   QuoteLineItem[]
+}
+
+model Option {
+  id                  String          @id @default(cuid())
+  name                String
+  customerDescription String
+  inputType           OptionInputType
+  defaultUnitPrice    Decimal?
+  laborPerUnit        Decimal?
+  active              Boolean         @default(true)
+
+  components     OptionComponent[]
+  quoteLineItems QuoteLineItem[]
+}
+
+// qtyPerUnit: how many of the catalog-item atom per unit of the option's input.
+model OptionComponent {
+  id            String @id @default(cuid())
+  optionId      String
+  catalogItemId String
+  qtyPerUnit    Decimal
+
+  option      Option      @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  catalogItem CatalogItem @relation(fields: [catalogItemId], references: [id])
+}
+
+model Quote {
+  id               String      @id @default(cuid())
+  number           Int         @unique
+  status           QuoteStatus @default(DRAFT)
+  customerName     String
+  customerPhone    String
+  customerEmail    String
+  customerAddress  String
+  ghlContactId     String?
+  ghlOpportunityId String?
+  message          String?
+  notes            String?
+  discount         Decimal     @default(0)
+  subtotal         Decimal     @default(0)
+  cost             Decimal     @default(0)
+  total            Decimal     @default(0)
+  profit           Decimal     @default(0)
+  margin           Decimal     @default(0)
+  scopeOfWork      String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  lineItems QuoteLineItem[]
+  job       Job?
+}
+
+model QuoteLineItem {
+  id            String  @id @default(cuid())
+  quoteId       String
+  catalogItemId String?
+  optionId      String?
+  name          String
+  description   String?
+  qty           Decimal
+  unitPrice     Decimal
+  cost          Decimal
+  taxable       Boolean
+
+  quote       Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  catalogItem CatalogItem? @relation(fields: [catalogItemId], references: [id])
+  option      Option?      @relation(fields: [optionId], references: [id])
+}
+
+// Local reflection of install scheduling only — pipeline proper lives in GHL
+// once Task 9 connects it.
+model Job {
+  id          String    @id @default(cuid())
+  quoteId     String    @unique
+  status      JobStatus @default(UNSCHEDULED)
+  installDate DateTime?
+
+  quote Quote @relation(fields: [quoteId], references: [id])
+}

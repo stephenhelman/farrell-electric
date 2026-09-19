@@ -1,0 +1,4 @@
+.heading {
+  font-size: var(--text-heading-md);
+  margin-bottom: var(--space-5);
+}

@@ -1,0 +1,27 @@
+.pill {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.neutral {
+  background: var(--color-surface-overlay);
+  color: var(--color-text-secondary);
+}
+
+.gold {
+  background: #3a3320;
+  color: #e8c96a;
+}
+
+.green {
+  background: #163322;
+  color: #3fb872;
+}
+
+.red {
+  background: #3a1f20;
+  color: var(--color-error);
+}
