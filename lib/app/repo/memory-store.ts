@@ -1,6 +1,6 @@
 import { normalizedCatalogSeed } from "@/lib/app/catalog/normalized-seed";
 import { normalizedOptionSeed } from "@/lib/app/options/normalized-seed";
-import type { RepoCatalogItem, RepoJob, RepoOption, RepoQuoteDetail, RepoUser } from "./types";
+import type { RepoCatalogItem, RepoJob, RepoLead, RepoOption, RepoQuoteDetail, RepoUser } from "./types";
 
 /**
  * Seeds the same admin identity the Prisma seed script (prisma/seed.ts)
@@ -60,6 +60,7 @@ export const memoryStore = {
   // survive a process restart, which is expected until DATABASE_URL is set.
   quotes: [] as RepoQuoteDetail[],
   jobs: [] as RepoJob[],
+  leads: [] as RepoLead[],
 };
 
 export function nextQuoteNumber(): number {

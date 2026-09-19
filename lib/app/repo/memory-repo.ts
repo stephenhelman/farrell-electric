@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PublicInvoice, PublicQuote, Repo, RepoQuoteDetail } from "./types";
+import type { PublicInvoice, PublicQuote, Repo, RepoLead, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 
@@ -172,5 +172,28 @@ export const memoryRepo: Repo = {
     if (!quote) return;
     quote.ghlContactId = ids.ghlContactId;
     quote.ghlOpportunityId = ids.ghlOpportunityId;
+  },
+
+  async createLead(input) {
+    const lead: RepoLead = {
+      id: randomUUID(),
+      createdAt: new Date(),
+      status: "NEW",
+      leadType: input.leadType,
+      source: "contact_form",
+      name: input.name,
+      phone: input.phone,
+      email: input.email,
+      propertyAddress: input.propertyAddress,
+      details: input.details,
+      ghlContactId: null,
+      ghlOpportunityId: null,
+    };
+    memoryStore.leads.unshift(lead);
+    return lead;
+  },
+
+  async getLeadById(id) {
+    return memoryStore.leads.find((lead) => lead.id === id) ?? null;
   },
 };

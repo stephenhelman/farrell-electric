@@ -5,6 +5,7 @@
  */
 import type { CalcType, UnitOfMeasure } from "@/lib/app/catalog/normalized-seed";
 import type { OptionInputType } from "@/lib/app/options/normalized-seed";
+import type { LeadPayload } from "@/lib/leads/types";
 
 export type AppRole = "OWNER" | "STAFF";
 
@@ -190,6 +191,33 @@ export interface PublicInvoice {
   lineItems: PublicQuoteLineItem[];
 }
 
+export type LeadType = "LIGHTING" | "ELECTRICAL";
+export type LeadStatus = "NEW" | "SYNCED";
+
+export interface RepoLead {
+  id: string;
+  createdAt: Date;
+  status: LeadStatus;
+  leadType: LeadType;
+  source: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  propertyAddress: string | null;
+  details: LeadPayload;
+  ghlContactId: string | null;
+  ghlOpportunityId: string | null;
+}
+
+export interface CreateLeadInput {
+  leadType: LeadType;
+  name: string;
+  phone: string;
+  email: string | null;
+  propertyAddress: string | null;
+  details: LeadPayload;
+}
+
 export interface Repo {
   getUserByEmail(email: string): Promise<RepoUser | null>;
   listCatalogItems(): Promise<RepoCatalogItem[]>;
@@ -205,4 +233,6 @@ export interface Repo {
   declineQuote(id: string): Promise<void>;
   /** Written only by the Task 9 GHL sync after a successful contact/opportunity upsert. */
   updateQuoteGhlIds(id: string, ids: GhlIdsInput): Promise<void>;
+  createLead(input: CreateLeadInput): Promise<RepoLead>;
+  getLeadById(id: string): Promise<RepoLead | null>;
 }

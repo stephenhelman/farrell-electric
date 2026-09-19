@@ -13,6 +13,16 @@ enum AppRole {
   STAFF
 }
 
+enum LeadType {
+  LIGHTING
+  ELECTRICAL
+}
+
+enum LeadStatus {
+  NEW
+  SYNCED
+}
+
 enum UnitOfMeasure {
   EACH
   LINEAR_FT
@@ -175,4 +185,22 @@ model Job {
   installDate DateTime?
 
   quote Quote @relation(fields: [quoteId], references: [id])
+}
+
+// System of record for leads submitted from the site. ghlContactId/
+// ghlOpportunityId are mirror linkage written later by the inbound GHL
+// webhook — always null until that round-trip exists.
+model Lead {
+  id               String     @id @default(cuid())
+  createdAt        DateTime   @default(now())
+  status           LeadStatus @default(NEW)
+  leadType         LeadType
+  source           String     @default("contact_form")
+  name             String
+  phone            String
+  email            String?
+  propertyAddress  String?
+  details          Json
+  ghlContactId     String?
+  ghlOpportunityId String?
 }

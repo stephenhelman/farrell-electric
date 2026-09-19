@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "@prisma/client";
+import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
-import type { Repo, RepoQuoteDetail } from "./types";
+import type { LeadPayload } from "@/lib/leads/types";
+import type { Repo, RepoLead, RepoQuoteDetail } from "./types";
 
 type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: { lineItems: true } }>;
 
@@ -38,6 +39,23 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
       cost: Number(item.cost),
       taxable: item.taxable,
     })),
+  };
+}
+
+function mapLead(lead: Lead): RepoLead {
+  return {
+    id: lead.id,
+    createdAt: lead.createdAt,
+    status: lead.status,
+    leadType: lead.leadType,
+    source: lead.source,
+    name: lead.name,
+    phone: lead.phone,
+    email: lead.email,
+    propertyAddress: lead.propertyAddress,
+    details: lead.details as unknown as LeadPayload,
+    ghlContactId: lead.ghlContactId,
+    ghlOpportunityId: lead.ghlOpportunityId,
   };
 }
 
@@ -287,5 +305,24 @@ export const prismaRepo: Repo = {
       where: { id },
       data: { ghlContactId: ids.ghlContactId, ghlOpportunityId: ids.ghlOpportunityId },
     });
+  },
+
+  async createLead(input) {
+    const lead = await prisma.lead.create({
+      data: {
+        leadType: input.leadType,
+        name: input.name,
+        phone: input.phone,
+        email: input.email,
+        propertyAddress: input.propertyAddress,
+        details: input.details as unknown as Prisma.InputJsonValue,
+      },
+    });
+    return mapLead(lead);
+  },
+
+  async getLeadById(id) {
+    const lead = await prisma.lead.findUnique({ where: { id } });
+    return lead ? mapLead(lead) : null;
   },
 };

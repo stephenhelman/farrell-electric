@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { submitLead } from "@/lib/leads/submitLead";
 import { getNotifier } from "@/lib/notifications/notifier";
 import type { LeadPayload } from "@/lib/leads/types";
+import { getRepo } from "@/lib/app/repo";
+import type { LeadType } from "@/lib/app/repo/types";
 
 function isValidPayload(value: unknown): value is LeadPayload {
   if (typeof value !== "object" || value === null) return false;
@@ -32,6 +34,21 @@ export async function POST(request: Request) {
   }
 
   const payload = body;
+
+  try {
+    const repo = await getRepo();
+    const leadType: LeadType = payload.type === "lighting" ? "LIGHTING" : "ELECTRICAL";
+    await repo.createLead({
+      leadType,
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      propertyAddress: payload.propertyAddress,
+      details: payload,
+    });
+  } catch (error) {
+    console.error("[api/leads] createLead failed", error);
+  }
 
   let sheetResult;
   try {
