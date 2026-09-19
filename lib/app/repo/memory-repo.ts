@@ -130,6 +130,7 @@ export const memoryRepo: Repo = {
       publicToken: input.status === "SENT" ? randomUUID() : null,
       ghlContactId: null,
       ghlOpportunityId: null,
+      ghlCustomObjectId: null,
       lineItems,
       createdAt: new Date(),
       ...totals,
@@ -170,8 +171,16 @@ export const memoryRepo: Repo = {
   async updateQuoteGhlIds(id, ids) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return;
-    quote.ghlContactId = ids.ghlContactId;
-    quote.ghlOpportunityId = ids.ghlOpportunityId;
+    if (ids.ghlContactId !== undefined) quote.ghlContactId = ids.ghlContactId;
+    if (ids.ghlOpportunityId !== undefined) quote.ghlOpportunityId = ids.ghlOpportunityId;
+    if (ids.ghlCustomObjectId !== undefined) quote.ghlCustomObjectId = ids.ghlCustomObjectId;
+  },
+
+  async updateLeadGhlIds(id, ids) {
+    const lead = memoryStore.leads.find((l) => l.id === id);
+    if (!lead) return;
+    if (ids.ghlContactId !== undefined) lead.ghlContactId = ids.ghlContactId;
+    if (ids.ghlOpportunityId !== undefined) lead.ghlOpportunityId = ids.ghlOpportunityId;
   },
 
   async createLead(input) {

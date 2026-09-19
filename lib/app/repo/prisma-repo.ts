@@ -28,6 +28,7 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     publicToken: quote.publicToken,
     ghlContactId: quote.ghlContactId,
     ghlOpportunityId: quote.ghlOpportunityId,
+    ghlCustomObjectId: quote.ghlCustomObjectId,
     createdAt: quote.createdAt,
     lineItems: quote.lineItems.map((item) => ({
       id: item.id,
@@ -301,10 +302,34 @@ export const prismaRepo: Repo = {
   },
 
   async updateQuoteGhlIds(id, ids) {
-    await prisma.quote.update({
-      where: { id },
-      data: { ghlContactId: ids.ghlContactId, ghlOpportunityId: ids.ghlOpportunityId },
-    });
+    try {
+      await prisma.quote.update({
+        where: { id },
+        data: {
+          ...(ids.ghlContactId !== undefined && { ghlContactId: ids.ghlContactId }),
+          ...(ids.ghlOpportunityId !== undefined && { ghlOpportunityId: ids.ghlOpportunityId }),
+          ...(ids.ghlCustomObjectId !== undefined && { ghlCustomObjectId: ids.ghlCustomObjectId }),
+        },
+      });
+    } catch (error) {
+      // Unknown dbId — same "quietly no-op" behavior as the memory repo,
+      // rather than surfacing as a webhook-processing failure.
+      if ((error as { code?: string }).code !== "P2025") throw error;
+    }
+  },
+
+  async updateLeadGhlIds(id, ids) {
+    try {
+      await prisma.lead.update({
+        where: { id },
+        data: {
+          ...(ids.ghlContactId !== undefined && { ghlContactId: ids.ghlContactId }),
+          ...(ids.ghlOpportunityId !== undefined && { ghlOpportunityId: ids.ghlOpportunityId }),
+        },
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code !== "P2025") throw error;
+    }
   },
 
   async createLead(input) {

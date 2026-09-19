@@ -11,6 +11,10 @@ const AUTH_API_PREFIX = "/api/auth";
 // Cloudflare Worker. Unauthenticated by design, reachable on either host,
 // never rewritten into the auth-gated app-portal namespace.
 const PUBLIC_QUOTE_PREFIX = "/q/";
+// Inbound GHL webhook callback — public route (no session), guarded instead
+// by its own shared-secret check (app/api/webhooks/ghl/route.ts). Must stay
+// reachable pre-auth on either host, same as PUBLIC_QUOTE_PREFIX.
+const WEBHOOKS_PREFIX = "/api/webhooks/";
 
 function isAppHost(host: string | null): boolean {
   return host === APP_HOST || host === DEV_APP_HOST;
@@ -33,6 +37,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith(PUBLIC_QUOTE_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(WEBHOOKS_PREFIX)) {
     return NextResponse.next();
   }
 

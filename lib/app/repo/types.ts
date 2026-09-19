@@ -109,9 +109,11 @@ export interface RepoQuoteDetail extends RepoQuote {
   scopeOfWork: string;
   /** Set the moment a quote is first marked SENT; powers the public quote-link route. */
   publicToken: string | null;
-  /** Set by Task 9's GHL sync — never user-editable, only ever written via updateQuoteGhlIds. */
+  /** Never user-editable — only ever written via updateQuoteGhlIds, by the inbound GHL webhook handler. */
   ghlContactId: string | null;
   ghlOpportunityId: string | null;
+  /** The GHL custom-object id (quote mirror), same write path as ghlContactId. */
+  ghlCustomObjectId: string | null;
   lineItems: RepoQuoteLineItem[];
 }
 
@@ -167,9 +169,21 @@ export interface PublicQuote {
   lineItems: PublicQuoteLineItem[];
 }
 
-export interface GhlIdsInput {
-  ghlContactId: string | null;
-  ghlOpportunityId: string | null;
+/**
+ * Fields written by the inbound GHL webhook handler (Task 4). Each is
+ * optional/undefined-means-"leave unchanged" — a single GHL callback rarely
+ * carries every id at once (e.g. the lead round-trip has no custom-object
+ * id), so a partial update must never null out a field the payload omitted.
+ */
+export interface QuoteGhlIdsInput {
+  ghlContactId?: string | null;
+  ghlOpportunityId?: string | null;
+  ghlCustomObjectId?: string | null;
+}
+
+export interface LeadGhlIdsInput {
+  ghlContactId?: string | null;
+  ghlOpportunityId?: string | null;
 }
 
 /**
@@ -231,8 +245,10 @@ export interface Repo {
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   acceptQuote(id: string): Promise<void>;
   declineQuote(id: string): Promise<void>;
-  /** Written only by the Task 9 GHL sync after a successful contact/opportunity upsert. */
-  updateQuoteGhlIds(id: string, ids: GhlIdsInput): Promise<void>;
+  /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
+  updateQuoteGhlIds(id: string, ids: QuoteGhlIdsInput): Promise<void>;
+  /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
+  updateLeadGhlIds(id: string, ids: LeadGhlIdsInput): Promise<void>;
   createLead(input: CreateLeadInput): Promise<RepoLead>;
   getLeadById(id: string): Promise<RepoLead | null>;
 }
