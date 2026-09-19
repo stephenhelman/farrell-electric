@@ -35,10 +35,11 @@ export async function POST(request: Request) {
 
   const payload = body;
 
+  let leadId: string | null = null;
   try {
     const repo = await getRepo();
     const leadType: LeadType = payload.type === "lighting" ? "LIGHTING" : "ELECTRICAL";
-    await repo.createLead({
+    const lead = await repo.createLead({
       leadType,
       name: payload.name,
       phone: payload.phone,
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       propertyAddress: payload.propertyAddress,
       details: payload,
     });
+    leadId = lead.id;
   } catch (error) {
     console.error("[api/leads] createLead failed", error);
   }
@@ -58,10 +60,12 @@ export async function POST(request: Request) {
     sheetResult = { ok: false, notified: false as const, stub: true };
   }
 
-  try {
-    await getNotifier().notifyNewLead({ payload, submittedAt: new Date().toISOString() });
-  } catch (error) {
-    console.error("[api/leads] notifyNewLead failed", error);
+  if (leadId) {
+    try {
+      await getNotifier().notifyNewLead({ leadId, payload, submittedAt: new Date().toISOString() });
+    } catch (error) {
+      console.error("[api/leads] notifyNewLead failed", error);
+    }
   }
 
   return NextResponse.json({ ok: true, sheetWritten: sheetResult.ok && !sheetResult.stub }, { status: 200 });

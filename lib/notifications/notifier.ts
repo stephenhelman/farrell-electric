@@ -1,7 +1,9 @@
 import type { LeadPayload } from "@/lib/leads/types";
-import { getGhlClient } from "@/lib/ghl/client";
+import { dispatchGhlEvent } from "@/lib/ghl/dispatch";
 
 export interface Lead {
+  /** The DB-assigned id (repo.createLead's row) — rides in the lead.created payload as the round-trip linkage key. */
+  leadId: string;
   payload: LeadPayload;
   submittedAt: string;
 }
@@ -22,46 +24,40 @@ export class LogNotifier implements Notifier {
 }
 
 /**
- * Task 9: website leads (contact form + all lead forms behind
- * app/api/leads/route.ts) flow to GHL as contacts, same seam, same
- * best-effort-non-fatal contract as LogNotifier. GHL owns contacts/pipeline
- * per the sprint's data-ownership rules, so this only upserts the contact —
- * no opportunity/pipeline is created here (that's the app's quote flow,
- * lib/app/ghl/sync-quote.ts, which has real pipeline/stage context to use).
+ * Website leads (contact form + all lead forms behind app/api/leads/route.ts)
+ * signal GHL via the lead.created outbound event — same seam, same
+ * best-effort-non-fatal contract as LogNotifier. GHL owns contact creation +
+ * pipeline entry off this signal; the app never calls the GHL API directly.
  */
 export class GhlLeadNotifier implements Notifier {
   async notifyNewLead(lead: Lead): Promise<void> {
-    try {
-      const client = getGhlClient();
-      const { payload } = lead;
+    const { payload } = lead;
+    const [firstName, ...rest] = payload.name.trim().split(/\s+/);
+    const lastName = rest.join(" ");
 
-      const contact = await client.upsertContact({
-        name: payload.name,
-        phone: payload.phone,
-        email: payload.email,
-        address: payload.propertyAddress,
-        tags: ["website-lead", payload.type, payload.intent],
-      });
-
-      if (!contact) {
-        console.warn("[GhlLeadNotifier] contact upsert returned no id — GHL not configured or call failed.");
-        return;
-      }
-
-      console.log(`[GhlLeadNotifier] Upserted GHL contact ${contact.contactId} for a ${payload.type} lead.`);
-    } catch (error) {
-      console.error("[GhlLeadNotifier] failed (best-effort, non-fatal)", error);
-    }
+    await dispatchGhlEvent({
+      event: "lead.created",
+      leadId: lead.leadId,
+      source: "contact_form",
+      leadType: payload.type === "lighting" ? "LIGHTING" : "ELECTRICAL",
+      firstName: firstName ?? payload.name,
+      lastName,
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      propertyAddress: payload.propertyAddress,
+      details: payload,
+    });
   }
 }
 
 /**
- * Config-selected slot for the real channel. GHL is used once its Private
- * Integration Token + location id are set; otherwise falls back to the log
- * stub so the contact form works end-to-end with zero GHL credentials.
+ * Config-selected slot for the real channel. GHL is used once GHL_WEBHOOK_URL
+ * is set (dispatchGhlEvent then actually fires); otherwise falls back to the
+ * log stub so the contact form works end-to-end with zero GHL credentials.
  */
 export function getNotifier(): Notifier {
-  if (process.env.GHL_PRIVATE_INTEGRATION_TOKEN && process.env.GHL_LOCATION_ID) {
+  if (process.env.GHL_WEBHOOK_URL) {
     return new GhlLeadNotifier();
   }
   return new LogNotifier();
