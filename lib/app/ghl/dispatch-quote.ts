@@ -13,7 +13,7 @@ import type { RepoQuoteDetail } from "@/lib/app/repo/types";
  * happen here — GHL mints those IDs from this signal and reports them back
  * via the inbound webhook handler, which writes them onto the mirror row.
  */
-export async function syncQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" | "ACCEPTED"): Promise<void> {
+export async function dispatchQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" | "ACCEPTED"): Promise<void> {
   const publicQuoteUrl = quote.publicToken ? buildQuoteLink(quote.publicToken) : "";
 
   if (event === "SENT") {

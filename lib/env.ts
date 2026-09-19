@@ -76,6 +76,16 @@ export const ENV_VARS: EnvVarSpec[] = [
     tier: "stub",
     whenUnset: "same as GOOGLE_SERVICE_ACCOUNT_JSON — both are required together for the Sheets write.",
   },
+  {
+    name: "GHL_WEBHOOK_URL",
+    tier: "stub",
+    whenUnset: "lib/ghl/dispatch.ts's dispatchGhlEvent logs and no-ops instead of POSTing lead/quote signals to GHL.",
+  },
+  {
+    name: "GHL_WEBHOOK_SECRET",
+    tier: "stub",
+    whenUnset: "app/api/webhooks/ghl rejects every inbound callback (401) — no secret configured means nothing is trusted.",
+  },
 ];
 
 /** Pure — computes warnings, never logs or throws itself. */

@@ -32,10 +32,10 @@ export interface DeliverInvoiceInput {
 }
 
 /**
- * TODO(owner/future task): wire to GHL — reuse lib/ghl/client.ts's
- * sendMessage the same way lib/app/ghl/sync-quote.ts delivers the quote
- * link, once this seam is picked up. Not implemented — share the invoice
- * link manually until then.
+ * TODO(owner/future task): wire to GHL — dispatch an invoice-ready event the
+ * same way lib/app/ghl/dispatch-quote.ts fires quote.sent/quote.accepted,
+ * once this seam is picked up. Not implemented — share the invoice link
+ * manually until then.
  */
 export async function deliverInvoiceViaGhl(input: DeliverInvoiceInput): Promise<void> {
   void input;

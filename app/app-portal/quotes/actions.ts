@@ -2,14 +2,14 @@
 
 import { getRepo } from "@/lib/app/repo";
 import type { SaveQuoteInput } from "@/lib/app/repo/types";
-import { syncQuoteToGhl } from "@/lib/app/ghl/sync-quote";
+import { dispatchQuoteToGhl } from "@/lib/app/ghl/dispatch-quote";
 
 export async function saveQuoteAction(input: SaveQuoteInput) {
   const repo = await getRepo();
   const quote = await repo.saveQuote(input);
 
   if (quote.status === "SENT") {
-    await syncQuoteToGhl(quote, "SENT");
+    await dispatchQuoteToGhl(quote, "SENT");
   }
 
   return { id: quote.id, number: quote.number };
@@ -21,7 +21,7 @@ export async function acceptQuoteAction(id: string) {
 
   const quote = await repo.getQuote(id);
   if (quote) {
-    await syncQuoteToGhl(quote, "ACCEPTED");
+    await dispatchQuoteToGhl(quote, "ACCEPTED");
   }
 }
 
