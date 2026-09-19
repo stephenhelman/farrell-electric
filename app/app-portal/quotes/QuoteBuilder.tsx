@@ -9,7 +9,7 @@ import { CatalogPicker } from "./CatalogPicker";
 import { saveQuoteAction } from "./actions";
 import styles from "./QuoteBuilder.module.css";
 
-interface DraftLineItem {
+export interface DraftLineItem {
   key: string;
   catalogItemId: string | null;
   name: string;
@@ -28,9 +28,12 @@ function toDraftLineItems(quote: RepoQuoteDetail | null): DraftLineItem[] {
 export function QuoteBuilder({
   catalogItems,
   initialQuote,
+  initialLineItems,
 }: {
   catalogItems: RepoCatalogItem[];
   initialQuote: RepoQuoteDetail | null;
+  /** Prefill from the guided estimator (Task 7) — ignored once initialQuote is set. */
+  initialLineItems?: DraftLineItem[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -45,7 +48,9 @@ export function QuoteBuilder({
   );
   const [notes, setNotes] = useState(initialQuote?.notes ?? "");
   const [discount, setDiscount] = useState(initialQuote?.discount ?? 0);
-  const [lineItems, setLineItems] = useState<DraftLineItem[]>(() => toDraftLineItems(initialQuote));
+  const [lineItems, setLineItems] = useState<DraftLineItem[]>(() =>
+    initialQuote ? toDraftLineItems(initialQuote) : (initialLineItems ?? []),
+  );
 
   const totals = useMemo(() => calcQuoteTotals(lineItems, discount), [lineItems, discount]);
 

@@ -92,6 +92,10 @@ export const prismaRepo: Repo = {
         id: component.id,
         catalogItemId: component.catalogItemId,
         catalogItemName: component.catalogItem.name,
+        catalogItemPrice: Number(component.catalogItem.price),
+        catalogItemCost: Number(component.catalogItem.cost),
+        catalogItemTaxable: component.catalogItem.taxable,
+        catalogItemWattage: component.catalogItem.wattage ? Number(component.catalogItem.wattage) : null,
         qtyPerUnit: Number(component.qtyPerUnit),
       })),
     }));

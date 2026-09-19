@@ -39,6 +39,10 @@ function seedOptions(catalogItems: RepoCatalogItem[]): RepoOption[] {
         id: `option-component-${option.key}-${component.catalogSourceId}`,
         catalogItemId: catalogItem.id,
         catalogItemName: catalogItem.name,
+        catalogItemPrice: catalogItem.price,
+        catalogItemCost: catalogItem.cost,
+        catalogItemTaxable: catalogItem.taxable,
+        catalogItemWattage: catalogItem.wattage,
         qtyPerUnit: component.qtyPerUnit,
       };
     }),

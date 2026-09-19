@@ -13,9 +13,14 @@ export default async function QuotesPage() {
     <div>
       <div className={styles.header}>
         <h1 className={styles.heading}>Quotes</h1>
-        <Link href="/quotes/new" className={styles.newButton}>
-          + Quote
-        </Link>
+        <div className={styles.headerActions}>
+          <Link href="/quotes/estimate" className={styles.newButton}>
+            Guided Estimate
+          </Link>
+          <Link href="/quotes/new" className={styles.newButton}>
+            + Quote
+          </Link>
+        </div>
       </div>
       {quotes.length === 0 ? (
         <p className={styles.empty}>No quotes yet.</p>

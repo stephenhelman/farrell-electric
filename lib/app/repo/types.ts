@@ -38,6 +38,10 @@ export interface RepoOptionComponent {
   id: string;
   catalogItemId: string;
   catalogItemName: string;
+  catalogItemPrice: number;
+  catalogItemCost: number;
+  catalogItemTaxable: boolean;
+  catalogItemWattage: number | null;
   qtyPerUnit: number;
 }
 
