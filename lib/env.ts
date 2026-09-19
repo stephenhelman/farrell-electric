@@ -57,31 +57,6 @@ export const ENV_VARS: EnvVarSpec[] = [
     whenUnset: "only needed alongside DATABASE_URL, for `prisma migrate` — read directly by prisma/schema.prisma.",
   },
   {
-    name: "GHL_PRIVATE_INTEGRATION_TOKEN",
-    tier: "stub",
-    whenUnset: "lib/ghl/client.ts's no-op client is used — GHL calls log and no-op instead of firing.",
-  },
-  {
-    name: "GHL_LOCATION_ID",
-    tier: "stub",
-    whenUnset: "same as GHL_PRIVATE_INTEGRATION_TOKEN — both are required together for live GHL calls.",
-  },
-  {
-    name: "GHL_PIPELINE_ID",
-    tier: "stub",
-    whenUnset: "TODO(owner): opportunity/stage sync is skipped (contact sync still runs) until this is provided.",
-  },
-  {
-    name: "GHL_STAGE_SENT_ID",
-    tier: "stub",
-    whenUnset: "TODO(owner): same as GHL_PIPELINE_ID — needed for the Sent-stage opportunity move.",
-  },
-  {
-    name: "GHL_STAGE_ACCEPTED_ID",
-    tier: "stub",
-    whenUnset: "TODO(owner): same as GHL_PIPELINE_ID — needed for the Accepted-stage opportunity move.",
-  },
-  {
     name: "NEXT_PUBLIC_SITE_URL",
     tier: "stub",
     whenUnset: "quote/invoice links default to https://www.farrellelectric.com.",
