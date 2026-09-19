@@ -119,6 +119,9 @@
 }
 
 .btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target-min);
   border: 1px solid var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-contrast);
@@ -126,6 +129,16 @@
   border-radius: var(--radius-md);
   font-weight: 700;
   font-size: var(--text-sm);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.btnPrimary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btnPrimary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .btnPrimary:disabled {

@@ -90,4 +90,8 @@
 
   /* Mobile action bar */
   --mobile-bar-height: 64px;
+
+  /* Minimum comfortable tap target for primary controls (buttons, top-level
+     filters) on the internal tool, which is used one-handed in the field. */
+  --tap-target-min: 44px;
 }

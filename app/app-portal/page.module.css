@@ -3,17 +3,25 @@
   margin-bottom: var(--space-5);
 }
 
-.grid {
+.stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-}
-
-.card {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.stat {
   padding: var(--space-4);
+}
+
+.stat:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stat:nth-child(odd) {
+  border-right: 1px solid var(--color-border);
 }
 
 .label {
@@ -27,7 +35,7 @@
 .metric {
   font-size: var(--text-3xl);
   font-weight: 700;
-  margin-top: var(--space-2);
+  margin: var(--space-2) 0 0;
 }
 
 .section {
@@ -54,7 +62,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-border);
   font-size: var(--text-sm);
 }

@@ -16,24 +16,24 @@ export default async function DashboardPage() {
   return (
     <div>
       <h1 className={styles.heading}>Dashboard</h1>
-      <div className={styles.grid}>
-        <div className={styles.card}>
-          <div className={styles.label}>Open quotes</div>
-          <div className={styles.metric}>{open.length}</div>
+      <dl className={styles.stats}>
+        <div className={styles.stat}>
+          <dt className={styles.label}>Open quotes</dt>
+          <dd className={styles.metric}>{open.length}</dd>
         </div>
-        <div className={styles.card}>
-          <div className={styles.label}>Sold</div>
-          <div className={styles.metric}>{formatMoney(sold.reduce((sum, q) => sum + q.total, 0))}</div>
+        <div className={styles.stat}>
+          <dt className={styles.label}>Sold</dt>
+          <dd className={styles.metric}>{formatMoney(sold.reduce((sum, q) => sum + q.total, 0))}</dd>
         </div>
-        <div className={styles.card}>
-          <div className={styles.label}>Scheduled</div>
-          <div className={styles.metric}>{scheduled.length}</div>
+        <div className={styles.stat}>
+          <dt className={styles.label}>Scheduled</dt>
+          <dd className={styles.metric}>{scheduled.length}</dd>
         </div>
-        <div className={styles.card}>
-          <div className={styles.label}>Close rate</div>
-          <div className={styles.metric}>{closeRate}%</div>
+        <div className={styles.stat}>
+          <dt className={styles.label}>Close rate</dt>
+          <dd className={styles.metric}>{closeRate}%</dd>
         </div>
-      </div>
+      </dl>
 
       <div className={styles.section}>
         <h2 className={styles.sectionHeading}>Recent Quotes</h2>
