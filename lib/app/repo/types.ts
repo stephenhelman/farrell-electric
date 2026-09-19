@@ -171,6 +171,25 @@ export interface GhlIdsInput {
   ghlOpportunityId: string | null;
 }
 
+/**
+ * Task 10: the invoice is a derived document, not a stored entity — the
+ * sprint's locked §2 schema has no Invoice model, and everything it needs
+ * (line items, totals) is already final and immutable once a quote is
+ * ACCEPTED. Same public-payload discipline as PublicQuote: no cost/profit/
+ * margin, no catalogItemId, no contact info beyond name/address.
+ */
+export interface PublicInvoice {
+  invoiceNumber: string;
+  quoteNumber: number;
+  customerName: string;
+  customerAddress: string;
+  scopeOfWork: string;
+  discount: number;
+  subtotal: number;
+  total: number;
+  lineItems: PublicQuoteLineItem[];
+}
+
 export interface Repo {
   getUserByEmail(email: string): Promise<RepoUser | null>;
   listCatalogItems(): Promise<RepoCatalogItem[]>;
@@ -179,6 +198,8 @@ export interface Repo {
   listJobs(): Promise<RepoJob[]>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;
   getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
+  /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */
+  getInvoiceByPublicToken(token: string): Promise<PublicInvoice | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   acceptQuote(id: string): Promise<void>;
   declineQuote(id: string): Promise<void>;

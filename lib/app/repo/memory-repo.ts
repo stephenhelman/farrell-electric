@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PublicQuote, Repo, RepoQuoteDetail } from "./types";
+import type { PublicInvoice, PublicQuote, Repo, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 
@@ -10,6 +10,25 @@ function toPublicQuote(quote: RepoQuoteDetail): PublicQuote {
     customerName: quote.customerName,
     customerAddress: quote.customerAddress,
     message: quote.message,
+    scopeOfWork: quote.scopeOfWork,
+    discount: quote.discount,
+    subtotal: quote.subtotal,
+    total: quote.total,
+    lineItems: quote.lineItems.map((item) => ({
+      name: item.name,
+      description: item.description,
+      qty: item.qty,
+      unitPrice: item.unitPrice,
+    })),
+  };
+}
+
+function toPublicInvoice(quote: RepoQuoteDetail): PublicInvoice {
+  return {
+    invoiceNumber: `INV-${quote.number}`,
+    quoteNumber: quote.number,
+    customerName: quote.customerName,
+    customerAddress: quote.customerAddress,
     scopeOfWork: quote.scopeOfWork,
     discount: quote.discount,
     subtotal: quote.subtotal,
@@ -58,6 +77,12 @@ export const memoryRepo: Repo = {
   async getQuoteByPublicToken(token) {
     const quote = memoryStore.quotes.find((q) => q.publicToken === token);
     return quote ? toPublicQuote(quote) : null;
+  },
+
+  async getInvoiceByPublicToken(token) {
+    const quote = memoryStore.quotes.find((q) => q.publicToken === token);
+    if (!quote || quote.status !== "ACCEPTED") return null;
+    return toPublicInvoice(quote);
   },
 
   async saveQuote(input) {
@@ -117,6 +142,10 @@ export const memoryRepo: Repo = {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return;
     quote.status = "ACCEPTED";
+    // A quote can be accepted straight from DRAFT (never marked Sent), which
+    // means no publicToken exists yet — mint one now so the Task 10 invoice
+    // link always resolves once a quote is ACCEPTED.
+    quote.publicToken ??= randomUUID();
 
     if (!memoryStore.jobs.find((j) => j.quoteId === id)) {
       memoryStore.jobs.unshift({

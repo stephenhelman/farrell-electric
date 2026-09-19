@@ -58,6 +58,8 @@ export function QuoteBuilder({
 
   const totals = useMemo(() => calcQuoteTotals(lineItems, discount), [lineItems, discount]);
   const sharePath = initialQuote?.publicToken ? `/q/${initialQuote.publicToken}` : null;
+  const invoicePath =
+    initialQuote?.status === "ACCEPTED" && initialQuote.publicToken ? `${sharePath}/invoice` : null;
 
   const isLocked = initialQuote?.status === "ACCEPTED" || initialQuote?.status === "DECLINED";
 
@@ -164,6 +166,17 @@ export function QuoteBuilder({
         <p className={styles.lockedNotice}>
           Customer link: <a href={sharePath}>{sharePath}</a>
         </p>
+      ) : null}
+      {invoicePath ? (
+        <div className={styles.lockedNotice}>
+          <p>
+            Invoice link: <a href={invoicePath}>{invoicePath}</a>
+          </p>
+          <p style={{ marginTop: "var(--space-2)", marginBottom: 0 }}>
+            Payment (Stripe) and automatic delivery (GHL) aren&apos;t built yet — collect payment and share this
+            link manually for now.
+          </p>
+        </div>
       ) : null}
 
       <div className={styles.card}>

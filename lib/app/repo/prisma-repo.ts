@@ -168,6 +168,28 @@ export const prismaRepo: Repo = {
     };
   },
 
+  async getInvoiceByPublicToken(token) {
+    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: { lineItems: true } });
+    if (!quote || quote.status !== "ACCEPTED") return null;
+
+    return {
+      invoiceNumber: `INV-${quote.number}`,
+      quoteNumber: quote.number,
+      customerName: quote.customerName,
+      customerAddress: quote.customerAddress,
+      scopeOfWork: quote.scopeOfWork ?? "",
+      discount: Number(quote.discount),
+      subtotal: Number(quote.subtotal),
+      total: Number(quote.total),
+      lineItems: quote.lineItems.map((item) => ({
+        name: item.name,
+        description: item.description,
+        qty: Number(item.qty),
+        unitPrice: Number(item.unitPrice),
+      })),
+    };
+  },
+
   async saveQuote(input) {
     const totals = calcQuoteTotals(input.lineItems, input.discount);
     const lineItemsData = input.lineItems.map((item) => ({
@@ -243,7 +265,13 @@ export const prismaRepo: Repo = {
   },
 
   async acceptQuote(id) {
-    await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED" } });
+    // A quote can be accepted straight from DRAFT (never marked Sent), which
+    // means no publicToken exists yet — mint one now so the Task 10 invoice
+    // link always resolves once a quote is ACCEPTED.
+    const existing = await prisma.quote.findUniqueOrThrow({ where: { id } });
+    const publicToken = existing.publicToken ?? randomUUID();
+
+    await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", publicToken } });
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
     if (!existingJob) {
       await prisma.job.create({ data: { quoteId: id, status: "UNSCHEDULED" } });
