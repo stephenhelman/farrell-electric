@@ -56,7 +56,16 @@ export async function middleware(request: NextRequest) {
   const isSignInRoute = pathname === SIGN_IN_PATH;
 
   if (!isSignInRoute) {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    // getToken defaults secureCookie to false when it's not passed explicitly
+    // (see @auth/core/jwt.js), so over HTTPS it looks for the unprefixed
+    // "authjs.session-token" while sign-in actually set the "__Secure-"
+    // prefixed cookie (@auth/core/lib/init.js derives that from the request
+    // protocol). Passing this explicitly keeps both sides in agreement.
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: request.nextUrl.protocol === "https:",
+    });
     if (!token) {
       const signInUrl = request.nextUrl.clone();
       signInUrl.pathname = SIGN_IN_PATH;
