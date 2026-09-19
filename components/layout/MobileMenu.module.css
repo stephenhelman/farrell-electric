@@ -23,12 +23,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--tap-target-min);
+  height: var(--tap-target-min);
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.closeButton:active {
+  transform: scale(0.97);
 }
 
 .navList {

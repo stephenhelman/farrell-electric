@@ -8,7 +8,6 @@
   grid-template-columns: 1fr;
   gap: var(--space-6);
   margin-bottom: var(--space-6);
-  counter-reset: step;
 }
 
 @media (min-width: 768px) {

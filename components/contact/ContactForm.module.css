@@ -68,11 +68,12 @@
   font-family: var(--font-text);
 }
 
-.input:focus,
-.select:focus,
-.textarea:focus {
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: var(--focus-ring);
 }
 
 .textarea {
