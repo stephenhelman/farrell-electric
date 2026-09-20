@@ -1,0 +1,34 @@
+.wrap {
+  max-width: 72ch;
+}
+
+.headline {
+  font-size: var(--text-heading-xl);
+  margin-bottom: var(--space-3);
+}
+
+.effectiveDate {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-6);
+}
+
+.intro {
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-3);
+}
+
+.section {
+  margin-top: var(--space-8);
+}
+
+.sectionHeading {
+  font-size: var(--text-heading-sm);
+  margin-bottom: var(--space-3);
+}
+
+.paragraph {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}

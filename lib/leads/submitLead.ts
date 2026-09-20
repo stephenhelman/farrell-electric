@@ -55,6 +55,8 @@ function toRow(payload: LeadPayload): (string | boolean)[] {
       payload.propertyAddress,
       payload.interestedIn,
       payload.projectDetails,
+      payload.smsConsentTransactional,
+      payload.smsConsentPromotional,
       notified,
     ];
   }
@@ -69,6 +71,8 @@ function toRow(payload: LeadPayload): (string | boolean)[] {
     payload.issueType,
     payload.description,
     payload.preferredContactMethod,
+    payload.smsConsentTransactional,
+    payload.smsConsentPromotional,
     notified,
   ];
 }

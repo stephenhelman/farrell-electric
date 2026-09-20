@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import type { LeadIntent, LeadPayload, LightingLeadPayload, ElectricalLeadPayload } from "@/lib/leads/types";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { Checkbox } from "@/components/ui/Checkbox";
 import styles from "./ContactForm.module.css";
 
 const INTENT_OPTIONS: { value: LeadIntent; label: string }[] = [
@@ -36,7 +38,11 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
       phone: String(formData.get("phone") ?? ""),
       email: String(formData.get("email") ?? ""),
       propertyAddress: String(formData.get("propertyAddress") ?? ""),
+      smsConsentTransactional: formData.get("smsConsentTransactional") === "on",
+      smsConsentPromotional: formData.get("smsConsentPromotional") === "on",
     };
+
+    const preferredContactMethod = String(formData.get("preferredContactMethod") ?? "phone");
 
     const payload: LeadPayload = isLightingIntent(intent)
       ? ({
@@ -44,13 +50,14 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
           type: "lighting",
           interestedIn: String(formData.get("interestedIn") ?? "not-sure"),
           projectDetails: String(formData.get("projectDetails") ?? ""),
+          preferredContactMethod,
         } as LightingLeadPayload)
       : ({
           ...base,
           type: "electrical",
           issueType: String(formData.get("issueType") ?? ""),
           description: String(formData.get("description") ?? ""),
-          preferredContactMethod: String(formData.get("preferredContactMethod") ?? "phone"),
+          preferredContactMethod,
         } as ElectricalLeadPayload);
 
     setStatus("submitting");
@@ -92,7 +99,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
       </div>
 
       {intent && (
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} onSubmit={handleSubmit} key={intent}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="name">
               Name
@@ -146,12 +153,6 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
                 </label>
                 <textarea className={styles.textarea} id="projectDetails" name="projectDetails" />
               </div>
-
-              <div className={styles.submitRow}>
-                <SubmitButton variant="primary" disabled={status === "submitting"}>
-                  {status === "submitting" ? "Sending…" : "GET MY FREE LIGHTING ESTIMATE"}
-                </SubmitButton>
-              </div>
             </>
           ) : (
             <>
@@ -168,31 +169,65 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
                 </label>
                 <textarea className={styles.textarea} id="description" name="description" required />
               </div>
-
-              <div className={styles.field}>
-                <span className={styles.label}>Preferred Contact Method</span>
-                <div className={styles.radioRow}>
-                  {(["phone", "email", "text"] as const).map((method) => (
-                    <label key={method} className={styles.radioOption}>
-                      <input
-                        type="radio"
-                        name="preferredContactMethod"
-                        value={method}
-                        defaultChecked={method === "phone"}
-                      />
-                      {method === "phone" ? "Phone" : method === "email" ? "Email" : "Text"}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className={styles.submitRow}>
-                <SubmitButton variant="primary" disabled={status === "submitting"}>
-                  {status === "submitting" ? "Sending…" : "REQUEST ELECTRICAL SERVICE"}
-                </SubmitButton>
-              </div>
             </>
           )}
+
+          <div className={styles.field}>
+            <span className={styles.label}>Preferred Contact Method</span>
+            <div className={styles.radioRow}>
+              {(["phone", "email", "text"] as const).map((method) => (
+                <label key={method} className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="preferredContactMethod"
+                    value={method}
+                    defaultChecked={method === "phone"}
+                  />
+                  {method === "phone" ? "Phone" : method === "email" ? "Email" : "Text"}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.consentGroup}>
+            <Checkbox
+              id="smsConsentTransactional"
+              name="smsConsentTransactional"
+              defaultChecked={false}
+              label={
+                <>
+                  By submitting, you authorize Farrell Electric, Inc. to text/call the number above for
+                  informational/transactional messages (such as inquiry confirmations, estimates, and appointment
+                  updates), possibly using automated means. Msg/data rates apply, msg frequency varies. Consent is
+                  not a condition of purchase. See <Link href="/terms">terms</Link> and{" "}
+                  <Link href="/privacy">privacy policy</Link>. Text HELP for help and STOP to unsubscribe.
+                </>
+              }
+            />
+            <Checkbox
+              id="smsConsentPromotional"
+              name="smsConsentPromotional"
+              defaultChecked={false}
+              label={
+                <>
+                  By submitting, you authorize Farrell Electric, Inc. to text/call the number above for
+                  promotional messages, possibly using automated means. Msg/data rates apply, msg frequency varies.
+                  Consent is not a condition of purchase. See <Link href="/terms">terms</Link> and{" "}
+                  <Link href="/privacy">privacy policy</Link>. Text HELP for help and STOP to unsubscribe.
+                </>
+              }
+            />
+          </div>
+
+          <div className={styles.submitRow}>
+            <SubmitButton variant="primary" disabled={status === "submitting"}>
+              {status === "submitting"
+                ? "Sending…"
+                : isLightingIntent(intent)
+                  ? "GET MY FREE LIGHTING ESTIMATE"
+                  : "REQUEST ELECTRICAL SERVICE"}
+            </SubmitButton>
+          </div>
 
           {status === "success" && (
             <p className={`${styles.status} ${styles.statusSuccess}`}>

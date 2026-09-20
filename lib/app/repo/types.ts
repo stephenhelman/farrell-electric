@@ -219,6 +219,9 @@ export interface RepoLead {
   email: string | null;
   propertyAddress: string | null;
   details: LeadPayload;
+  /** Provable consent state — captured at submission, independent of `details`. */
+  smsConsentTransactional: boolean;
+  smsConsentPromotional: boolean;
   ghlContactId: string | null;
   ghlOpportunityId: string | null;
 }
@@ -230,6 +233,8 @@ export interface CreateLeadInput {
   email: string | null;
   propertyAddress: string | null;
   details: LeadPayload;
+  smsConsentTransactional: boolean;
+  smsConsentPromotional: boolean;
 }
 
 export interface Repo {

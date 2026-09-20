@@ -6,6 +6,11 @@ interface BaseLeadFields {
   phone: string;
   email: string;
   propertyAddress: string;
+  preferredContactMethod: "phone" | "email" | "text";
+  /** SMS opt-in for informational/transactional messages — false unless the checkbox was actively checked. */
+  smsConsentTransactional: boolean;
+  /** SMS opt-in for promotional messages — false unless the checkbox was actively checked. */
+  smsConsentPromotional: boolean;
 }
 
 export interface LightingLeadPayload extends BaseLeadFields {
@@ -18,7 +23,6 @@ export interface ElectricalLeadPayload extends BaseLeadFields {
   type: "electrical";
   issueType: string;
   description: string;
-  preferredContactMethod: "phone" | "email" | "text";
 }
 
 export type LeadPayload = LightingLeadPayload | ElectricalLeadPayload;

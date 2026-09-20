@@ -17,6 +17,11 @@
       { "label": "ABOUT US", "href": "/about" },
       { "label": "CONTACT", "href": "/contact" }
     ],
+    "legalLinks": [
+      { "label": "Privacy Policy", "href": "/privacy" },
+      { "label": "Terms & Conditions", "href": "/terms" },
+      { "label": "SMS Terms", "href": "/sms-terms" }
+    ],
     "primaryCta": { "label": "GET A FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
     "secondaryCta": { "label": "REQUEST ELECTRICAL SERVICE", "href": "/contact?intent=electrical" }
   },

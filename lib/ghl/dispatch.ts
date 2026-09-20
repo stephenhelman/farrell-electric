@@ -20,6 +20,8 @@ export interface LeadCreatedPayload {
   phone: string;
   email: string | null;
   propertyAddress: string | null;
+  smsConsentTransactional: boolean;
+  smsConsentPromotional: boolean;
   details: unknown;
 }
 

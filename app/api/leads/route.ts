@@ -33,7 +33,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Missing required fields." }, { status: 200 });
   }
 
-  const payload = body;
+  // Consent is never required to submit — coerce anything other than a literal
+  // `true` (missing, tampered, non-boolean) down to false rather than rejecting.
+  const rawPayload = body as unknown as Record<string, unknown>;
+  const payload: LeadPayload = {
+    ...body,
+    smsConsentTransactional: rawPayload.smsConsentTransactional === true,
+    smsConsentPromotional: rawPayload.smsConsentPromotional === true,
+  };
 
   let leadId: string | null = null;
   try {
@@ -46,6 +53,8 @@ export async function POST(request: Request) {
       email: payload.email,
       propertyAddress: payload.propertyAddress,
       details: payload,
+      smsConsentTransactional: payload.smsConsentTransactional,
+      smsConsentPromotional: payload.smsConsentPromotional,
     });
     leadId = lead.id;
   } catch (error) {

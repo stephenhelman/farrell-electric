@@ -27,6 +27,7 @@ export interface SiteSettings {
   accentBlueHex: string;
   serviceAreaLine: string;
   navItems: NavItem[];
+  legalLinks: NavItem[];
   primaryCta: Cta;
   secondaryCta: Cta;
 }
@@ -195,3 +196,20 @@ export interface CopyDocument {
   pages: Record<PageSlug, PageContent>;
   financing: Financing;
 }
+
+export type LegalPageSlug = "privacy" | "terms" | "sms-terms";
+
+export interface LegalSection {
+  heading: string | null;
+  body: string[];
+}
+
+export interface LegalPage {
+  slug: LegalPageSlug;
+  title: string;
+  effectiveDate: string;
+  intro: string[];
+  sections: LegalSection[];
+}
+
+export type LegalDocument = Record<LegalPageSlug, LegalPage>;

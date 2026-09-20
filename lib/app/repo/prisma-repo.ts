@@ -55,6 +55,8 @@ function mapLead(lead: Lead): RepoLead {
     email: lead.email,
     propertyAddress: lead.propertyAddress,
     details: lead.details as unknown as LeadPayload,
+    smsConsentTransactional: lead.smsConsentTransactional,
+    smsConsentPromotional: lead.smsConsentPromotional,
     ghlContactId: lead.ghlContactId,
     ghlOpportunityId: lead.ghlOpportunityId,
   };
@@ -341,6 +343,8 @@ export const prismaRepo: Repo = {
         email: input.email,
         propertyAddress: input.propertyAddress,
         details: input.details as unknown as Prisma.InputJsonValue,
+        smsConsentTransactional: input.smsConsentTransactional,
+        smsConsentPromotional: input.smsConsentPromotional,
       },
     });
     return mapLead(lead);

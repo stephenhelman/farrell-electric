@@ -203,6 +203,10 @@ model Lead {
   email            String?
   propertyAddress  String?
   details          Json
+  // Provable SMS consent, captured at submission — independent of `details`
+  // so consent state can't be lost/altered by future changes to the JSON blob.
+  smsConsentTransactional Boolean @default(false)
+  smsConsentPromotional   Boolean @default(false)
   ghlContactId     String?
   ghlOpportunityId String?
 }

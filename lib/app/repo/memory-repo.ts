@@ -195,6 +195,8 @@ export const memoryRepo: Repo = {
       email: input.email,
       propertyAddress: input.propertyAddress,
       details: input.details,
+      smsConsentTransactional: input.smsConsentTransactional,
+      smsConsentPromotional: input.smsConsentPromotional,
       ghlContactId: null,
       ghlOpportunityId: null,
     };

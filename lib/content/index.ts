@@ -6,10 +6,14 @@
 import copyData from "@/content/copy.json";
 import projectsData from "@/content/projects.json";
 import servicesData from "@/content/services.json";
+import legalData from "@/content/legal.json";
 import type {
   CopyDocument,
   Financing,
   Home,
+  LegalDocument,
+  LegalPage,
+  LegalPageSlug,
   PageContent,
   PageSlug,
   Project,
@@ -22,6 +26,7 @@ import type {
 const copy = copyData as CopyDocument;
 const projects = projectsData as Project[];
 const services = servicesData as Service[];
+const legal = legalData as LegalDocument;
 
 export function getSiteSettings(): SiteSettings {
   return copy.siteSettings;
@@ -33,6 +38,10 @@ export function getHome(): Home {
 
 export function getPage(slug: PageSlug): PageContent {
   return copy.pages[slug];
+}
+
+export function getLegalPage(slug: LegalPageSlug): LegalPage {
+  return legal[slug];
 }
 
 export function getFinancing(): Financing {
@@ -76,6 +85,10 @@ export type {
   PageSlug,
   ProcessStep,
   Financing,
+  LegalDocument,
+  LegalPage,
+  LegalPageSlug,
+  LegalSection,
   Project,
   ProjectCategory,
   Service,

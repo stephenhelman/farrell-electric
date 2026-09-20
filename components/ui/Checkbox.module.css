@@ -1,0 +1,32 @@
+.wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  min-width: var(--tap-target-min, 20px);
+  min-height: 20px;
+  margin-top: 2px;
+  accent-color: var(--color-accent);
+}
+
+.input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.label a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}

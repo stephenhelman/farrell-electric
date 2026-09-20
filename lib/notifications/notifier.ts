@@ -46,6 +46,8 @@ export class GhlLeadNotifier implements Notifier {
       phone: payload.phone,
       email: payload.email,
       propertyAddress: payload.propertyAddress,
+      smsConsentTransactional: payload.smsConsentTransactional,
+      smsConsentPromotional: payload.smsConsentPromotional,
       details: payload,
     });
   }
