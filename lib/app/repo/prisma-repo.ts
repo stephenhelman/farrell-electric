@@ -29,6 +29,7 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     ghlContactId: quote.ghlContactId,
     ghlOpportunityId: quote.ghlOpportunityId,
     ghlCustomObjectId: quote.ghlCustomObjectId,
+    leadId: quote.leadId,
     createdAt: quote.createdAt,
     lineItems: quote.lineItems.map((item) => ({
       id: item.id,
@@ -250,6 +251,7 @@ export const prismaRepo: Repo = {
           total: totals.total,
           profit: totals.profit,
           margin: totals.margin,
+          ...(input.leadId !== undefined && { leadId: input.leadId }),
           lineItems: { create: lineItemsData },
         },
         include: { lineItems: true },
@@ -278,6 +280,7 @@ export const prismaRepo: Repo = {
         total: totals.total,
         profit: totals.profit,
         margin: totals.margin,
+        leadId: input.leadId ?? null,
         lineItems: { create: lineItemsData },
       },
       include: { lineItems: true },
@@ -353,5 +356,26 @@ export const prismaRepo: Repo = {
   async getLeadById(id) {
     const lead = await prisma.lead.findUnique({ where: { id } });
     return lead ? mapLead(lead) : null;
+  },
+
+  async listLeads() {
+    const leads = await prisma.lead.findMany({ orderBy: { createdAt: "desc" } });
+    return leads.map(mapLead);
+  },
+
+  async listQuotesByLeadId(leadId) {
+    const quotes = await prisma.quote.findMany({ where: { leadId }, orderBy: { number: "desc" } });
+
+    return quotes.map((quote) => ({
+      id: quote.id,
+      number: quote.number,
+      status: quote.status,
+      customerName: quote.customerName,
+      customerPhone: quote.customerPhone,
+      customerEmail: quote.customerEmail,
+      customerAddress: quote.customerAddress,
+      total: Number(quote.total),
+      createdAt: quote.createdAt,
+    }));
   },
 };

@@ -67,16 +67,6 @@ export const ENV_VARS: EnvVarSpec[] = [
     whenUnset: "middleware.ts defaults the app host to app.farrellelectric.com (app.localhost:3000 in dev).",
   },
   {
-    name: "GOOGLE_SERVICE_ACCOUNT_JSON",
-    tier: "stub",
-    whenUnset: "lib/leads/submitLead.ts logs leads instead of writing to Sheets.",
-  },
-  {
-    name: "LEADS_SHEET_ID",
-    tier: "stub",
-    whenUnset: "same as GOOGLE_SERVICE_ACCOUNT_JSON — both are required together for the Sheets write.",
-  },
-  {
     name: "GHL_WEBHOOK_URL",
     tier: "stub",
     whenUnset: "lib/ghl/dispatch.ts's dispatchGhlEvent logs and no-ops instead of POSTing lead/quote signals to GHL.",

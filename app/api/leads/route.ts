@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { submitLead } from "@/lib/leads/submitLead";
 import { getNotifier } from "@/lib/notifications/notifier";
 import type { LeadPayload } from "@/lib/leads/types";
 import { getRepo } from "@/lib/app/repo";
@@ -17,9 +16,9 @@ function isValidPayload(value: unknown): value is LeadPayload {
 }
 
 /**
- * Sheet write and notification are called separately and fail independently.
- * The Sheet is the source of truth; notification is best-effort. This handler
- * always returns 200 so a Sheets or Notifier failure never breaks form UX.
+ * The DB write is the source of truth; notification is best-effort. This
+ * handler always returns 200 so a createLead or notifier failure never
+ * breaks form UX.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -61,14 +60,6 @@ export async function POST(request: Request) {
     console.error("[api/leads] createLead failed", error);
   }
 
-  let sheetResult;
-  try {
-    sheetResult = await submitLead(payload);
-  } catch (error) {
-    console.error("[api/leads] submitLead failed", error);
-    sheetResult = { ok: false, notified: false as const, stub: true };
-  }
-
   if (leadId) {
     try {
       await getNotifier().notifyNewLead({ leadId, payload, submittedAt: new Date().toISOString() });
@@ -77,5 +68,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, sheetWritten: sheetResult.ok && !sheetResult.stub }, { status: 200 });
+  return NextResponse.json({ ok: true }, { status: 200 });
 }

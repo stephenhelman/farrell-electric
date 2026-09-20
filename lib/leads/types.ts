@@ -26,11 +26,3 @@ export interface ElectricalLeadPayload extends BaseLeadFields {
 }
 
 export type LeadPayload = LightingLeadPayload | ElectricalLeadPayload;
-
-export interface SubmitLeadResult {
-  ok: boolean;
-  /** Always written false at submit time — a real-transport backfill sweep flips it later. */
-  notified: false;
-  /** True when the Sheets write was skipped because credentials aren't configured yet. */
-  stub: boolean;
-}

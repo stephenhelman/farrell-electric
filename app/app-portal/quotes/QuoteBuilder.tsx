@@ -26,28 +26,44 @@ function toDraftLineItems(quote: RepoQuoteDetail | null): DraftLineItem[] {
   return quote.lineItems.map((item) => ({ key: item.id, ...item }));
 }
 
+export interface LeadPrefill {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  customerAddress: string;
+  notes: string;
+}
+
 export function QuoteBuilder({
   catalogItems,
   initialQuote,
   initialLineItems,
+  leadId,
+  leadPrefill,
 }: {
   catalogItems: RepoCatalogItem[];
   initialQuote: RepoQuoteDetail | null;
   /** Prefill from the guided estimator (Task 7) — ignored once initialQuote is set. */
   initialLineItems?: DraftLineItem[];
+  /** Set when creating a quote from a lead's "Create Quote" action — ignored once initialQuote is set. */
+  leadId?: string | null;
+  /** Customer field prefill from the lead — ignored once initialQuote is set. */
+  leadPrefill?: LeadPrefill | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [customerName, setCustomerName] = useState(initialQuote?.customerName ?? "");
-  const [customerPhone, setCustomerPhone] = useState(initialQuote?.customerPhone ?? "");
-  const [customerEmail, setCustomerEmail] = useState(initialQuote?.customerEmail ?? "");
-  const [customerAddress, setCustomerAddress] = useState(initialQuote?.customerAddress ?? "");
+  const [customerName, setCustomerName] = useState(initialQuote?.customerName ?? leadPrefill?.customerName ?? "");
+  const [customerPhone, setCustomerPhone] = useState(initialQuote?.customerPhone ?? leadPrefill?.customerPhone ?? "");
+  const [customerEmail, setCustomerEmail] = useState(initialQuote?.customerEmail ?? leadPrefill?.customerEmail ?? "");
+  const [customerAddress, setCustomerAddress] = useState(
+    initialQuote?.customerAddress ?? leadPrefill?.customerAddress ?? "",
+  );
   const [message, setMessage] = useState(
     initialQuote?.message ?? "Thank you for the opportunity to design your outdoor lighting system.",
   );
-  const [notes, setNotes] = useState(initialQuote?.notes ?? "");
+  const [notes, setNotes] = useState(initialQuote?.notes ?? leadPrefill?.notes ?? "");
   const [discount, setDiscount] = useState(initialQuote?.discount ?? 0);
   const [lineItems, setLineItems] = useState<DraftLineItem[]>(() =>
     initialQuote ? toDraftLineItems(initialQuote) : (initialLineItems ?? []),
@@ -110,6 +126,7 @@ export function QuoteBuilder({
     startTransition(async () => {
       const result = await saveQuoteAction({
         id: initialQuote?.id,
+        leadId: initialQuote ? undefined : (leadId ?? null),
         status,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),

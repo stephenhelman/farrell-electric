@@ -114,6 +114,8 @@ export interface RepoQuoteDetail extends RepoQuote {
   ghlOpportunityId: string | null;
   /** The GHL custom-object id (quote mirror), same write path as ghlContactId. */
   ghlCustomObjectId: string | null;
+  /** Internal navigation/provenance only — GHL correlation still rides on customer identity. */
+  leadId: string | null;
   lineItems: RepoQuoteLineItem[];
 }
 
@@ -142,6 +144,8 @@ export interface SaveQuoteInput {
   discount: number;
   scopeOfWork: string;
   lineItems: QuoteLineItemInput[];
+  /** Set only when the quote was created from a lead's "Create Quote" action. */
+  leadId?: string | null;
 }
 
 /**
@@ -256,4 +260,6 @@ export interface Repo {
   updateLeadGhlIds(id: string, ids: LeadGhlIdsInput): Promise<void>;
   createLead(input: CreateLeadInput): Promise<RepoLead>;
   getLeadById(id: string): Promise<RepoLead | null>;
+  listLeads(): Promise<RepoLead[]>;
+  listQuotesByLeadId(leadId: string): Promise<RepoQuote[]>;
 }

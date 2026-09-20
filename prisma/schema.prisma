@@ -156,9 +156,11 @@ model Quote {
   scopeOfWork       String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+  leadId            String?
 
   lineItems QuoteLineItem[]
   job       Job?
+  lead      Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
 }
 
 model QuoteLineItem {
@@ -209,4 +211,6 @@ model Lead {
   smsConsentPromotional   Boolean @default(false)
   ghlContactId     String?
   ghlOpportunityId String?
+
+  quotes Quote[]
 }

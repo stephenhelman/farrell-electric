@@ -108,6 +108,7 @@ export const memoryRepo: Repo = {
         discount: input.discount,
         scopeOfWork: input.scopeOfWork,
         publicToken,
+        leadId: input.leadId !== undefined ? input.leadId : existing.leadId,
         lineItems,
         ...totals,
       };
@@ -127,6 +128,7 @@ export const memoryRepo: Repo = {
       notes: input.notes,
       discount: input.discount,
       scopeOfWork: input.scopeOfWork,
+      leadId: input.leadId ?? null,
       publicToken: input.status === "SENT" ? randomUUID() : null,
       ghlContactId: null,
       ghlOpportunityId: null,
@@ -206,5 +208,13 @@ export const memoryRepo: Repo = {
 
   async getLeadById(id) {
     return memoryStore.leads.find((lead) => lead.id === id) ?? null;
+  },
+
+  async listLeads() {
+    return [...memoryStore.leads];
+  },
+
+  async listQuotesByLeadId(leadId) {
+    return memoryStore.quotes.filter((q) => q.leadId === leadId).sort((a, b) => b.number - a.number);
   },
 };

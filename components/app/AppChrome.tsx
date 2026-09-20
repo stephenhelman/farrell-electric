@@ -7,7 +7,7 @@ import styles from "./AppChrome.module.css";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/clients", label: "Clients" },
+  { href: "/leads", label: "Leads" },
   { href: "/quotes", label: "Quotes" },
   { href: "/jobs", label: "Jobs" },
   { href: "/price-book", label: "Price Book" },
