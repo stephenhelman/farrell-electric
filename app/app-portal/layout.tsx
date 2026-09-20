@@ -30,7 +30,7 @@ export default async function AppLayout({
     <html lang="en" className={`${displayFace.variable} ${textFace.variable}`}>
       <body>
         <SessionProviderWrapper>
-          <AppChrome userEmail={session?.user?.email ?? null}>{children}</AppChrome>
+          <AppChrome userName={session?.user?.name ?? null}>{children}</AppChrome>
         </SessionProviderWrapper>
       </body>
     </html>

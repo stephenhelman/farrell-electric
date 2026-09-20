@@ -28,6 +28,11 @@
   gap: var(--space-2);
   max-height: 320px;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.grid::-webkit-scrollbar {
+  display: none;
 }
 
 @media (max-width: 480px) {
