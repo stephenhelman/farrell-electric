@@ -2,7 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import type { LeadIntent, LeadPayload, LightingLeadPayload, ElectricalLeadPayload } from "@/lib/leads/types";
+import type {
+  LeadIntent,
+  LeadPayload,
+  LightingLeadPayload,
+  ElectricalLeadPayload,
+} from "@/lib/leads/types";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Checkbox } from "@/components/ui/Checkbox";
 import styles from "./ContactForm.module.css";
@@ -20,8 +25,10 @@ function isLightingIntent(intent: LeadIntent): boolean {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
-export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | null }) {
-  const [intent, setIntent] = useState<LeadIntent | null>(initialIntent);
+export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
+  const [intent, setIntent] = useState<LeadIntent>(
+    initialIntent ?? "landscape-lighting",
+  );
   const [status, setStatus] = useState<SubmitStatus>("idle");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -42,7 +49,9 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
       smsConsentPromotional: formData.get("smsConsentPromotional") === "on",
     };
 
-    const preferredContactMethod = String(formData.get("preferredContactMethod") ?? "phone");
+    const preferredContactMethod = String(
+      formData.get("preferredContactMethod") ?? "phone",
+    );
 
     const payload: LeadPayload = isLightingIntent(intent)
       ? ({
@@ -104,28 +113,52 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
             <label className={styles.label} htmlFor="name">
               Name
             </label>
-            <input className={styles.input} id="name" name="name" type="text" required />
+            <input
+              className={styles.input}
+              id="name"
+              name="name"
+              type="text"
+              required
+            />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="phone">
               Phone Number
             </label>
-            <input className={styles.input} id="phone" name="phone" type="tel" required />
+            <input
+              className={styles.input}
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+            />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">
               Email
             </label>
-            <input className={styles.input} id="email" name="email" type="email" required />
+            <input
+              className={styles.input}
+              id="email"
+              name="email"
+              type="email"
+              required
+            />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="propertyAddress">
               Property Address
             </label>
-            <input className={styles.input} id="propertyAddress" name="propertyAddress" type="text" required />
+            <input
+              className={styles.input}
+              id="propertyAddress"
+              name="propertyAddress"
+              type="text"
+              required
+            />
           </div>
 
           {isLightingIntent(intent) ? (
@@ -151,7 +184,11 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
                 <label className={styles.label} htmlFor="projectDetails">
                   Tell Us About Your Project
                 </label>
-                <textarea className={styles.textarea} id="projectDetails" name="projectDetails" />
+                <textarea
+                  className={styles.textarea}
+                  id="projectDetails"
+                  name="projectDetails"
+                />
               </div>
             </>
           ) : (
@@ -160,14 +197,25 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
                 <label className={styles.label} htmlFor="issueType">
                   Type of Electrical Issue
                 </label>
-                <input className={styles.input} id="issueType" name="issueType" type="text" required />
+                <input
+                  className={styles.input}
+                  id="issueType"
+                  name="issueType"
+                  type="text"
+                  required
+                />
               </div>
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="description">
                   Description
                 </label>
-                <textarea className={styles.textarea} id="description" name="description" required />
+                <textarea
+                  className={styles.textarea}
+                  id="description"
+                  name="description"
+                  required
+                />
               </div>
             </>
           )}
@@ -183,7 +231,11 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
                     value={method}
                     defaultChecked={method === "phone"}
                   />
-                  {method === "phone" ? "Phone" : method === "email" ? "Email" : "Text"}
+                  {method === "phone"
+                    ? "Phone"
+                    : method === "email"
+                      ? "Email"
+                      : "Text"}
                 </label>
               ))}
             </div>
@@ -196,11 +248,14 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
               defaultChecked={false}
               label={
                 <>
-                  By submitting, you authorize Farrell Electric, Inc. to text/call the number above for
-                  informational/transactional messages (such as inquiry confirmations, estimates, and appointment
-                  updates), possibly using automated means. Msg/data rates apply, msg frequency varies. Consent is
-                  not a condition of purchase. See <Link href="/terms">terms</Link> and{" "}
-                  <Link href="/privacy">privacy policy</Link>. Text HELP for help and STOP to unsubscribe.
+                  By submitting, you authorize Farrell Electric, Inc. to
+                  text/call the number above for informational/transactional
+                  messages (such as inquiry confirmations, estimates, and
+                  appointment updates), possibly using automated means. Msg/data
+                  rates apply, msg frequency varies. Consent is not a condition
+                  of purchase. See <Link href="/terms">terms</Link> and{" "}
+                  <Link href="/privacy">privacy policy</Link>. Text HELP for
+                  help and STOP to unsubscribe.
                 </>
               }
             />
@@ -210,10 +265,13 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
               defaultChecked={false}
               label={
                 <>
-                  By submitting, you authorize Farrell Electric, Inc. to text/call the number above for
-                  promotional messages, possibly using automated means. Msg/data rates apply, msg frequency varies.
-                  Consent is not a condition of purchase. See <Link href="/terms">terms</Link> and{" "}
-                  <Link href="/privacy">privacy policy</Link>. Text HELP for help and STOP to unsubscribe.
+                  By submitting, you authorize Farrell Electric, Inc. to
+                  text/call the number above for promotional messages, possibly
+                  using automated means. Msg/data rates apply, msg frequency
+                  varies. Consent is not a condition of purchase. See{" "}
+                  <Link href="/terms">terms</Link> and{" "}
+                  <Link href="/privacy">privacy policy</Link>. Text HELP for
+                  help and STOP to unsubscribe.
                 </>
               }
             />
@@ -236,7 +294,8 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent | nul
           )}
           {status === "error" && (
             <p className={`${styles.status} ${styles.statusError}`}>
-              Something went wrong sending your request. Please call or text us directly.
+              Something went wrong sending your request. Please call or text us
+              directly.
             </p>
           )}
         </form>
