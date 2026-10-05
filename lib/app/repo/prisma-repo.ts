@@ -5,9 +5,19 @@ import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import type { LeadPayload } from "@/lib/leads/types";
 import type { Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
 
-type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: { lineItems: true } }>;
+// Quotes and jobs are READERS of the GHL opportunity ids — the Lead owns them.
+const QUOTE_DETAIL_INCLUDE = {
+  lineItems: true,
+  lead: { select: { ghlSalesOpportunityId: true } },
+} satisfies Prisma.QuoteInclude;
 
-type JobWithQuote = Prisma.JobGetPayload<{ include: { quote: true } }>;
+const JOB_INCLUDE = {
+  quote: { include: { lead: { select: { ghlOpsOpportunityId: true } } } },
+} satisfies Prisma.JobInclude;
+
+type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: typeof QUOTE_DETAIL_INCLUDE }>;
+
+type JobWithQuote = Prisma.JobGetPayload<{ include: typeof JOB_INCLUDE }>;
 
 function mapJob(job: JobWithQuote): RepoJob {
   return {
@@ -18,6 +28,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     customerName: job.quote.customerName,
     customerAddress: job.quote.customerAddress,
     ghlContactId: job.quote.ghlContactId,
+    ghlOpsOpportunityId: job.quote.lead?.ghlOpsOpportunityId ?? null,
     total: Number(job.quote.total),
     paymentType: job.paymentType,
     depositRequired: job.depositRequired,
@@ -58,7 +69,7 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     scopeOfWork: quote.scopeOfWork ?? "",
     publicToken: quote.publicToken,
     ghlContactId: quote.ghlContactId,
-    ghlOpportunityId: quote.ghlOpportunityId,
+    ghlSalesOpportunityId: quote.lead?.ghlSalesOpportunityId ?? null,
     ghlCustomObjectId: quote.ghlCustomObjectId,
     leadId: quote.leadId,
     createdAt: quote.createdAt,
@@ -90,7 +101,8 @@ function mapLead(lead: Lead): RepoLead {
     smsConsentTransactional: lead.smsConsentTransactional,
     smsConsentPromotional: lead.smsConsentPromotional,
     ghlContactId: lead.ghlContactId,
-    ghlOpportunityId: lead.ghlOpportunityId,
+    ghlSalesOpportunityId: lead.ghlSalesOpportunityId,
+    ghlOpsOpportunityId: lead.ghlOpsOpportunityId,
   };
 }
 
@@ -177,7 +189,7 @@ export const prismaRepo: Repo = {
 
   async listJobs() {
     const jobs = await prisma.job.findMany({
-      include: { quote: true },
+      include: JOB_INCLUDE,
       orderBy: { quote: { number: "desc" } },
     });
 
@@ -185,13 +197,13 @@ export const prismaRepo: Repo = {
   },
 
   async getJob(id) {
-    const job = await prisma.job.findUnique({ where: { id }, include: { quote: true } });
+    const job = await prisma.job.findUnique({ where: { id }, include: JOB_INCLUDE });
     return job ? mapJob(job) : null;
   },
 
   async updateJob(id, input) {
     try {
-      const job = await prisma.job.update({ where: { id }, data: input, include: { quote: true } });
+      const job = await prisma.job.update({ where: { id }, data: input, include: JOB_INCLUDE });
       return mapJob(job);
     } catch (error) {
       // P2025: record to update not found.
@@ -213,7 +225,7 @@ export const prismaRepo: Repo = {
       },
     });
     if (count === 0) return null;
-    const job = await prisma.job.findUnique({ where: { id }, include: { quote: true } });
+    const job = await prisma.job.findUnique({ where: { id }, include: JOB_INCLUDE });
     return job ? mapJob(job) : null;
   },
 
@@ -234,12 +246,12 @@ export const prismaRepo: Repo = {
   },
 
   async getQuote(id) {
-    const quote = await prisma.quote.findUnique({ where: { id }, include: { lineItems: true } });
+    const quote = await prisma.quote.findUnique({ where: { id }, include: QUOTE_DETAIL_INCLUDE });
     return quote ? mapQuoteDetail(quote) : null;
   },
 
   async getQuoteByPublicToken(token) {
-    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: { lineItems: true } });
+    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: QUOTE_DETAIL_INCLUDE });
     if (!quote) return null;
 
     return {
@@ -262,7 +274,7 @@ export const prismaRepo: Repo = {
   },
 
   async getInvoiceByPublicToken(token) {
-    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: { lineItems: true } });
+    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: QUOTE_DETAIL_INCLUDE });
     if (!quote || quote.status !== "ACCEPTED") return null;
 
     return {
@@ -325,7 +337,7 @@ export const prismaRepo: Repo = {
           ...(input.leadId !== undefined && { leadId: input.leadId }),
           lineItems: { create: lineItemsData },
         },
-        include: { lineItems: true },
+        include: QUOTE_DETAIL_INCLUDE,
       });
       return mapQuoteDetail(updated);
     }
@@ -354,7 +366,7 @@ export const prismaRepo: Repo = {
         leadId: input.leadId ?? null,
         lineItems: { create: lineItemsData },
       },
-      include: { lineItems: true },
+      include: QUOTE_DETAIL_INCLUDE,
     });
     return mapQuoteDetail(created);
   },
@@ -398,7 +410,6 @@ export const prismaRepo: Repo = {
         where: { id },
         data: {
           ...(ids.ghlContactId !== undefined && { ghlContactId: ids.ghlContactId }),
-          ...(ids.ghlOpportunityId !== undefined && { ghlOpportunityId: ids.ghlOpportunityId }),
           ...(ids.ghlCustomObjectId !== undefined && { ghlCustomObjectId: ids.ghlCustomObjectId }),
         },
       });
@@ -415,7 +426,8 @@ export const prismaRepo: Repo = {
         where: { id },
         data: {
           ...(ids.ghlContactId !== undefined && { ghlContactId: ids.ghlContactId }),
-          ...(ids.ghlOpportunityId !== undefined && { ghlOpportunityId: ids.ghlOpportunityId }),
+          ...(ids.ghlSalesOpportunityId !== undefined && { ghlSalesOpportunityId: ids.ghlSalesOpportunityId }),
+          ...(ids.ghlOpsOpportunityId !== undefined && { ghlOpsOpportunityId: ids.ghlOpsOpportunityId }),
         },
       });
     } catch (error) {

@@ -96,6 +96,12 @@ export interface RepoJob {
   customerAddress: string;
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
+  /**
+   * The Operations-pipeline opportunity id, read through quote → lead (the Lead
+   * owns it). Null until the ops echo-back lands, and always null for an orphan
+   * job whose quote has no lead.
+   */
+  ghlOpsOpportunityId: string | null;
   /** The accepted quote's customer-facing total. */
   total: number;
 
@@ -190,7 +196,14 @@ export interface RepoQuoteDetail extends RepoQuote {
   publicToken: string | null;
   /** Never user-editable — only ever written via updateQuoteGhlIds, by the inbound GHL webhook handler. */
   ghlContactId: string | null;
-  ghlOpportunityId: string | null;
+  /**
+   * The Sales-pipeline opportunity id, READ THROUGH the lead (the Lead owns it;
+   * there is no Quote column). Null until the New Lead echo-back lands, and
+   * always null for an orphan quote (leadId null).
+   * KNOWN DEBT: ghlContactId above is still a Quote column for the same orphan
+   * reason — fold it into this read-through once lead-on-quote-creation lands.
+   */
+  ghlSalesOpportunityId: string | null;
   /** The GHL custom-object id (quote mirror), same write path as ghlContactId. */
   ghlCustomObjectId: string | null;
   /** Internal navigation/provenance only — GHL correlation still rides on customer identity. */
@@ -260,13 +273,13 @@ export interface PublicQuote {
  */
 export interface QuoteGhlIdsInput {
   ghlContactId?: string | null;
-  ghlOpportunityId?: string | null;
   ghlCustomObjectId?: string | null;
 }
 
 export interface LeadGhlIdsInput {
   ghlContactId?: string | null;
-  ghlOpportunityId?: string | null;
+  ghlSalesOpportunityId?: string | null;
+  ghlOpsOpportunityId?: string | null;
 }
 
 /**
@@ -306,7 +319,8 @@ export interface RepoLead {
   smsConsentTransactional: boolean;
   smsConsentPromotional: boolean;
   ghlContactId: string | null;
-  ghlOpportunityId: string | null;
+  ghlSalesOpportunityId: string | null;
+  ghlOpsOpportunityId: string | null;
 }
 
 export interface CreateLeadInput {

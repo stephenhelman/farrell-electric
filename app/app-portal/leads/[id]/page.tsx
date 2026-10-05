@@ -81,8 +81,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <span>{lead.ghlContactId ?? "not yet synced"}</span>
         </div>
         <div className={styles.field}>
-          <span className={styles.fieldLabel}>Opportunity ID</span>
-          <span>{lead.ghlOpportunityId ?? "not yet synced"}</span>
+          <span className={styles.fieldLabel}>Sales opportunity ID</span>
+          <span>{lead.ghlSalesOpportunityId ?? "not yet synced"}</span>
+        </div>
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Ops opportunity ID</span>
+          <span>{lead.ghlOpsOpportunityId ?? "not yet synced"}</span>
         </div>
       </div>
 

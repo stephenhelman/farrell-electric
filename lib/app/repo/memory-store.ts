@@ -54,8 +54,11 @@ const catalogItems = seedCatalogItems();
 /** Job fields owned by the job itself; the quote-derived ones are joined in on read so client-info edits on the quote show through. */
 export type MemoryJobRecord = Omit<
   RepoJob,
-  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "total"
+  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "ghlOpsOpportunityId" | "total"
 >;
+
+/** Quote fields owned by the quote; the sales opp id is joined in from the lead on read. */
+export type MemoryQuoteRecord = Omit<RepoQuoteDetail, "ghlSalesOpportunityId">;
 
 export const memoryStore = {
   users: seedAdminUser(),
@@ -64,7 +67,7 @@ export const memoryStore = {
   // Quotes/jobs have no seed data — they're created through the builder.
   // This array is the entire "database" on the in-memory path: it does not
   // survive a process restart, which is expected until DATABASE_URL is set.
-  quotes: [] as RepoQuoteDetail[],
+  quotes: [] as MemoryQuoteRecord[],
   jobs: [] as MemoryJobRecord[],
   leads: [] as RepoLead[],
 };

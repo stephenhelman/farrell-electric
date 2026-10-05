@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
-import { memoryStore, nextQuoteNumber, type MemoryJobRecord } from "./memory-store";
+import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 
-function toPublicQuote(quote: RepoQuoteDetail): PublicQuote {
+function toPublicQuote(quote: MemoryQuoteRecord): PublicQuote {
   return {
     number: quote.number,
     status: quote.status,
@@ -23,7 +23,7 @@ function toPublicQuote(quote: RepoQuoteDetail): PublicQuote {
   };
 }
 
-function toPublicInvoice(quote: RepoQuoteDetail): PublicInvoice {
+function toPublicInvoice(quote: MemoryQuoteRecord): PublicInvoice {
   return {
     invoiceNumber: `INV-${quote.number}`,
     quoteNumber: quote.number,
@@ -42,6 +42,15 @@ function toPublicInvoice(quote: RepoQuoteDetail): PublicInvoice {
   };
 }
 
+function leadFor(quote: MemoryQuoteRecord | undefined) {
+  return quote?.leadId ? memoryStore.leads.find((l) => l.id === quote.leadId) : undefined;
+}
+
+/** Quotes read the sales opp through the lead, same as the Prisma repo. */
+function toRepoQuote(quote: MemoryQuoteRecord): RepoQuoteDetail {
+  return { ...quote, ghlSalesOpportunityId: leadFor(quote)?.ghlSalesOpportunityId ?? null };
+}
+
 function toRepoJob(record: MemoryJobRecord): RepoJob {
   const quote = memoryStore.quotes.find((q) => q.id === record.quoteId);
   return {
@@ -50,6 +59,7 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
     customerName: quote?.customerName ?? "",
     customerAddress: quote?.customerAddress ?? "",
     ghlContactId: quote?.ghlContactId ?? null,
+    ghlOpsOpportunityId: leadFor(quote)?.ghlOpsOpportunityId ?? null,
     total: quote?.total ?? 0,
   };
 }
@@ -125,7 +135,7 @@ export const memoryRepo: Repo = {
   async getQuote(id) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return null;
-    return { ...quote, lineItems: quote.lineItems.map((item) => ({ ...item })) };
+    return { ...toRepoQuote(quote), lineItems: quote.lineItems.map((item) => ({ ...item })) };
   },
 
   async getQuoteByPublicToken(token) {
@@ -150,7 +160,7 @@ export const memoryRepo: Repo = {
       const existing = memoryStore.quotes[index];
       const publicToken = input.status === "SENT" ? (existing.publicToken ?? randomUUID()) : existing.publicToken;
 
-      const updated: RepoQuoteDetail = {
+      const updated: MemoryQuoteRecord = {
         ...existing,
         status: input.status,
         customerName: input.customerName,
@@ -167,10 +177,10 @@ export const memoryRepo: Repo = {
         ...totals,
       };
       memoryStore.quotes[index] = updated;
-      return updated;
+      return toRepoQuote(updated);
     }
 
-    const created: RepoQuoteDetail = {
+    const created: MemoryQuoteRecord = {
       id: randomUUID(),
       number: nextQuoteNumber(),
       status: input.status,
@@ -185,14 +195,13 @@ export const memoryRepo: Repo = {
       leadId: input.leadId ?? null,
       publicToken: input.status === "SENT" ? randomUUID() : null,
       ghlContactId: null,
-      ghlOpportunityId: null,
       ghlCustomObjectId: null,
       lineItems,
       createdAt: new Date(),
       ...totals,
     };
     memoryStore.quotes.unshift(created);
-    return created;
+    return toRepoQuote(created);
   },
 
   async acceptQuote(id) {
@@ -251,7 +260,6 @@ export const memoryRepo: Repo = {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return;
     if (ids.ghlContactId !== undefined) quote.ghlContactId = ids.ghlContactId;
-    if (ids.ghlOpportunityId !== undefined) quote.ghlOpportunityId = ids.ghlOpportunityId;
     if (ids.ghlCustomObjectId !== undefined) quote.ghlCustomObjectId = ids.ghlCustomObjectId;
   },
 
@@ -259,7 +267,8 @@ export const memoryRepo: Repo = {
     const lead = memoryStore.leads.find((l) => l.id === id);
     if (!lead) return;
     if (ids.ghlContactId !== undefined) lead.ghlContactId = ids.ghlContactId;
-    if (ids.ghlOpportunityId !== undefined) lead.ghlOpportunityId = ids.ghlOpportunityId;
+    if (ids.ghlSalesOpportunityId !== undefined) lead.ghlSalesOpportunityId = ids.ghlSalesOpportunityId;
+    if (ids.ghlOpsOpportunityId !== undefined) lead.ghlOpsOpportunityId = ids.ghlOpsOpportunityId;
   },
 
   async createLead(input) {
@@ -277,7 +286,8 @@ export const memoryRepo: Repo = {
       smsConsentTransactional: input.smsConsentTransactional,
       smsConsentPromotional: input.smsConsentPromotional,
       ghlContactId: null,
-      ghlOpportunityId: null,
+      ghlSalesOpportunityId: null,
+      ghlOpsOpportunityId: null,
     };
     memoryStore.leads.unshift(lead);
     return lead;

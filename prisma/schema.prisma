@@ -155,8 +155,11 @@ model Quote {
   customerPhone     String
   customerEmail     String
   customerAddress   String
+  // KNOWN DEBT: ghlContactId stays on Quote while orphan quotes (leadId null)
+  // exist — dispatches read it directly. Drop it and read through the lead
+  // once lead-on-quote-creation guarantees every quote has a lead.
+  // The opportunity ids live on Lead only; quotes/jobs read them via the lead.
   ghlContactId      String?
-  ghlOpportunityId  String?
   ghlCustomObjectId String?     @unique
   publicToken       String?     @unique
   message           String?
@@ -239,9 +242,11 @@ model Job {
   quote Quote @relation(fields: [quoteId], references: [id])
 }
 
-// System of record for leads submitted from the site. ghlContactId/
-// ghlOpportunityId are mirror linkage written later by the inbound GHL
-// webhook — always null until that round-trip exists.
+// System of record for leads submitted from the site. The Lead owns all three
+// GHL ids (Quotes/Jobs are readers): ghlContactId + ghlSalesOpportunityId are
+// written by the New Lead echo-back; ghlOpsOpportunityId by the later
+// Operations-pipeline echo-back at close. All written only by the inbound GHL
+// webhook — null until those round-trips happen.
 model Lead {
   id                      String     @id @default(cuid())
   createdAt               DateTime   @default(now())
@@ -258,7 +263,8 @@ model Lead {
   smsConsentTransactional Boolean    @default(false)
   smsConsentPromotional   Boolean    @default(false)
   ghlContactId            String?
-  ghlOpportunityId        String?
+  ghlSalesOpportunityId   String?
+  ghlOpsOpportunityId     String?
 
   quotes Quote[]
 }
