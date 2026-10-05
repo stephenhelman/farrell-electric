@@ -11,8 +11,8 @@ export function QuoteRowActions({ quoteId }: { quoteId: string }) {
 
   function accept() {
     startTransition(async () => {
-      await acceptQuoteAction(quoteId);
-      router.refresh();
+      const jobId = await acceptQuoteAction(quoteId);
+      router.push(`/jobs/${jobId}`);
     });
   }
 

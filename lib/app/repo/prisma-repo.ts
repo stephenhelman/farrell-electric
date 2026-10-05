@@ -351,9 +351,12 @@ export const prismaRepo: Repo = {
 
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", publicToken } });
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
-    if (!existingJob) {
-      await prisma.job.create({ data: { quoteId: id, status: "UNSCHEDULED", revenue: existing.total } });
-    }
+    if (existingJob) return existingJob.id;
+
+    const job = await prisma.job.create({
+      data: { quoteId: id, status: "UNSCHEDULED", revenue: existing.total },
+    });
+    return job.id;
   },
 
   async declineQuote(id) {

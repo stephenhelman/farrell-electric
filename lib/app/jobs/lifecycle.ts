@@ -35,3 +35,17 @@ export function closeGateMet(job: GateInput): boolean {
 export function completeGateMet(job: GateInput): boolean {
   return job.installedDate !== null && (job.finalInvoicePaid || balanceDue(job) <= 0);
 }
+
+/**
+ * Display stage for the rep. JobStatus has no CLOSED value, so the lifecycle
+ * label is derived from the gate markers and contract state.
+ */
+export function jobStage(
+  job: Pick<RepoJob, "completedAt" | "closedAt" | "contractStatus">,
+): "Complete" | "Closed" | "Contract signed" | "Contract sent" | "Awaiting contract" {
+  if (job.completedAt) return "Complete";
+  if (job.closedAt) return "Closed";
+  if (job.contractStatus === "SIGNED") return "Contract signed";
+  if (job.contractStatus === "SENT") return "Contract sent";
+  return "Awaiting contract";
+}

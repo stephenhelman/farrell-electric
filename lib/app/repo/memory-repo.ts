@@ -186,36 +186,39 @@ export const memoryRepo: Repo = {
 
   async acceptQuote(id) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
-    if (!quote) return;
+    if (!quote) throw new Error(`Quote ${id} not found`);
     quote.status = "ACCEPTED";
     // A quote can be accepted straight from DRAFT (never marked Sent), which
     // means no publicToken exists yet — mint one now so the Task 10 invoice
     // link always resolves once a quote is ACCEPTED.
     quote.publicToken ??= randomUUID();
 
-    if (!memoryStore.jobs.find((j) => j.quoteId === id)) {
-      memoryStore.jobs.unshift({
-        id: randomUUID(),
-        status: "UNSCHEDULED",
-        quoteId: id,
-        paymentType: null,
-        depositRequired: false,
-        depositAmount: null,
-        contractStatus: "NONE",
-        contractSentAt: null,
-        contractSignedAt: null,
-        depositPaid: false,
-        depositPaidAt: null,
-        finalInvoicePaid: false,
-        finalInvoicePaidAt: null,
-        installScheduledDate: null,
-        installedDate: null,
-        revenue: quote.total,
-        actualCost: null,
-        closedAt: null,
-        completedAt: null,
-      });
-    }
+    const existingJob = memoryStore.jobs.find((j) => j.quoteId === id);
+    if (existingJob) return existingJob.id;
+
+    const job: MemoryJobRecord = {
+      id: randomUUID(),
+      status: "UNSCHEDULED",
+      quoteId: id,
+      paymentType: null,
+      depositRequired: false,
+      depositAmount: null,
+      contractStatus: "NONE",
+      contractSentAt: null,
+      contractSignedAt: null,
+      depositPaid: false,
+      depositPaidAt: null,
+      finalInvoicePaid: false,
+      finalInvoicePaidAt: null,
+      installScheduledDate: null,
+      installedDate: null,
+      revenue: quote.total,
+      actualCost: null,
+      closedAt: null,
+      completedAt: null,
+    };
+    memoryStore.jobs.unshift(job);
+    return job.id;
   },
 
   async declineQuote(id) {

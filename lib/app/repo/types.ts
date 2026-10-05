@@ -327,7 +327,8 @@ export interface Repo {
   /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */
   getInvoiceByPublicToken(token: string): Promise<PublicInvoice | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
-  acceptQuote(id: string): Promise<void>;
+  /** Idempotent. Returns the id of the Job spawned (or already existing) for the accepted quote. */
+  acceptQuote(id: string): Promise<string>;
   declineQuote(id: string): Promise<void>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
   updateQuoteGhlIds(id: string, ids: QuoteGhlIdsInput): Promise<void>;

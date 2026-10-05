@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { getRepo } from "@/lib/app/repo";
 import { formatMoney } from "@/lib/app/format";
+import { jobStage } from "@/lib/app/jobs/lifecycle";
 import { StatusPill } from "@/components/app/StatusPill";
 import styles from "./page.module.css";
 
@@ -15,17 +17,21 @@ export default async function JobsPage() {
       ) : (
         <ul className={styles.list}>
           {jobs.map((job) => (
-            <li key={job.id} className={styles.row}>
-              <div>
-                <div className={styles.title}>
-                  Job #{job.quoteNumber} &middot; {job.customerName}
+            <li key={job.id}>
+              <Link href={`/jobs/${job.id}`} className={styles.row}>
+                <div>
+                  <div className={styles.title}>
+                    Job #{job.quoteNumber} &middot; {job.customerName}
+                  </div>
+                  <div className={styles.meta}>
+                    {job.customerAddress} &middot; {jobStage(job)}
+                  </div>
                 </div>
-                <div className={styles.meta}>{job.customerAddress}</div>
-              </div>
-              <div className={styles.right}>
-                <div className={styles.total}>{formatMoney(job.total)}</div>
-                <StatusPill status={job.status} />
-              </div>
+                <div className={styles.right}>
+                  <div className={styles.total}>{formatMoney(job.total)}</div>
+                  <StatusPill status={job.status} />
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
