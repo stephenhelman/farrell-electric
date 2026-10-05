@@ -4,6 +4,9 @@ import { getRepo } from "@/lib/app/repo";
 import { formatMoney } from "@/lib/app/format";
 import { balanceDue, jobStage } from "@/lib/app/jobs/lifecycle";
 import { StatusPill } from "@/components/app/StatusPill";
+import { resolveScopeOfWork } from "@/lib/app/jobs/contract";
+import { ActualCostForm } from "./ActualCostForm";
+import { GenerateContract } from "./GenerateContract";
 import styles from "./page.module.css";
 
 function formatDate(date: Date | null): string {
@@ -99,6 +102,20 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         <Field label="Status">{titleCase(job.contractStatus)}</Field>
         <Field label="Sent">{formatDate(job.contractSentAt)}</Field>
         <Field label="Signed">{formatDate(job.contractSignedAt)}</Field>
+        <GenerateContract
+          jobId={job.id}
+          contractStatus={job.contractStatus}
+          initial={{
+            paymentType: job.paymentType ?? "",
+            depositRequired: job.depositRequired,
+            depositAmount: job.depositAmount,
+            customerName: job.customerName,
+            customerPhone: quote?.customerPhone ?? "",
+            customerEmail: quote?.customerEmail ?? "",
+            customerAddress: job.customerAddress,
+          }}
+          scopeOfWork={quote ? resolveScopeOfWork(quote) : ""}
+        />
       </div>
 
       <div className={styles.section}>
@@ -125,9 +142,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
       <div className={`${styles.section} ${styles.internal}`}>
         <div className={styles.sectionTitle}>Financials &middot; internal, rep only</div>
         <Field label="Revenue">{formatMoney(job.revenue)}</Field>
-        <Field label="Actual cost">
-          {job.actualCost === null ? "Not entered" : formatMoney(job.actualCost)}
-        </Field>
+        <ActualCostForm jobId={job.id} initial={job.actualCost} />
         <Field label="Margin">
           {margin === null
             ? "—"

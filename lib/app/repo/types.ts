@@ -126,6 +126,22 @@ export interface RepoJob {
   completedAt: Date | null;
 }
 
+/** Client info as confirmed in the Generate Contract modal — written back to the Quote (the single source). */
+export interface QuoteCustomerInput {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  customerAddress: string;
+}
+
+/** The deal terms captured by the Generate Contract modal. */
+export interface JobDealTermsInput {
+  paymentType: PaymentType;
+  depositRequired: boolean;
+  /** Must be null when depositRequired is false. */
+  depositAmount: number | null;
+}
+
 /**
  * Mutable Job fields. undefined = leave unchanged (same convention as the GHL
  * id inputs). closedAt/completedAt are deliberately absent — they are only
@@ -314,6 +330,14 @@ export interface Repo {
   /** Partial update; returns the updated job, or null if the id doesn't exist. */
   updateJob(id: string, input: JobUpdateInput): Promise<RepoJob | null>;
   /**
+   * Persists the deal terms and sets contractStatus = SENT + contractSentAt in
+   * one conditional write that only applies while the contract is NOT SIGNED
+   * — so a signature that lands mid-regeneration can never be downgraded back
+   * to SENT. Returns the updated job, or null if the job is missing or already
+   * SIGNED (nothing written).
+   */
+  sendJobContract(id: string, terms: JobDealTermsInput): Promise<RepoJob | null>;
+  /**
    * Atomically stamps closedAt, only if it is still null. Resolves true for
    * exactly one caller (the one that should fire job.closed) and false for
    * every re-delivery/concurrent caller. Does NOT evaluate the gate itself —
@@ -330,6 +354,8 @@ export interface Repo {
   /** Idempotent. Returns the id of the Job spawned (or already existing) for the accepted quote. */
   acceptQuote(id: string): Promise<string>;
   declineQuote(id: string): Promise<void>;
+  /** Overwrites the customer identity fields on a quote; no-op if the id doesn't exist. */
+  updateQuoteCustomer(id: string, input: QuoteCustomerInput): Promise<void>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
   updateQuoteGhlIds(id: string, ids: QuoteGhlIdsInput): Promise<void>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */

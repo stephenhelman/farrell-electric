@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getRepo } from "@/lib/app/repo";
 import { formatMoney } from "@/lib/app/format";
 import { StatusPill } from "@/components/app/StatusPill";
-import { QuoteRowActions } from "./QuoteRowActions";
 import styles from "./page.module.css";
 
 export default async function QuotesPage() {
@@ -40,9 +39,6 @@ export default async function QuotesPage() {
                   <StatusPill status={quote.status} />
                 </div>
               </div>
-              {quote.status === "DRAFT" || quote.status === "SENT" ? (
-                <QuoteRowActions quoteId={quote.id} />
-              ) : null}
             </li>
           ))}
         </ul>

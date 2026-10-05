@@ -200,6 +200,23 @@ export const prismaRepo: Repo = {
     }
   },
 
+  async sendJobContract(id, terms) {
+    // The WHERE is the guard: a SIGNED contract matches nothing, so it can't be downgraded.
+    const { count } = await prisma.job.updateMany({
+      where: { id, contractStatus: { not: "SIGNED" } },
+      data: {
+        paymentType: terms.paymentType,
+        depositRequired: terms.depositRequired,
+        depositAmount: terms.depositAmount,
+        contractStatus: "SENT",
+        contractSentAt: new Date(),
+      },
+    });
+    if (count === 0) return null;
+    const job = await prisma.job.findUnique({ where: { id }, include: { quote: true } });
+    return job ? mapJob(job) : null;
+  },
+
   async claimJobClosed(id) {
     const { count } = await prisma.job.updateMany({
       where: { id, closedAt: null },
@@ -361,6 +378,18 @@ export const prismaRepo: Repo = {
 
   async declineQuote(id) {
     await prisma.quote.update({ where: { id }, data: { status: "DECLINED" } });
+  },
+
+  async updateQuoteCustomer(id, input) {
+    await prisma.quote.updateMany({
+      where: { id },
+      data: {
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        customerEmail: input.customerEmail,
+        customerAddress: input.customerAddress,
+      },
+    });
   },
 
   async updateQuoteGhlIds(id, ids) {

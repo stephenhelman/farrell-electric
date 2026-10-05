@@ -94,6 +94,17 @@ export const memoryRepo: Repo = {
     return toRepoJob(record);
   },
 
+  async sendJobContract(id, terms) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    if (!record || record.contractStatus === "SIGNED") return null;
+    record.paymentType = terms.paymentType;
+    record.depositRequired = terms.depositRequired;
+    record.depositAmount = terms.depositAmount;
+    record.contractStatus = "SENT";
+    record.contractSentAt = new Date();
+    return toRepoJob(record);
+  },
+
   // Single-threaded, so check-then-set is atomic here — the in-memory twin of
   // Prisma's `updateMany WHERE closedAt IS NULL`.
   async claimJobClosed(id) {
@@ -225,6 +236,15 @@ export const memoryRepo: Repo = {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote) return;
     quote.status = "DECLINED";
+  },
+
+  async updateQuoteCustomer(id, input) {
+    const quote = memoryStore.quotes.find((q) => q.id === id);
+    if (!quote) return;
+    quote.customerName = input.customerName;
+    quote.customerPhone = input.customerPhone;
+    quote.customerEmail = input.customerEmail;
+    quote.customerAddress = input.customerAddress;
   },
 
   async updateQuoteGhlIds(id, ids) {

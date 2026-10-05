@@ -7,6 +7,7 @@ import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
 import { formatMoney } from "@/lib/app/format";
 import { CatalogPicker } from "./CatalogPicker";
+import { QuoteDecision } from "./QuoteDecision";
 import { saveQuoteAction } from "./actions";
 import styles from "./QuoteBuilder.module.css";
 
@@ -78,6 +79,50 @@ export function QuoteBuilder({
     initialQuote?.status === "ACCEPTED" && initialQuote.publicToken ? `${sharePath}/invoice` : null;
 
   const isLocked = initialQuote?.status === "ACCEPTED" || initialQuote?.status === "DECLINED";
+
+  // Accept/decline act on the SAVED quote, so edits not yet saved must block accepting.
+  const hasUnsavedChanges = useMemo(() => {
+    if (!initialQuote) return false;
+    const snapshot = (v: {
+      name: string;
+      phone: string;
+      email: string;
+      address: string;
+      message: string;
+      notes: string;
+      discount: number;
+      scope: string;
+      items: Omit<DraftLineItem, "key">[];
+    }) => JSON.stringify(v);
+    const pick = ({ catalogItemId, name, description, qty, unitPrice, cost, taxable }: Omit<DraftLineItem, "key">) => ({
+      catalogItemId, name, description, qty, unitPrice, cost, taxable,
+    });
+    return (
+      snapshot({
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        email: customerEmail.trim(),
+        address: customerAddress.trim(),
+        message,
+        notes,
+        discount,
+        scope: scopeOfWork,
+        items: lineItems.map(pick),
+      }) !==
+      snapshot({
+        name: initialQuote.customerName,
+        phone: initialQuote.customerPhone,
+        email: initialQuote.customerEmail,
+        address: initialQuote.customerAddress,
+        message: initialQuote.message,
+        notes: initialQuote.notes,
+        discount: initialQuote.discount,
+        scope: initialQuote.scopeOfWork,
+        items: initialQuote.lineItems.map(pick),
+      })
+    );
+  }, [initialQuote, customerName, customerPhone, customerEmail, customerAddress, message, notes, discount, scopeOfWork, lineItems]);
+  const canDecide = initialQuote !== null && (initialQuote.status === "DRAFT" || initialQuote.status === "SENT");
 
   function addItem(item: RepoCatalogItem) {
     setLineItems((current) => {
@@ -170,6 +215,15 @@ export function QuoteBuilder({
           >
             Mark Sent
           </button>
+          {initialQuote && canDecide ? (
+            <QuoteDecision
+              quoteId={initialQuote.id}
+              quoteNumber={initialQuote.number}
+              customerName={initialQuote.customerName}
+              total={initialQuote.total}
+              hasUnsavedChanges={hasUnsavedChanges || isPending}
+            />
+          ) : null}
         </div>
       </div>
 

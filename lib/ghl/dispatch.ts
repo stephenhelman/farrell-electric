@@ -56,7 +56,35 @@ export interface QuoteAcceptedPayload {
   publicQuoteUrl: string;
 }
 
-export type GhlEventPayload = LeadCreatedPayload | QuoteSentPayload | QuoteAcceptedPayload;
+/**
+ * Fired when a rep generates/regenerates the contract. Carries the stored deal
+ * terms and customer-facing data only — `total` is the quote's customer-facing
+ * total. Never revenue/actualCost/margin, and never opportunity/pipeline ids:
+ * GHL routes off jobId + ghlContactId.
+ */
+export interface JobContractSentPayload {
+  event: "job.contract_sent";
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  /** Null until the GHL lead round-trip has written it back to the quote. */
+  ghlContactId: string | null;
+  scopeOfWork: string;
+  paymentType: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER";
+  depositRequired: boolean;
+  depositAmount: number | null;
+  total: number;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  customerAddress: string;
+}
+
+export type GhlEventPayload =
+  | LeadCreatedPayload
+  | QuoteSentPayload
+  | QuoteAcceptedPayload
+  | JobContractSentPayload;
 
 /** Entity prefix → the env var naming that entity's outbound webhook URL. */
 const ENTITY_WEBHOOKS = {
