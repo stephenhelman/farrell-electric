@@ -82,6 +82,16 @@ export const ENV_VARS: EnvVarSpec[] = [
     whenUnset: "lib/ghl/dispatch.ts logs and no-ops instead of POSTing job.* events to GHL (other entities are unaffected).",
   },
   {
+    name: "TURNSTILE_SECRET_KEY",
+    tier: "stub",
+    whenUnset: "Cloudflare Turnstile is off (the intended default) — the honeypot, timing and validation guards still run. Needs NEXT_PUBLIC_TURNSTILE_SITE_KEY too.",
+  },
+  {
+    name: "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    tier: "stub",
+    whenUnset: "the contact form renders no Turnstile widget. Turnstile only turns on when this AND TURNSTILE_SECRET_KEY are set.",
+  },
+  {
     name: "GHL_WEBHOOK_SECRET",
     tier: "stub",
     whenUnset: "app/api/webhooks/ghl rejects every inbound callback (401) — no secret configured means nothing is trusted.",

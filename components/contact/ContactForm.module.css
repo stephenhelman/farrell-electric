@@ -121,3 +121,13 @@
   border: 1px solid var(--color-error);
   color: var(--color-error);
 }
+
+/* Honeypot container: off-screen rather than display:none (which some bots detect). */
+.hp {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import type {
   LeadIntent,
@@ -8,6 +8,8 @@ import type {
   LightingLeadPayload,
   ElectricalLeadPayload,
 } from "@/lib/leads/types";
+import { HONEYPOT_FIELD, LEAD_FIELD_LIMITS } from "@/lib/leads/validation";
+import { TurnstileWidget } from "./TurnstileWidget";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Checkbox } from "@/components/ui/Checkbox";
 import styles from "./ContactForm.module.css";
@@ -25,15 +27,36 @@ function isLightingIntent(intent: LeadIntent): boolean {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
+// Inlined at build time. Unset = Turnstile is off: no widget, no script.
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
   const [intent, setIntent] = useState<LeadIntent>(
     initialIntent ?? "landscape-lighting",
   );
   const [status, setStatus] = useState<SubmitStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const handleToken = useCallback((token: string | null) => setTurnstileToken(token), []);
+
+  // Time-to-submit guard: the server drops submissions that arrive faster than
+  // a human could fill the form. Elapsed time (not a timestamp) so a wrong
+  // system clock can never wall out a real customer.
+  const mountedAt = useRef(0);
+  useEffect(() => {
+    mountedAt.current = Date.now();
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!intent) return;
+
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setErrorMessage("Please complete the verification check, then submit again.");
+      setStatus("error");
+      return;
+    }
 
     // Captured synchronously: React nulls event.currentTarget once the
     // handler's synchronous phase ends, which happens before `await` resumes.
@@ -70,20 +93,29 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
         } as ElectricalLeadPayload);
 
     setStatus("submitting");
+    setErrorMessage(null);
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          [HONEYPOT_FIELD]: String(formData.get(HONEYPOT_FIELD) ?? ""),
+          formElapsedMs: Date.now() - mountedAt.current,
+          ...(TURNSTILE_SITE_KEY && { turnstileToken }),
+        }),
       });
       const result = await response.json();
       setStatus(result.ok ? "success" : "error");
+      // The server's message is specific (e.g. "Please enter a valid phone number") — show it so a real person can fix it.
+      setErrorMessage(result.ok ? null : typeof result.error === "string" ? result.error : null);
       if (result.ok) {
         form.reset();
       }
     } catch {
       setStatus("error");
     }
+    if (TURNSTILE_SITE_KEY) setTurnstileReset((count) => count + 1);
   }
 
   return (
@@ -117,6 +149,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
               className={styles.input}
               id="name"
               name="name"
+              maxLength={LEAD_FIELD_LIMITS.name}
               type="text"
               required
             />
@@ -130,6 +163,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
               className={styles.input}
               id="phone"
               name="phone"
+              maxLength={LEAD_FIELD_LIMITS.phone}
               type="tel"
               required
             />
@@ -143,6 +177,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
               className={styles.input}
               id="email"
               name="email"
+              maxLength={LEAD_FIELD_LIMITS.email}
               type="email"
               required
             />
@@ -156,6 +191,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
               className={styles.input}
               id="propertyAddress"
               name="propertyAddress"
+              maxLength={LEAD_FIELD_LIMITS.propertyAddress}
               type="text"
               required
             />
@@ -188,6 +224,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
                   className={styles.textarea}
                   id="projectDetails"
                   name="projectDetails"
+                  maxLength={LEAD_FIELD_LIMITS.projectDetails}
                 />
               </div>
             </>
@@ -201,6 +238,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
                   className={styles.input}
                   id="issueType"
                   name="issueType"
+                  maxLength={LEAD_FIELD_LIMITS.issueType}
                   type="text"
                   required
                 />
@@ -214,6 +252,7 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
                   className={styles.textarea}
                   id="description"
                   name="description"
+                  maxLength={LEAD_FIELD_LIMITS.description}
                   required
                 />
               </div>
@@ -277,6 +316,24 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
             />
           </div>
 
+          {/* Honeypot: off-screen, out of the a11y tree, nonsense name, autofill/password-manager opt-outs. A human never touches it. */}
+          <div className={styles.hp} aria-hidden="true">
+            <input
+              type="text"
+              name={HONEYPOT_FIELD}
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+            />
+          </div>
+
+          {TURNSTILE_SITE_KEY ? (
+            <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={handleToken} resetCount={turnstileReset} />
+          ) : null}
+
           <div className={styles.submitRow}>
             <SubmitButton variant="primary" disabled={status === "submitting"}>
               {status === "submitting"
@@ -294,8 +351,8 @@ export function ContactForm({ initialIntent }: { initialIntent: LeadIntent }) {
           )}
           {status === "error" && (
             <p className={`${styles.status} ${styles.statusError}`}>
-              Something went wrong sending your request. Please call or text us
-              directly.
+              {errorMessage ??
+                "Something went wrong sending your request. Please call or text us directly."}
             </p>
           )}
         </form>
