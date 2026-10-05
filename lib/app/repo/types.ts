@@ -74,16 +74,79 @@ export interface RepoQuote {
 }
 
 export type JobStatus = "UNSCHEDULED" | "SCHEDULED" | "DONE";
+export type PaymentType = "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER";
+export type ContractStatus = "NONE" | "SENT" | "SIGNED";
 
+/**
+ * The post-sale record. INTERNAL: carries revenue/actualCost, so it must
+ * never be spread or passed into a customer-facing surface or GHL payload —
+ * outbound job events are hand-mapped from it (economics wall).
+ *
+ * Lifecycle state is the flags + dates below; Closed is derived from closedAt
+ * (JobStatus has no CLOSED value). See lib/app/jobs/lifecycle.ts for the gates.
+ */
 export interface RepoJob {
   id: string;
   status: JobStatus;
-  installDate: Date | null;
   quoteId: string;
+
+  // Read through from the quote (the single source for client info).
   quoteNumber: number;
   customerName: string;
   customerAddress: string;
+  /** Null until the GHL lead round-trip has written it back to the quote. */
+  ghlContactId: string | null;
+  /** The accepted quote's customer-facing total. */
   total: number;
+
+  // Deal terms — null/false until the Generate Contract modal sets them.
+  paymentType: PaymentType | null;
+  depositRequired: boolean;
+  depositAmount: number | null;
+
+  contractStatus: ContractStatus;
+  contractSentAt: Date | null;
+  contractSignedAt: Date | null;
+
+  depositPaid: boolean;
+  depositPaidAt: Date | null;
+  finalInvoicePaid: boolean;
+  finalInvoicePaidAt: Date | null;
+
+  installScheduledDate: Date | null;
+  /** Also the warranty start. */
+  installedDate: Date | null;
+
+  // INTERNAL financials. revenue defaults from the quote total at job creation.
+  revenue: number;
+  actualCost: number | null;
+
+  /** Set once, by claimJobClosed / claimJobCompleted — records that the gate already fired. */
+  closedAt: Date | null;
+  completedAt: Date | null;
+}
+
+/**
+ * Mutable Job fields. undefined = leave unchanged (same convention as the GHL
+ * id inputs). closedAt/completedAt are deliberately absent — they are only
+ * ever written by the claim methods, which guard against double-firing.
+ */
+export interface JobUpdateInput {
+  status?: JobStatus;
+  paymentType?: PaymentType | null;
+  depositRequired?: boolean;
+  depositAmount?: number | null;
+  contractStatus?: ContractStatus;
+  contractSentAt?: Date | null;
+  contractSignedAt?: Date | null;
+  depositPaid?: boolean;
+  depositPaidAt?: Date | null;
+  finalInvoicePaid?: boolean;
+  finalInvoicePaidAt?: Date | null;
+  installScheduledDate?: Date | null;
+  installedDate?: Date | null;
+  revenue?: number;
+  actualCost?: number | null;
 }
 
 export interface RepoQuoteLineItem {
@@ -247,6 +310,18 @@ export interface Repo {
   listOptions(): Promise<RepoOption[]>;
   listQuotes(): Promise<RepoQuote[]>;
   listJobs(): Promise<RepoJob[]>;
+  getJob(id: string): Promise<RepoJob | null>;
+  /** Partial update; returns the updated job, or null if the id doesn't exist. */
+  updateJob(id: string, input: JobUpdateInput): Promise<RepoJob | null>;
+  /**
+   * Atomically stamps closedAt, only if it is still null. Resolves true for
+   * exactly one caller (the one that should fire job.closed) and false for
+   * every re-delivery/concurrent caller. Does NOT evaluate the gate itself —
+   * callers check lib/app/jobs/lifecycle.ts first.
+   */
+  claimJobClosed(id: string): Promise<boolean>;
+  /** Same guard for completedAt; the winning call also sets status = DONE. */
+  claimJobCompleted(id: string): Promise<boolean>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;
   getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
   /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */

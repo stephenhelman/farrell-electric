@@ -3,9 +3,40 @@ import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import type { LeadPayload } from "@/lib/leads/types";
-import type { Repo, RepoLead, RepoQuoteDetail } from "./types";
+import type { Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
 
 type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: { lineItems: true } }>;
+
+type JobWithQuote = Prisma.JobGetPayload<{ include: { quote: true } }>;
+
+function mapJob(job: JobWithQuote): RepoJob {
+  return {
+    id: job.id,
+    status: job.status,
+    quoteId: job.quoteId,
+    quoteNumber: job.quote.number,
+    customerName: job.quote.customerName,
+    customerAddress: job.quote.customerAddress,
+    ghlContactId: job.quote.ghlContactId,
+    total: Number(job.quote.total),
+    paymentType: job.paymentType,
+    depositRequired: job.depositRequired,
+    depositAmount: job.depositAmount === null ? null : Number(job.depositAmount),
+    contractStatus: job.contractStatus,
+    contractSentAt: job.contractSentAt,
+    contractSignedAt: job.contractSignedAt,
+    depositPaid: job.depositPaid,
+    depositPaidAt: job.depositPaidAt,
+    finalInvoicePaid: job.finalInvoicePaid,
+    finalInvoicePaidAt: job.finalInvoicePaidAt,
+    installScheduledDate: job.installScheduledDate,
+    installedDate: job.installedDate,
+    revenue: Number(job.revenue),
+    actualCost: job.actualCost === null ? null : Number(job.actualCost),
+    closedAt: job.closedAt,
+    completedAt: job.completedAt,
+  };
+}
 
 function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
   return {
@@ -150,16 +181,39 @@ export const prismaRepo: Repo = {
       orderBy: { quote: { number: "desc" } },
     });
 
-    return jobs.map((job) => ({
-      id: job.id,
-      status: job.status,
-      installDate: job.installDate,
-      quoteId: job.quoteId,
-      quoteNumber: job.quote.number,
-      customerName: job.quote.customerName,
-      customerAddress: job.quote.customerAddress,
-      total: Number(job.quote.total),
-    }));
+    return jobs.map(mapJob);
+  },
+
+  async getJob(id) {
+    const job = await prisma.job.findUnique({ where: { id }, include: { quote: true } });
+    return job ? mapJob(job) : null;
+  },
+
+  async updateJob(id, input) {
+    try {
+      const job = await prisma.job.update({ where: { id }, data: input, include: { quote: true } });
+      return mapJob(job);
+    } catch (error) {
+      // P2025: record to update not found.
+      if (error instanceof Error && "code" in error && error.code === "P2025") return null;
+      throw error;
+    }
+  },
+
+  async claimJobClosed(id) {
+    const { count } = await prisma.job.updateMany({
+      where: { id, closedAt: null },
+      data: { closedAt: new Date() },
+    });
+    return count === 1;
+  },
+
+  async claimJobCompleted(id) {
+    const { count } = await prisma.job.updateMany({
+      where: { id, completedAt: null },
+      data: { completedAt: new Date(), status: "DONE" },
+    });
+    return count === 1;
   },
 
   async getQuote(id) {
@@ -298,7 +352,7 @@ export const prismaRepo: Repo = {
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", publicToken } });
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
     if (!existingJob) {
-      await prisma.job.create({ data: { quoteId: id, status: "UNSCHEDULED" } });
+      await prisma.job.create({ data: { quoteId: id, status: "UNSCHEDULED", revenue: existing.total } });
     }
   },
 

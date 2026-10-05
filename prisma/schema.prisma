@@ -69,6 +69,20 @@ enum JobStatus {
   DONE
 }
 
+enum PaymentType {
+  CARD
+  CHECK
+  CASH
+  FINANCING
+  OTHER
+}
+
+enum ContractStatus {
+  NONE
+  SENT
+  SIGNED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -180,13 +194,47 @@ model QuoteLineItem {
   option      Option?      @relation(fields: [optionId], references: [id])
 }
 
-// Local reflection of install scheduling only — pipeline proper lives in GHL
-// once Task 9 connects it.
+// Post-sale operational record — the hub for everything after quote
+// acceptance. DB is the source of truth; GHL mirrors it via events. Lifecycle
+// gates read the flags below: Closed = signed && (depositPaid || !depositRequired),
+// Complete = installed && (finalInvoicePaid || balanceDue <= 0). closedAt /
+// completedAt record that a gate already fired (set via a conditional
+// "WHERE ... IS NULL" update so re-delivery never double-advances); Closed is
+// derived from closedAt, so JobStatus stays UNSCHEDULED/SCHEDULED/DONE.
+// revenue/actualCost are INTERNAL economics — never on a customer-facing
+// surface or GHL payload.
 model Job {
-  id          String    @id @default(cuid())
-  quoteId     String    @unique
-  status      JobStatus @default(UNSCHEDULED)
-  installDate DateTime?
+  id      String    @id @default(cuid())
+  quoteId String    @unique
+  status  JobStatus @default(UNSCHEDULED)
+
+  // Deal terms — runtime inputs captured by the Generate Contract modal.
+  paymentType     PaymentType?
+  depositRequired Boolean      @default(false)
+  depositAmount   Decimal?
+
+  // Contract
+  contractStatus   ContractStatus @default(NONE)
+  contractSentAt   DateTime?
+  contractSignedAt DateTime?
+
+  // Payments
+  depositPaid        Boolean   @default(false)
+  depositPaidAt      DateTime?
+  finalInvoicePaid   Boolean   @default(false)
+  finalInvoicePaidAt DateTime?
+
+  // Install — installedDate doubles as the warranty start.
+  installScheduledDate DateTime?
+  installedDate        DateTime?
+
+  // Financials (INTERNAL). revenue defaults from the accepted quote's total.
+  revenue    Decimal
+  actualCost Decimal?
+
+  // Lifecycle gate markers.
+  closedAt    DateTime?
+  completedAt DateTime?
 
   quote Quote @relation(fields: [quoteId], references: [id])
 }
@@ -195,22 +243,22 @@ model Job {
 // ghlOpportunityId are mirror linkage written later by the inbound GHL
 // webhook — always null until that round-trip exists.
 model Lead {
-  id               String     @id @default(cuid())
-  createdAt        DateTime   @default(now())
-  status           LeadStatus @default(NEW)
-  leadType         LeadType
-  source           String     @default("contact_form")
-  name             String
-  phone            String
-  email            String?
-  propertyAddress  String?
-  details          Json
+  id                      String     @id @default(cuid())
+  createdAt               DateTime   @default(now())
+  status                  LeadStatus @default(NEW)
+  leadType                LeadType
+  source                  String     @default("contact_form")
+  name                    String
+  phone                   String
+  email                   String?
+  propertyAddress         String?
+  details                 Json
   // Provable SMS consent, captured at submission — independent of `details`
   // so consent state can't be lost/altered by future changes to the JSON blob.
-  smsConsentTransactional Boolean @default(false)
-  smsConsentPromotional   Boolean @default(false)
-  ghlContactId     String?
-  ghlOpportunityId String?
+  smsConsentTransactional Boolean    @default(false)
+  smsConsentPromotional   Boolean    @default(false)
+  ghlContactId            String?
+  ghlOpportunityId        String?
 
   quotes Quote[]
 }

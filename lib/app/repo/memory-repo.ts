@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { PublicInvoice, PublicQuote, Repo, RepoLead, RepoQuoteDetail } from "./types";
-import { memoryStore, nextQuoteNumber } from "./memory-store";
+import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
+import { memoryStore, nextQuoteNumber, type MemoryJobRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 
 function toPublicQuote(quote: RepoQuoteDetail): PublicQuote {
@@ -42,6 +42,18 @@ function toPublicInvoice(quote: RepoQuoteDetail): PublicInvoice {
   };
 }
 
+function toRepoJob(record: MemoryJobRecord): RepoJob {
+  const quote = memoryStore.quotes.find((q) => q.id === record.quoteId);
+  return {
+    ...record,
+    quoteNumber: quote?.number ?? 0,
+    customerName: quote?.customerName ?? "",
+    customerAddress: quote?.customerAddress ?? "",
+    ghlContactId: quote?.ghlContactId ?? null,
+    total: quote?.total ?? 0,
+  };
+}
+
 /**
  * In-memory fallback used whenever DATABASE_URL is unset — the app builds,
  * runs, and authenticates with zero database credentials.
@@ -65,7 +77,38 @@ export const memoryRepo: Repo = {
   },
 
   async listJobs() {
-    return [...memoryStore.jobs].sort((a, b) => b.quoteNumber - a.quoteNumber);
+    return memoryStore.jobs.map(toRepoJob).sort((a, b) => b.quoteNumber - a.quoteNumber);
+  },
+
+  async getJob(id) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    return record ? toRepoJob(record) : null;
+  },
+
+  async updateJob(id, input) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    if (!record) return null;
+    for (const [key, value] of Object.entries(input)) {
+      if (value !== undefined) (record as unknown as Record<string, unknown>)[key] = value;
+    }
+    return toRepoJob(record);
+  },
+
+  // Single-threaded, so check-then-set is atomic here — the in-memory twin of
+  // Prisma's `updateMany WHERE closedAt IS NULL`.
+  async claimJobClosed(id) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    if (!record || record.closedAt !== null) return false;
+    record.closedAt = new Date();
+    return true;
+  },
+
+  async claimJobCompleted(id) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    if (!record || record.completedAt !== null) return false;
+    record.completedAt = new Date();
+    record.status = "DONE";
+    return true;
   },
 
   async getQuote(id) {
@@ -154,12 +197,23 @@ export const memoryRepo: Repo = {
       memoryStore.jobs.unshift({
         id: randomUUID(),
         status: "UNSCHEDULED",
-        installDate: null,
         quoteId: id,
-        quoteNumber: quote.number,
-        customerName: quote.customerName,
-        customerAddress: quote.customerAddress,
-        total: quote.total,
+        paymentType: null,
+        depositRequired: false,
+        depositAmount: null,
+        contractStatus: "NONE",
+        contractSentAt: null,
+        contractSignedAt: null,
+        depositPaid: false,
+        depositPaidAt: null,
+        finalInvoicePaid: false,
+        finalInvoicePaidAt: null,
+        installScheduledDate: null,
+        installedDate: null,
+        revenue: quote.total,
+        actualCost: null,
+        closedAt: null,
+        completedAt: null,
       });
     }
   },
