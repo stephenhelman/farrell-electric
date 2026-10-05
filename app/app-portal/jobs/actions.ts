@@ -1,6 +1,7 @@
 "use server";
 
 import { getRepo } from "@/lib/app/repo";
+import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
 import { dispatchJobContractSent } from "@/lib/app/ghl/dispatch-job";
 import {
   resolveScopeOfWork,
@@ -43,6 +44,14 @@ export async function generateContractAction(
   const quote = await repo.getQuote(job.quoteId);
   if (quote) {
     await dispatchJobContractSent(updated, quote, resolveScopeOfWork(quote));
+  }
+
+  // New terms can change the balance due. If the job was already installed, no
+  // later inbound event would re-check the Complete gate — so check it here.
+  try {
+    await advanceJobLifecycle(repo, jobId);
+  } catch (error) {
+    console.error("[jobs/actions] lifecycle check after contract failed (non-fatal)", error);
   }
 
   return { ok: true };

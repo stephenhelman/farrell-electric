@@ -34,3 +34,38 @@ export async function dispatchJobContractSent(
     customerAddress: quote.customerAddress,
   });
 }
+
+/**
+ * job.closed / job.completed. Fired by the lifecycle gates (lib/app/jobs/gates.ts)
+ * only after they have WON the claimJob* guard, so each fires once per job.
+ * Hand-mapped for the same reason as above — RepoJob carries revenue/actualCost.
+ * Best-effort, non-fatal.
+ */
+export async function dispatchJobClosed(job: RepoJob): Promise<void> {
+  if (!job.closedAt) return;
+
+  await dispatchGhlEvent({
+    event: "job.closed",
+    jobId: job.id,
+    quoteId: job.quoteId,
+    quoteNumber: job.quoteNumber,
+    ghlContactId: job.ghlContactId,
+    total: job.total,
+    closedAt: job.closedAt.toISOString(),
+  });
+}
+
+export async function dispatchJobCompleted(job: RepoJob): Promise<void> {
+  if (!job.completedAt || !job.installedDate) return;
+
+  await dispatchGhlEvent({
+    event: "job.completed",
+    jobId: job.id,
+    quoteId: job.quoteId,
+    quoteNumber: job.quoteNumber,
+    ghlContactId: job.ghlContactId,
+    total: job.total,
+    completedAt: job.completedAt.toISOString(),
+    installedDate: job.installedDate.toISOString(),
+  });
+}

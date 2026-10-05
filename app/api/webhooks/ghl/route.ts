@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { getRepo } from "@/lib/app/repo";
+import { advanceJobLifecycle, type AdvanceResult } from "@/lib/app/jobs/gates";
 import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/inbound";
 
 /**
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
   const repo = await getRepo();
 
   if (body.type === "job") {
+    let advanced: AdvanceResult = { closed: false, completed: false };
     try {
       const job = await repo.getJob(body.dbId);
       if (!job) {
@@ -116,12 +118,18 @@ export async function POST(request: Request) {
       if (Object.keys(patch).length > 0) {
         await repo.updateJob(job.id, patch);
       }
+
+      // The gates run AFTER the field write — and on re-deliveries too — so
+      // they judge the stored flags and any event order works. They are
+      // exactly-once via the claimJob* guards, so re-checking is always safe.
+      advanced = await advanceJobLifecycle(repo, job.id);
     } catch (error) {
+      // 500 so GHL redelivers; every step above is idempotent.
       console.error("[api/webhooks/ghl] failed to write job event", error);
       return NextResponse.json({ ok: false, error: "Write failed." }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    return NextResponse.json({ ok: true, ...advanced }, { status: 200 });
   }
 
   try {

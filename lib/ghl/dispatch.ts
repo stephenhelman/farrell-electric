@@ -80,11 +80,46 @@ export interface JobContractSentPayload {
   customerAddress: string;
 }
 
+/**
+ * Fired exactly once, when the server-side close gate is met:
+ * contract signed AND (deposit paid OR no deposit required). Identifiers +
+ * customer-facing total only — same economics wall and ID discipline as above.
+ */
+export interface JobClosedPayload {
+  event: "job.closed";
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  ghlContactId: string | null;
+  total: number;
+  /** ISO timestamp. */
+  closedAt: string;
+}
+
+/**
+ * Fired exactly once, when the complete gate is met:
+ * installed AND (final invoice paid OR no balance due).
+ */
+export interface JobCompletedPayload {
+  event: "job.completed";
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  ghlContactId: string | null;
+  total: number;
+  /** ISO timestamp. */
+  completedAt: string;
+  /** ISO timestamp — the warranty start. */
+  installedDate: string;
+}
+
 export type GhlEventPayload =
   | LeadCreatedPayload
   | QuoteSentPayload
   | QuoteAcceptedPayload
-  | JobContractSentPayload;
+  | JobContractSentPayload
+  | JobClosedPayload
+  | JobCompletedPayload;
 
 /** Entity prefix → the env var naming that entity's outbound webhook URL. */
 const ENTITY_WEBHOOKS = {

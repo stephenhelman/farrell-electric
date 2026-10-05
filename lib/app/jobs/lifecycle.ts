@@ -31,9 +31,19 @@ export function closeGateMet(job: GateInput): boolean {
   return job.contractStatus === "SIGNED" && (job.depositPaid || !job.depositRequired);
 }
 
-/** Complete = installed AND (final invoice paid OR no balance due). */
+/**
+ * Complete = Closed AND installed AND (final invoice paid OR no balance due).
+ * Closed is part of the invariant: a job must never complete without a signed
+ * contract (and its deposit, if one was required). It is evaluated from the
+ * flags (closeGateMet), so it holds in any event order — the pass that closes
+ * a job can complete it in the same call.
+ */
 export function completeGateMet(job: GateInput): boolean {
-  return job.installedDate !== null && (job.finalInvoicePaid || balanceDue(job) <= 0);
+  return (
+    closeGateMet(job) &&
+    job.installedDate !== null &&
+    (job.finalInvoicePaid || balanceDue(job) <= 0)
+  );
 }
 
 /**
