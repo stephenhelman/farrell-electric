@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { getRepo } from "@/lib/app/repo";
+import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/inbound";
 
 /**
  * Inbound GHL → server callback (§1). GHL reports the ids it minted for a
@@ -12,16 +13,33 @@ import { getRepo } from "@/lib/app/repo";
  * lets you attach a static custom header) rather than a request-signing
  * scheme GHL doesn't support out of the box. Unverified requests are
  * rejected outright — there is no "warn and continue" path for inbound.
+ *
+ * type "job" carries a lifecycle `action` instead of ids (contract signed,
+ * deposit paid, install scheduled, installed, final paid). Those are written
+ * to the Job as facts, idempotently — see lib/app/jobs/inbound.ts. Whether a
+ * deal closes or a job completes is decided separately by the lifecycle gates.
  */
 const SECRET_HEADER = "x-ghl-webhook-secret";
 
-interface InboundPayload {
+interface IdsPayload {
   type: "lead" | "quote";
   dbId: string;
   ghlContactId?: string;
   ghlOpportunityId?: string;
   ghlCustomObjectId?: string;
 }
+
+interface JobEventPayload {
+  type: "job";
+  dbId: string;
+  action: JobAction;
+  /** ISO timestamp the event happened in GHL; defaults to receipt time. */
+  occurredAt?: string;
+  /** ISO date of the install itself — required for install_scheduled. */
+  scheduledDate?: string;
+}
+
+type InboundPayload = IdsPayload | JobEventPayload;
 
 function isVerified(request: Request): boolean {
   const secret = process.env.GHL_WEBHOOK_SECRET;
@@ -36,11 +54,24 @@ function isVerified(request: Request): boolean {
   return timingSafeEqual(secretBuf, providedBuf);
 }
 
+function isValidDate(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(new Date(value).getTime());
+}
+
 function isValidPayload(value: unknown): value is InboundPayload {
   if (typeof value !== "object" || value === null) return false;
   const payload = value as Record<string, unknown>;
-  if (payload.type !== "lead" && payload.type !== "quote") return false;
   if (typeof payload.dbId !== "string" || payload.dbId.trim() === "") return false;
+
+  if (payload.type === "job") {
+    if (!isJobAction(payload.action)) return false;
+    if (payload.occurredAt !== undefined && !isValidDate(payload.occurredAt)) return false;
+    if (payload.scheduledDate !== undefined && !isValidDate(payload.scheduledDate)) return false;
+    if (payload.action === "install_scheduled" && payload.scheduledDate === undefined) return false;
+    return true;
+  }
+
+  if (payload.type !== "lead" && payload.type !== "quote") return false;
   if (payload.ghlContactId !== undefined && typeof payload.ghlContactId !== "string") return false;
   if (payload.ghlOpportunityId !== undefined && typeof payload.ghlOpportunityId !== "string") return false;
   if (payload.ghlCustomObjectId !== undefined && typeof payload.ghlCustomObjectId !== "string") return false;
@@ -64,6 +95,34 @@ export async function POST(request: Request) {
   }
 
   const repo = await getRepo();
+
+  if (body.type === "job") {
+    try {
+      const job = await repo.getJob(body.dbId);
+      if (!job) {
+        // A job id that doesn't exist will never become valid — 200 so GHL doesn't retry, loud log so a misconfig is visible.
+        console.error(`[api/webhooks/ghl] ${body.action} for unknown job ${body.dbId} — ignored`);
+        return NextResponse.json({ ok: true, ignored: "job not found" }, { status: 200 });
+      }
+
+      const patch = buildJobEventPatch(
+        job,
+        body.action,
+        body.occurredAt ? new Date(body.occurredAt) : new Date(),
+        body.scheduledDate ? new Date(body.scheduledDate) : null,
+      );
+
+      // An empty patch means the fact is already recorded: a re-delivery, a clean no-op.
+      if (Object.keys(patch).length > 0) {
+        await repo.updateJob(job.id, patch);
+      }
+    } catch (error) {
+      console.error("[api/webhooks/ghl] failed to write job event", error);
+      return NextResponse.json({ ok: false, error: "Write failed." }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
 
   try {
     if (body.type === "lead") {
