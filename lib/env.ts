@@ -67,9 +67,19 @@ export const ENV_VARS: EnvVarSpec[] = [
     whenUnset: "middleware.ts defaults the app host to app.farrellelectric.com (app.localhost:3000 in dev).",
   },
   {
-    name: "GHL_WEBHOOK_URL",
+    name: "GHL_WEBHOOK_URL_LEAD",
     tier: "stub",
-    whenUnset: "lib/ghl/dispatch.ts's dispatchGhlEvent logs and no-ops instead of POSTing lead/quote signals to GHL.",
+    whenUnset: "lib/ghl/dispatch.ts logs and no-ops instead of POSTing lead.* events to GHL (other entities are unaffected).",
+  },
+  {
+    name: "GHL_WEBHOOK_URL_QUOTE",
+    tier: "stub",
+    whenUnset: "lib/ghl/dispatch.ts logs and no-ops instead of POSTing quote.* events to GHL (other entities are unaffected).",
+  },
+  {
+    name: "GHL_WEBHOOK_URL_JOB",
+    tier: "stub",
+    whenUnset: "lib/ghl/dispatch.ts logs and no-ops instead of POSTing job.* events to GHL (other entities are unaffected).",
   },
   {
     name: "GHL_WEBHOOK_SECRET",

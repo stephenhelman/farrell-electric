@@ -21,6 +21,8 @@ export async function dispatchQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" |
       event: "quote.sent",
       quoteId: quote.id,
       quoteNumber: quote.number,
+      ...(quote.leadId && { leadId: quote.leadId }),
+      ghlContactId: quote.ghlContactId,
       customerName: quote.customerName,
       customerPhone: quote.customerPhone,
       customerEmail: quote.customerEmail,
@@ -36,6 +38,7 @@ export async function dispatchQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" |
     event: "quote.accepted",
     quoteId: quote.id,
     quoteNumber: quote.number,
+    ghlContactId: quote.ghlContactId,
     total: quote.total,
     publicQuoteUrl,
   });

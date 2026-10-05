@@ -54,12 +54,12 @@ export class GhlLeadNotifier implements Notifier {
 }
 
 /**
- * Config-selected slot for the real channel. GHL is used once GHL_WEBHOOK_URL
+ * Config-selected slot for the real channel. GHL is used once GHL_WEBHOOK_URL_LEAD
  * is set (dispatchGhlEvent then actually fires); otherwise falls back to the
  * log stub so the contact form works end-to-end with zero GHL credentials.
  */
 export function getNotifier(): Notifier {
-  if (process.env.GHL_WEBHOOK_URL) {
+  if (process.env.GHL_WEBHOOK_URL_LEAD) {
     return new GhlLeadNotifier();
   }
   return new LogNotifier();
