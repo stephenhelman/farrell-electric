@@ -30,21 +30,48 @@ export interface LeadCreatedPayload {
   details: unknown;
 }
 
-export interface QuoteSentPayload {
-  event: "quote.sent";
+/**
+ * Fired ONCE per quote, the first time it is saved. Its only job: tell GHL to
+ * create the Quote custom object and associate it to the contact (the mirror
+ * of lead.created). The echo-back writes just ghlCustomObjectId. Customer
+ * fields + leadId are here so GHL can associate it; `total` is the only money.
+ */
+export interface QuoteCreatedPayload {
+  event: "quote.created";
   quoteId: string;
   quoteNumber: number;
   leadId?: string;
-  /** Null until the GHL lead round-trip has written it back to the quote. */
+  /** Read through the lead; null for an orphan quote that has no contact id yet. */
   ghlContactId: string | null;
-  /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
+  /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the lead echo-back. */
   ghlSalesOpportunityId: string | null;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
   customerAddress: string;
   total: number;
-  status: "SENT";
+  status: "DRAFT" | "SENT";
+  /** Empty until a public token is minted (first SENT). */
+  publicQuoteUrl: string;
+}
+
+/**
+ * DELIVERY ONLY: what GHL needs to send the quote link to the customer (and
+ * move the opportunity to Quoted). It no longer implies object creation — the
+ * object exists from quote.created.
+ */
+export interface QuoteSentPayload {
+  event: "quote.sent";
+  quoteId: string;
+  quoteNumber: number;
+  /** Read through the lead; null for an orphan quote that has no contact id yet. */
+  ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  total: number;
   publicQuoteUrl: string;
 }
 
@@ -52,7 +79,7 @@ export interface QuoteAcceptedPayload {
   event: "quote.accepted";
   quoteId: string;
   quoteNumber: number;
-  /** Null until the GHL lead round-trip has written it back to the quote. */
+  /** Read through the lead; null for an orphan quote that has no contact id yet. */
   ghlContactId: string | null;
   /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
   ghlSalesOpportunityId: string | null;
@@ -124,6 +151,7 @@ export interface JobCompletedPayload {
 
 export type GhlEventPayload =
   | LeadCreatedPayload
+  | QuoteCreatedPayload
   | QuoteSentPayload
   | QuoteAcceptedPayload
   | JobContractSentPayload

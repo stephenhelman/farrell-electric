@@ -46,9 +46,13 @@ function leadFor(quote: MemoryQuoteRecord | undefined) {
   return quote?.leadId ? memoryStore.leads.find((l) => l.id === quote.leadId) : undefined;
 }
 
-/** Quotes read the sales opp through the lead, same as the Prisma repo. */
+/** Quotes read the GHL ids through the lead, same as the Prisma repo (contact id falls back to the quote's own column for orphan quotes). */
 function toRepoQuote(quote: MemoryQuoteRecord): RepoQuoteDetail {
-  return { ...quote, ghlSalesOpportunityId: leadFor(quote)?.ghlSalesOpportunityId ?? null };
+  return {
+    ...quote,
+    ghlContactId: quote.ghlContactId ?? leadFor(quote)?.ghlContactId ?? null,
+    ghlSalesOpportunityId: leadFor(quote)?.ghlSalesOpportunityId ?? null,
+  };
 }
 
 function toRepoJob(record: MemoryJobRecord): RepoJob {
@@ -58,7 +62,7 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
     quoteNumber: quote?.number ?? 0,
     customerName: quote?.customerName ?? "",
     customerAddress: quote?.customerAddress ?? "",
-    ghlContactId: quote?.ghlContactId ?? null,
+    ghlContactId: quote?.ghlContactId ?? leadFor(quote)?.ghlContactId ?? null,
     ghlOpsOpportunityId: leadFor(quote)?.ghlOpsOpportunityId ?? null,
     total: quote?.total ?? 0,
   };
@@ -258,9 +262,18 @@ export const memoryRepo: Repo = {
 
   async updateQuoteGhlIds(id, ids) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
-    if (!quote) return;
+    if (!quote) return "unknown";
+    // Mirrors the Prisma @unique on ghlCustomObjectId.
+    if (
+      ids.ghlCustomObjectId &&
+      memoryStore.quotes.some((q) => q.id !== id && q.ghlCustomObjectId === ids.ghlCustomObjectId)
+    ) {
+      console.error(`[repo] ghlCustomObjectId already belongs to another quote — not written for quote ${id}`);
+      return "duplicate_custom_object";
+    }
     if (ids.ghlContactId !== undefined) quote.ghlContactId = ids.ghlContactId;
     if (ids.ghlCustomObjectId !== undefined) quote.ghlCustomObjectId = ids.ghlCustomObjectId;
+    return "updated";
   },
 
   async updateLeadGhlIds(id, ids) {

@@ -276,6 +276,9 @@ export interface QuoteGhlIdsInput {
   ghlCustomObjectId?: string | null;
 }
 
+/** Outcome of writing quote GHL ids — lets the inbound handler answer "200 ignored" instead of failing. */
+export type QuoteGhlIdsResult = "updated" | "unknown" | "duplicate_custom_object";
+
 export interface LeadGhlIdsInput {
   ghlContactId?: string | null;
   ghlSalesOpportunityId?: string | null;
@@ -371,7 +374,7 @@ export interface Repo {
   /** Overwrites the customer identity fields on a quote; no-op if the id doesn't exist. */
   updateQuoteCustomer(id: string, input: QuoteCustomerInput): Promise<void>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
-  updateQuoteGhlIds(id: string, ids: QuoteGhlIdsInput): Promise<void>;
+  updateQuoteGhlIds(id: string, ids: QuoteGhlIdsInput): Promise<QuoteGhlIdsResult>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */
   updateLeadGhlIds(id: string, ids: LeadGhlIdsInput): Promise<void>;
   createLead(input: CreateLeadInput): Promise<RepoLead>;

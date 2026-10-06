@@ -3,16 +3,18 @@ import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import type { LeadPayload } from "@/lib/leads/types";
-import type { Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
+import type { QuoteGhlIdsResult, Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
 
-// Quotes and jobs are READERS of the GHL opportunity ids — the Lead owns them.
+// Quotes and jobs are READERS of the GHL ids — the Lead owns them. ghlContactId
+// is read through the lead too (falling back to the quote's own column for
+// orphan quotes), since the quote.created echo-back no longer writes it.
 const QUOTE_DETAIL_INCLUDE = {
   lineItems: true,
-  lead: { select: { ghlSalesOpportunityId: true } },
+  lead: { select: { ghlContactId: true, ghlSalesOpportunityId: true } },
 } satisfies Prisma.QuoteInclude;
 
 const JOB_INCLUDE = {
-  quote: { include: { lead: { select: { ghlOpsOpportunityId: true } } } },
+  quote: { include: { lead: { select: { ghlContactId: true, ghlOpsOpportunityId: true } } } },
 } satisfies Prisma.JobInclude;
 
 type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: typeof QUOTE_DETAIL_INCLUDE }>;
@@ -27,7 +29,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     quoteNumber: job.quote.number,
     customerName: job.quote.customerName,
     customerAddress: job.quote.customerAddress,
-    ghlContactId: job.quote.ghlContactId,
+    ghlContactId: job.quote.ghlContactId ?? job.quote.lead?.ghlContactId ?? null,
     ghlOpsOpportunityId: job.quote.lead?.ghlOpsOpportunityId ?? null,
     total: Number(job.quote.total),
     paymentType: job.paymentType,
@@ -68,7 +70,7 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     margin: Number(quote.margin),
     scopeOfWork: quote.scopeOfWork ?? "",
     publicToken: quote.publicToken,
-    ghlContactId: quote.ghlContactId,
+    ghlContactId: quote.ghlContactId ?? quote.lead?.ghlContactId ?? null,
     ghlSalesOpportunityId: quote.lead?.ghlSalesOpportunityId ?? null,
     ghlCustomObjectId: quote.ghlCustomObjectId,
     leadId: quote.leadId,
@@ -404,7 +406,7 @@ export const prismaRepo: Repo = {
     });
   },
 
-  async updateQuoteGhlIds(id, ids) {
+  async updateQuoteGhlIds(id, ids): Promise<QuoteGhlIdsResult> {
     try {
       await prisma.quote.update({
         where: { id },
@@ -413,10 +415,19 @@ export const prismaRepo: Repo = {
           ...(ids.ghlCustomObjectId !== undefined && { ghlCustomObjectId: ids.ghlCustomObjectId }),
         },
       });
+      return "updated";
     } catch (error) {
-      // Unknown dbId — same "quietly no-op" behavior as the memory repo,
-      // rather than surfacing as a webhook-processing failure.
-      if ((error as { code?: string }).code !== "P2025") throw error;
+      const code = (error as { code?: string }).code;
+      // Unknown dbId — a quiet no-op rather than a webhook-processing failure.
+      if (code === "P2025") return "unknown";
+      // ghlCustomObjectId is @unique: the same GHL object id claimed by a second
+      // quote. Retrying can never succeed, so report it instead of throwing (a
+      // 500 would make GHL redeliver forever).
+      if (code === "P2002") {
+        console.error(`[repo] ghlCustomObjectId already belongs to another quote — not written for quote ${id}`);
+        return "duplicate_custom_object";
+      }
+      throw error;
     }
   },
 

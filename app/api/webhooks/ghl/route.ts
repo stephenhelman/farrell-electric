@@ -220,10 +220,15 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
         log(`IGNORED unknown quote ${body.dbId}`);
         return NextResponse.json({ ok: true, ignored: "quote not found" }, { status: 200 });
       }
-      await repo.updateQuoteGhlIds(body.dbId, {
+      const result = await repo.updateQuoteGhlIds(body.dbId, {
         ...(body.ghlContactId !== undefined && { ghlContactId: body.ghlContactId }),
         ...(body.ghlCustomObjectId !== undefined && { ghlCustomObjectId: body.ghlCustomObjectId }),
       });
+      if (result === "duplicate_custom_object") {
+        // 200, not 500: this can never succeed on retry (the id belongs to another quote), so don't make GHL redeliver forever.
+        log(`IGNORED ghlCustomObjectId for quote ${body.dbId}: already belongs to another quote`);
+        return NextResponse.json({ ok: true, ignored: "custom object id already assigned to another quote" }, { status: 200 });
+      }
       const after = await repo.getQuote(body.dbId);
       const pick = (q: typeof before | null) => ({ ghlContactId: q?.ghlContactId, ghlCustomObjectId: q?.ghlCustomObjectId });
       log("quote ids", { before: pick(before), after: pick(after), changed: JSON.stringify(pick(before)) !== JSON.stringify(pick(after)) });
