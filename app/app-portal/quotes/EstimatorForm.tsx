@@ -7,14 +7,18 @@ import { formatMoney } from "@/lib/app/format";
 import { estimateAutoSizing } from "@/lib/app/estimator/auto-size";
 import { expandSelectionsToLineItems, type EstimatorSelection } from "@/lib/app/estimator/expand-options";
 import { QuoteBuilder, type DraftLineItem } from "./QuoteBuilder";
+import type { QuoteLeadContext } from "./lead-context";
 import styles from "./EstimatorForm.module.css";
 
 export function EstimatorForm({
   options,
   catalogItems,
+  lead,
 }: {
   options: RepoOption[];
   catalogItems: RepoCatalogItem[];
+  /** The lead this estimate is for — the review step's QuoteBuilder needs it to save. */
+  lead: QuoteLeadContext;
 }) {
   const activeOptions = useMemo(() => options.filter((option) => option.active), [options]);
   const [values, setValues] = useState<Record<string, number>>({});
@@ -44,7 +48,16 @@ export function EstimatorForm({
   }
 
   if (reviewLineItems !== null) {
-    return <QuoteBuilder catalogItems={catalogItems} initialQuote={null} initialLineItems={reviewLineItems} />;
+    return (
+      <QuoteBuilder
+        catalogItems={catalogItems}
+        initialQuote={null}
+        initialLineItems={reviewLineItems}
+        leadId={lead.leadId}
+        leadPrefill={lead.leadPrefill}
+        leadSync={lead.leadSync}
+      />
+    );
   }
 
   return (

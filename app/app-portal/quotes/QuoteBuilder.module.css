@@ -252,3 +252,63 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skeletonBlock {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-raised) 25%,
+    var(--color-surface-overlay) 50%,
+    var(--color-surface-raised) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBlock {
+    animation: none;
+  }
+}
+
+.syncWarning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  border: 1px solid var(--color-accent);
+  background: var(--color-surface-overlay);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.syncWarning p {
+  margin: 0;
+  flex: 1 1 18rem;
+}
+
+.footerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}

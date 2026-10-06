@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/app/format";
 import { CatalogPicker } from "./CatalogPicker";
 import { QuoteDecision } from "./QuoteDecision";
 import { saveQuoteAction } from "./actions";
+import { useLeadSync } from "./useLeadSync";
 import styles from "./QuoteBuilder.module.css";
 
 export interface DraftLineItem {
@@ -35,12 +36,21 @@ export interface LeadPrefill {
   notes: string;
 }
 
+export interface LeadSyncInfo {
+  /** False in stub mode (no GHL lead webhook): nothing will echo back, so nothing is gated. */
+  enabled: boolean;
+  /** The lead's GHL contact id as of page load; null until the New Lead echo-back lands. */
+  contactId: string | null;
+  leadName: string;
+}
+
 export function QuoteBuilder({
   catalogItems,
   initialQuote,
   initialLineItems,
   leadId,
   leadPrefill,
+  leadSync,
 }: {
   catalogItems: RepoCatalogItem[];
   initialQuote: RepoQuoteDetail | null;
@@ -50,6 +60,8 @@ export function QuoteBuilder({
   leadId?: string | null;
   /** Customer field prefill from the lead — ignored once initialQuote is set. */
   leadPrefill?: LeadPrefill | null;
+  /** Lead's GHL sync state — drives the syncing skeleton and the pre-save warning on NEW quotes. */
+  leadSync?: LeadSyncInfo | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -72,6 +84,20 @@ export function QuoteBuilder({
   const [scopeOfWork, setScopeOfWork] = useState(
     initialQuote?.scopeOfWork || generateScopeOfWork(initialLineItems ?? []),
   );
+
+  // Sync only matters when creating: the first save fires quote.created, which
+  // needs the lead's GHL contact id to attach the quote object to the contact.
+  const syncApplies = !initialQuote && leadSync?.enabled === true;
+  const sync = useLeadSync(leadId ?? null, leadSync?.contactId ?? null, syncApplies);
+  const [syncAcknowledged, setSyncAcknowledged] = useState(false);
+  const notSynced = syncApplies && !sync.contactId;
+  // Save unlocks once the contact id is here, or after one deliberate inline sync click.
+  const saveBlockedBySync = notSynced && !syncAcknowledged;
+
+  async function inlineSync() {
+    setSyncAcknowledged(true);
+    await sync.check();
+  }
 
   const totals = useMemo(() => calcQuoteTotals(lineItems, discount), [lineItems, discount]);
   const sharePath = initialQuote?.publicToken ? `/q/${initialQuote.publicToken}` : null;
@@ -159,6 +185,10 @@ export function QuoteBuilder({
   function save(status: "DRAFT" | "SENT") {
     setError(null);
 
+    if (saveBlockedBySync) {
+      setError("Sync with GHL first — see the warning below.");
+      return;
+    }
     if (!customerName.trim()) {
       setError("Add a customer name.");
       return;
@@ -204,13 +234,29 @@ export function QuoteBuilder({
           <h1 className={styles.heading}>{initialQuote ? `Quote #${initialQuote.number}` : "New Quote"}</h1>
         </div>
         <div className={styles.headerActions}>
-          <button type="button" className={styles.btn} disabled={isPending || isLocked} onClick={() => save("DRAFT")}>
+          {syncApplies ? (
+            <button
+              type="button"
+              className={styles.btn}
+              disabled={sync.checking}
+              onClick={() => void sync.check()}
+              aria-label="Refresh GHL sync status"
+            >
+              {sync.checking ? "Checking…" : sync.contactId ? "Synced ✓" : "Refresh sync"}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={isPending || isLocked || saveBlockedBySync}
+            onClick={() => save("DRAFT")}
+          >
             Save
           </button>
           <button
             type="button"
             className={styles.btnPrimary}
-            disabled={isPending || isLocked}
+            disabled={isPending || isLocked || saveBlockedBySync}
             onClick={() => save("SENT")}
           >
             Mark Sent
@@ -227,6 +273,12 @@ export function QuoteBuilder({
         </div>
       </div>
 
+      {leadSync && !initialQuote ? (
+        <p className={styles.lockedNotice} role="status">
+          Quote for lead <strong>{leadSync.leadName}</strong>
+          {syncApplies ? (sync.syncing ? " — syncing with GHL…" : sync.contactId ? " — synced with GHL." : "") : ""}
+        </p>
+      ) : null}
       {isLocked ? (
         <p className={styles.lockedNotice}>
           This quote is {initialQuote?.status.toLowerCase()} and can no longer be edited here.
@@ -250,6 +302,14 @@ export function QuoteBuilder({
         </div>
       ) : null}
 
+      {sync.syncing ? (
+        <div className={styles.skeleton} aria-hidden="true">
+          <div className={styles.skeletonBlock} style={{ height: "9rem" }} />
+          <div className={styles.skeletonBlock} style={{ height: "6rem" }} />
+          <div className={styles.skeletonBlock} style={{ height: "12rem" }} />
+        </div>
+      ) : (
+      <>
       <div className={styles.card}>
         <div className={styles.grid2}>
           <div className={styles.field}>
@@ -409,6 +469,41 @@ export function QuoteBuilder({
           />
         </div>
       </div>
+
+      {notSynced ? (
+        <div className={styles.syncWarning} role="alert">
+          <p>
+            <strong>This lead hasn&apos;t synced with GHL yet.</strong> Saving now sends the quote without a contact id,
+            so GHL can&apos;t attach it to the contact. Sync to check again.
+          </p>
+          <button type="button" className={styles.btn} disabled={sync.checking} onClick={() => void inlineSync()}>
+            {sync.checking ? "Checking…" : "Sync now"}
+          </button>
+        </div>
+      ) : null}
+
+      {!isLocked ? (
+        <div className={styles.footerActions}>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={isPending || saveBlockedBySync}
+            onClick={() => save("DRAFT")}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            disabled={isPending || saveBlockedBySync}
+            onClick={() => save("SENT")}
+          >
+            Mark Sent
+          </button>
+        </div>
+      ) : null}
+      </>
+      )}
     </div>
   );
 }
