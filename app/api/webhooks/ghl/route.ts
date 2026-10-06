@@ -15,6 +15,12 @@ import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/
  * scheme GHL doesn't support out of the box. Unverified requests are
  * rejected outright — there is no "warn and continue" path for inbound.
  *
+ * type "lead" (New Lead echo-back) writes ghlContactId + ghlSalesOpportunityId;
+ * type "lead_ops" (close echo-back, live once the Ops pipeline exists) writes
+ * ghlOpsOpportunityId. Both target the Lead, which owns all three GHL ids. An
+ * unknown dbId is a quiet 200 no-op (the repo swallows the missing row), and
+ * re-delivery just rewrites the same values.
+ *
  * type "job" carries a lifecycle `action` instead of ids (contract signed,
  * deposit paid, install scheduled, installed, final paid). Those are written
  * to the Job as facts, idempotently — see lib/app/jobs/inbound.ts. Whether a
@@ -22,11 +28,34 @@ import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/
  */
 const SECRET_HEADER = "x-ghl-webhook-secret";
 
-interface IdsPayload {
-  type: "lead" | "quote";
+/**
+ * New Lead echo-back: GHL's New Lead workflow minted a contact and a
+ * Sales-pipeline opportunity. The Lead owns all GHL ids; quotes/jobs read them
+ * through it.
+ */
+interface LeadIdsPayload {
+  type: "lead";
   dbId: string;
   ghlContactId?: string;
-  ghlOpportunityId?: string;
+  ghlSalesOpportunityId?: string;
+}
+
+/**
+ * Close echo-back: GHL created the Operations-pipeline opportunity when the
+ * deal closed. Keyed on the LEAD dbId — the ops opp is stored on the Lead, not
+ * the Job. Named for what it carries, not the trigger.
+ */
+interface LeadOpsPayload {
+  type: "lead_ops";
+  dbId: string;
+  ghlOpsOpportunityId: string;
+}
+
+/** Quote mirror ids. The opportunity id is NOT a quote field — it lives on the Lead. */
+interface QuoteIdsPayload {
+  type: "quote";
+  dbId: string;
+  ghlContactId?: string;
   ghlCustomObjectId?: string;
 }
 
@@ -40,7 +69,7 @@ interface JobEventPayload {
   scheduledDate?: string;
 }
 
-type InboundPayload = IdsPayload | JobEventPayload;
+type InboundPayload = LeadIdsPayload | LeadOpsPayload | QuoteIdsPayload | JobEventPayload;
 
 function isVerified(request: Request): boolean {
   const secret = process.env.GHL_WEBHOOK_SECRET;
@@ -72,11 +101,23 @@ function isValidPayload(value: unknown): value is InboundPayload {
     return true;
   }
 
-  if (payload.type !== "lead" && payload.type !== "quote") return false;
-  if (payload.ghlContactId !== undefined && typeof payload.ghlContactId !== "string") return false;
-  if (payload.ghlOpportunityId !== undefined && typeof payload.ghlOpportunityId !== "string") return false;
-  if (payload.ghlCustomObjectId !== undefined && typeof payload.ghlCustomObjectId !== "string") return false;
-  return true;
+  if (payload.type === "lead_ops") {
+    return typeof payload.ghlOpsOpportunityId === "string" && payload.ghlOpsOpportunityId.trim() !== "";
+  }
+
+  if (payload.type === "lead") {
+    if (payload.ghlContactId !== undefined && typeof payload.ghlContactId !== "string") return false;
+    if (payload.ghlSalesOpportunityId !== undefined && typeof payload.ghlSalesOpportunityId !== "string") return false;
+    return true;
+  }
+
+  if (payload.type === "quote") {
+    if (payload.ghlContactId !== undefined && typeof payload.ghlContactId !== "string") return false;
+    if (payload.ghlCustomObjectId !== undefined && typeof payload.ghlCustomObjectId !== "string") return false;
+    return true;
+  }
+
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -136,12 +177,13 @@ export async function POST(request: Request) {
     if (body.type === "lead") {
       await repo.updateLeadGhlIds(body.dbId, {
         ...(body.ghlContactId !== undefined && { ghlContactId: body.ghlContactId }),
-        ...(body.ghlOpportunityId !== undefined && { ghlOpportunityId: body.ghlOpportunityId }),
+        ...(body.ghlSalesOpportunityId !== undefined && { ghlSalesOpportunityId: body.ghlSalesOpportunityId }),
       });
+    } else if (body.type === "lead_ops") {
+      await repo.updateLeadGhlIds(body.dbId, { ghlOpsOpportunityId: body.ghlOpsOpportunityId });
     } else {
       await repo.updateQuoteGhlIds(body.dbId, {
         ...(body.ghlContactId !== undefined && { ghlContactId: body.ghlContactId }),
-        ...(body.ghlOpportunityId !== undefined && { ghlOpportunityId: body.ghlOpportunityId }),
         ...(body.ghlCustomObjectId !== undefined && { ghlCustomObjectId: body.ghlCustomObjectId }),
       });
     }
