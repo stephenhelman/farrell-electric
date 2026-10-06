@@ -4,6 +4,8 @@ import { dispatchGhlEvent } from "@/lib/ghl/dispatch";
 export interface Lead {
   /** The DB-assigned id (repo.createLead's row) — rides in the lead.created payload as the round-trip linkage key. */
   leadId: string;
+  /** Defaults to "contact_form"; the portal's quick-create passes "portal". */
+  source?: string;
   payload: LeadPayload;
   submittedAt: string;
 }
@@ -38,13 +40,14 @@ export class GhlLeadNotifier implements Notifier {
     await dispatchGhlEvent({
       event: "lead.created",
       leadId: lead.leadId,
-      source: "contact_form",
+      source: lead.source ?? "contact_form",
       leadType: payload.type === "lighting" ? "LIGHTING" : "ELECTRICAL",
       firstName: firstName ?? payload.name,
       lastName,
       name: payload.name,
       phone: payload.phone,
-      email: payload.email,
+      // Portal quick-create leads may have no email (stored as "" in the payload).
+      email: payload.email || null,
       propertyAddress: payload.propertyAddress,
       smsConsentTransactional: payload.smsConsentTransactional,
       smsConsentPromotional: payload.smsConsentPromotional,

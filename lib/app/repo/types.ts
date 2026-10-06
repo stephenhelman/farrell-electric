@@ -327,6 +327,8 @@ export interface RepoLead {
 }
 
 export interface CreateLeadInput {
+  /** Where the lead came from; defaults to "contact_form" (the public site form). */
+  source?: string;
   leadType: LeadType;
   name: string;
   phone: string;

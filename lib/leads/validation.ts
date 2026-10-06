@@ -35,11 +35,11 @@ export const LEAD_FIELD_LIMITS = {
   description: 2000,
 } as const;
 
-const PHONE_MIN_DIGITS = 10;
+export const PHONE_MIN_DIGITS = 10;
 /** Upper bound of E.164; lets +1 and international numbers through. */
-const PHONE_MAX_DIGITS = 15;
+export const PHONE_MAX_DIGITS = 15;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const INTENTS: readonly LeadIntent[] = ["landscape-lighting", "permanent-lighting", "electrical", "commercial"];
 const CONTACT_METHODS = ["phone", "email", "text"] as const;

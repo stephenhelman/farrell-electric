@@ -290,7 +290,7 @@ export const memoryRepo: Repo = {
       createdAt: new Date(),
       status: "NEW",
       leadType: input.leadType,
-      source: "contact_form",
+      source: input.source ?? "contact_form",
       name: input.name,
       phone: input.phone,
       email: input.email,

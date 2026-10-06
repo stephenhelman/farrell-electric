@@ -449,6 +449,7 @@ export const prismaRepo: Repo = {
   async createLead(input) {
     const lead = await prisma.lead.create({
       data: {
+        ...(input.source !== undefined && { source: input.source }),
         leadType: input.leadType,
         name: input.name,
         phone: input.phone,
