@@ -177,7 +177,9 @@ model Quote {
 
   lineItems QuoteLineItem[]
   job       Job?
-  lead      Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  // Restrict: a lead with quotes can't be deleted, so a quote can never be orphaned
+  // by its lead going away. New quotes must carry a leadId (enforced server-side).
+  lead      Lead?           @relation(fields: [leadId], references: [id], onDelete: Restrict)
 }
 
 model QuoteLineItem {
