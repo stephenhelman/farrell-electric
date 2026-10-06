@@ -9,7 +9,8 @@ import type { RepoQuoteDetail } from "@/lib/app/repo/types";
  * dispatchGhlEvent itself never throws; this wrapper exists only to keep the
  * call-site symmetric with the rest of the best-effort seams.
  *
- * ID-bookkeeping (ghlContactId/ghlOpportunityId/ghlCustomObjectId) does not
+ * ID-bookkeeping (ghlContactId/ghlCustomObjectId on the quote, the opportunity
+ * ids on the lead) does not
  * happen here — GHL mints those IDs from this signal and reports them back
  * via the inbound webhook handler, which writes them onto the mirror row.
  */
@@ -23,6 +24,7 @@ export async function dispatchQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" |
       quoteNumber: quote.number,
       ...(quote.leadId && { leadId: quote.leadId }),
       ghlContactId: quote.ghlContactId,
+      ghlSalesOpportunityId: quote.ghlSalesOpportunityId,
       customerName: quote.customerName,
       customerPhone: quote.customerPhone,
       customerEmail: quote.customerEmail,
@@ -39,6 +41,7 @@ export async function dispatchQuoteToGhl(quote: RepoQuoteDetail, event: "SENT" |
     quoteId: quote.id,
     quoteNumber: quote.number,
     ghlContactId: quote.ghlContactId,
+    ghlSalesOpportunityId: quote.ghlSalesOpportunityId,
     total: quote.total,
     publicQuoteUrl,
   });

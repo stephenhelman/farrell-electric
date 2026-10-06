@@ -23,6 +23,8 @@ export async function dispatchJobContractSent(
     quoteId: quote.id,
     quoteNumber: quote.number,
     ghlContactId: quote.ghlContactId,
+    // Read through the lead via the job; the quote row carries no opp id.
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     scopeOfWork,
     paymentType: job.paymentType,
     depositRequired: job.depositRequired,
@@ -50,6 +52,7 @@ export async function dispatchJobClosed(job: RepoJob): Promise<void> {
     quoteId: job.quoteId,
     quoteNumber: job.quoteNumber,
     ghlContactId: job.ghlContactId,
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     total: job.total,
     closedAt: job.closedAt.toISOString(),
   });
@@ -64,6 +67,7 @@ export async function dispatchJobCompleted(job: RepoJob): Promise<void> {
     quoteId: job.quoteId,
     quoteNumber: job.quoteNumber,
     ghlContactId: job.ghlContactId,
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     total: job.total,
     completedAt: job.completedAt.toISOString(),
     installedDate: job.installedDate.toISOString(),

@@ -37,6 +37,8 @@ export interface QuoteSentPayload {
   leadId?: string;
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
@@ -52,6 +54,8 @@ export interface QuoteAcceptedPayload {
   quoteNumber: number;
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   total: number;
   publicQuoteUrl: string;
 }
@@ -59,8 +63,9 @@ export interface QuoteAcceptedPayload {
 /**
  * Fired when a rep generates/regenerates the contract. Carries the stored deal
  * terms and customer-facing data only — `total` is the quote's customer-facing
- * total. Never revenue/actualCost/margin, and never opportunity/pipeline ids:
- * GHL routes off jobId + ghlContactId.
+ * total. Never revenue/actualCost/margin, and never pipeline/stage ids. The
+ * Operations opportunity id is an identifier, not routing config: it is read
+ * through the lead and sent so GHL can find the opp to move.
  */
 export interface JobContractSentPayload {
   event: "job.contract_sent";
@@ -69,6 +74,8 @@ export interface JobContractSentPayload {
   quoteNumber: number;
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
+  /** Ops-pipeline opp, read through the lead. Null for orphan jobs / before the ops echo-back. */
+  ghlOpsOpportunityId: string | null;
   scopeOfWork: string;
   paymentType: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER";
   depositRequired: boolean;
@@ -91,6 +98,7 @@ export interface JobClosedPayload {
   quoteId: string;
   quoteNumber: number;
   ghlContactId: string | null;
+  ghlOpsOpportunityId: string | null;
   total: number;
   /** ISO timestamp. */
   closedAt: string;
@@ -106,6 +114,7 @@ export interface JobCompletedPayload {
   quoteId: string;
   quoteNumber: number;
   ghlContactId: string | null;
+  ghlOpsOpportunityId: string | null;
   total: number;
   /** ISO timestamp. */
   completedAt: string;
