@@ -64,6 +64,8 @@ export interface QuoteSentPayload {
   event: "quote.sent";
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable, so GHL can always locate the contact even when ghlContactId is null or the email changed. */
+  leadId?: string;
   /** Read through the lead; null for an orphan quote that has no contact id yet. */
   ghlContactId: string | null;
   /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */
@@ -93,6 +95,8 @@ export interface QuoteUpdatedPayload {
   event: "quote.updated";
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable, so GHL can always locate the contact even when ghlContactId is null or the email changed. */
+  leadId?: string;
   ghlContactId: string | null;
   ghlSalesOpportunityId: string | null;
   total: number;
@@ -111,6 +115,8 @@ export interface QuoteAcceptedPayload {
   source: QuoteEventSource;
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable, so GHL can always locate the contact even when ghlContactId is null or the email changed. */
+  leadId?: string;
   /** Read through the lead; null for an orphan quote that has no contact id yet. */
   ghlContactId: string | null;
   /** Sales-pipeline opp, read through the lead. Null for orphan quotes / before the echo-back. */

@@ -42,6 +42,19 @@ async function main() {
     return (await repo.getQuote(q.id))!;
   };
 
+  // every quote event carries the immutable lead id
+  {
+    const [q1, q2, q3, q4] = [await mk("SENT"), await mk("SENT"), await mk("SENT"), await mk("SENT")];
+    await acceptQuote(q1.id, "rep");
+    await declineQuote({ quoteId: q2.id, source: "rep", reason: "TIMING", detail: "" });
+    await expireQuote(q3.id, false);
+    await saveQuote({ ...base, id: q4.id, status: "SENT", lineItems: [item(2)] });
+    await saveQuote({ ...base, status: "SENT", lineItems: [item(1)] });
+    const all = take();
+    assert.deepEqual(all.map((e) => e.event), ["quote.accepted", "quote.updated", "quote.updated", "quote.updated", "quote.created", "quote.sent"]);
+    assert.ok(all.every((e) => e.leadId === lead.id), "all quote events carry leadId");
+  }
+
   // --- save semantics -------------------------------------------------
   const first = await saveQuote({ ...base, status: "SENT", lineItems: [item(100)] });
   assert.deepEqual(events(), ["quote.created", "quote.sent"], "first SENT save: created then sent");
