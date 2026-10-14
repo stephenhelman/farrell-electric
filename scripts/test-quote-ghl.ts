@@ -2,8 +2,6 @@
  * Quote GHL-sync behaviour test. Runs against the in-memory repo (no
  * DATABASE_URL) with fetch captured, so it asserts the real payloads the real
  * dispatch code produces. Run: npx tsx scripts/test-quote-ghl.ts
- *
- * Also doubles as the superset generator: SUPERSET=1 prints the curl.
  */
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -165,10 +163,5 @@ async function main() {
 
   console.log("quote ghl sync: all assertions passed");
 
-  if (process.env.SUPERSET) {
-    const fs = await import("node:fs");
-    fs.writeFileSync(process.env.SUPERSET, JSON.stringify(supersetSample, null, 2));
-  }
 }
-const supersetSample = {};
 main().catch((e) => { console.error(e); process.exit(1); });
