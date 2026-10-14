@@ -59,7 +59,18 @@ export interface RepoOption {
   components: RepoOptionComponent[];
 }
 
-export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED";
+export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED" | "EXPIRED";
+
+export const QUOTE_DECLINE_REASONS = [
+  "PRICE_TOO_HIGH",
+  "LOST_TO_COMPETITOR",
+  "TIMING",
+  "SCOPE_CHANGED",
+  "FINANCING",
+  "NO_RESPONSE",
+  "OTHER",
+] as const;
+export type QuoteDeclineReason = (typeof QUOTE_DECLINE_REASONS)[number];
 
 export interface RepoQuote {
   id: string;
@@ -192,6 +203,9 @@ export interface RepoQuoteDetail extends RepoQuote {
   profit: number;
   margin: number;
   scopeOfWork: string;
+  /** Set only while DECLINED. */
+  declineReason: QuoteDeclineReason | null;
+  declineReasonDetail: string | null;
   /** Set the moment a quote is first marked SENT; powers the public quote-link route. */
   publicToken: string | null;
   /** Never user-editable — only ever written via updateQuoteGhlIds, by the inbound GHL webhook handler. */

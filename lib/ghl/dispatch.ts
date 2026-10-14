@@ -75,8 +75,40 @@ export interface QuoteSentPayload {
   publicQuoteUrl: string;
 }
 
+/** WHO triggered a quote change. Always stamped server-side by the endpoint that was hit — never read from a request. */
+export type QuoteEventSource = "rep" | "customer";
+
+/** WHAT changed on a quote.updated. The status value itself travels in `status`. */
+export type QuoteUpdateReason = "total" | "status" | "photos_added";
+
+/**
+ * Fired when a SENT-or-later quote's total changes, or its status moves to
+ * something other than ACCEPTED (declined, expired — accepting is
+ * quote.accepted). Always carries the current object fields so GHL's object
+ * sync stays honest regardless of `notify`. `notify` gates the CUSTOMER
+ * message; the owner alert is derived GHL-side from source === "customer".
+ * `photos_added` is a valid reason but nothing fires it yet (gallery build).
+ */
+export interface QuoteUpdatedPayload {
+  event: "quote.updated";
+  quoteId: string;
+  quoteNumber: number;
+  ghlContactId: string | null;
+  ghlSalesOpportunityId: string | null;
+  total: number;
+  status: "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED" | "EXPIRED";
+  publicQuoteUrl: string;
+  reason: QuoteUpdateReason;
+  notify: boolean;
+  source: QuoteEventSource;
+  /** Non-null only on a decline. */
+  declineReason: string | null;
+  declineReasonDetail: string | null;
+}
+
 export interface QuoteAcceptedPayload {
   event: "quote.accepted";
+  source: QuoteEventSource;
   quoteId: string;
   quoteNumber: number;
   /** Read through the lead; null for an orphan quote that has no contact id yet. */
@@ -153,6 +185,7 @@ export type GhlEventPayload =
   | LeadCreatedPayload
   | QuoteCreatedPayload
   | QuoteSentPayload
+  | QuoteUpdatedPayload
   | QuoteAcceptedPayload
   | JobContractSentPayload
   | JobClosedPayload
