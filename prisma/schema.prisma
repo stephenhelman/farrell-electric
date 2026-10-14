@@ -61,6 +61,17 @@ enum QuoteStatus {
   SENT
   ACCEPTED
   DECLINED
+  EXPIRED
+}
+
+enum QuoteDeclineReason {
+  PRICE_TOO_HIGH
+  LOST_TO_COMPETITOR
+  TIMING
+  SCOPE_CHANGED
+  FINANCING
+  NO_RESPONSE
+  OTHER
 }
 
 enum JobStatus {
@@ -148,32 +159,35 @@ model OptionComponent {
 }
 
 model Quote {
-  id                String      @id @default(cuid())
-  number            Int         @unique
-  status            QuoteStatus @default(DRAFT)
-  customerName      String
-  customerPhone     String
-  customerEmail     String
-  customerAddress   String
+  id                  String              @id @default(cuid())
+  number              Int                 @unique
+  status              QuoteStatus         @default(DRAFT)
+  customerName        String
+  customerPhone       String
+  customerEmail       String
+  customerAddress     String
   // KNOWN DEBT: ghlContactId stays on Quote while orphan quotes (leadId null)
   // exist — dispatches read it directly. Drop it and read through the lead
   // once lead-on-quote-creation guarantees every quote has a lead.
   // The opportunity ids live on Lead only; quotes/jobs read them via the lead.
-  ghlContactId      String?
-  ghlCustomObjectId String?     @unique
-  publicToken       String?     @unique
-  message           String?
-  notes             String?
-  discount          Decimal     @default(0)
-  subtotal          Decimal     @default(0)
-  cost              Decimal     @default(0)
-  total             Decimal     @default(0)
-  profit            Decimal     @default(0)
-  margin            Decimal     @default(0)
-  scopeOfWork       String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  leadId            String?
+  ghlContactId        String?
+  ghlCustomObjectId   String?             @unique
+  publicToken         String?             @unique
+  message             String?
+  notes               String?
+  discount            Decimal             @default(0)
+  subtotal            Decimal             @default(0)
+  cost                Decimal             @default(0)
+  total               Decimal             @default(0)
+  profit              Decimal             @default(0)
+  margin              Decimal             @default(0)
+  scopeOfWork         String?
+  // Set only when status is DECLINED; the detail is required free text when the reason is OTHER.
+  declineReason       QuoteDeclineReason?
+  declineReasonDetail String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  leadId              String?
 
   lineItems QuoteLineItem[]
   job       Job?
