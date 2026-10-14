@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRepo } from "@/lib/app/repo";
 import { formatMoney } from "@/lib/app/format";
+import { QuoteResponse } from "./QuoteResponse";
 import styles from "./page.module.css";
 
 export default async function PublicQuotePage({ params }: { params: Promise<{ token: string }> }) {
@@ -57,6 +58,8 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
             <p className={styles.scopeBody}>{quote.scopeOfWork}</p>
           </div>
         ) : null}
+
+        <QuoteResponse token={token} status={quote.status} />
       </div>
     </main>
   );

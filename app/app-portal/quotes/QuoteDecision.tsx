@@ -3,56 +3,78 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/app/format";
-import { acceptQuoteAction, declineQuoteAction } from "./actions";
+import { DeclineModal } from "@/components/app/DeclineModal";
+import { NotifyCustomerDialog } from "@/components/app/NotifyCustomerDialog";
+import { acceptQuoteAction, createJobAction, declineQuoteAction, expireQuoteAction } from "./actions";
 import styles from "./QuoteDecision.module.css";
 
 interface Props {
   quoteId: string;
   quoteNumber: number;
   customerName: string;
+  status: "DRAFT" | "SENT" | "ACCEPTED";
   /** The SAVED total — accept is disabled while the builder has unsaved edits, so this is what gets accepted. */
   total: number;
   hasUnsavedChanges: boolean;
 }
 
-type Decision = "accept" | "decline";
-
 /**
- * Accept / Decline for a saved DRAFT or SENT quote, each behind a confirm
- * step. Accepting spawns the Job and lands the rep on it; declining locks the
- * quote.
+ * Rep actions on a saved quote. DRAFT/SENT: Accept (marks accepted + creates
+ * the job), Decline (reason modal, notify default off), and — once SENT —
+ * Mark expired (notify default on). ACCEPTED: "Open job", which creates the
+ * Job if the customer accepted from the public page and none exists yet.
  */
-export function QuoteDecision({ quoteId, quoteNumber, customerName, total, hasUnsavedChanges }: Props) {
+export function QuoteDecision({ quoteId, quoteNumber, customerName, status, total, hasUnsavedChanges }: Props) {
   const router = useRouter();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [decision, setDecision] = useState<Decision>("accept");
+  const acceptRef = useRef<HTMLDialogElement>(null);
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [expireOpen, setExpireOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function open(next: Decision) {
-    setDecision(next);
-    setError(null);
-    dialogRef.current?.showModal();
-  }
-
-  function confirm() {
+  function accept() {
     startTransition(async () => {
       try {
-        if (decision === "accept") {
-          const jobId = await acceptQuoteAction(quoteId);
-          router.push(`/jobs/${jobId}`);
-        } else {
-          await declineQuoteAction(quoteId);
-          dialogRef.current?.close();
-          router.refresh();
-        }
+        router.push(`/jobs/${await acceptQuoteAction(quoteId)}`);
       } catch {
         setError("Something went wrong — nothing was changed. Try again.");
       }
     });
   }
 
-  const accepting = decision === "accept";
+  function openJob() {
+    startTransition(async () => {
+      try {
+        router.push(`/jobs/${await createJobAction(quoteId)}`);
+      } catch {
+        setError("Couldn't open the job. Try again.");
+      }
+    });
+  }
+
+  function expire(notify: boolean) {
+    startTransition(async () => {
+      const result = await expireQuoteAction(quoteId, notify);
+      if (result.ok) {
+        setExpireOpen(false);
+        router.refresh();
+      } else {
+        setError(result.error);
+        setExpireOpen(false);
+      }
+    });
+  }
+
+  if (status === "ACCEPTED") {
+    return (
+      <>
+        <button type="button" className={styles.accept} disabled={isPending} onClick={openJob}>
+          Open job
+        </button>
+        {error ? <span role="alert" className={styles.error}>{error}</span> : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -60,27 +82,40 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, total, hasUn
         type="button"
         className={styles.accept}
         disabled={hasUnsavedChanges}
-        onClick={() => open("accept")}
+        onClick={() => {
+          setError(null);
+          acceptRef.current?.showModal();
+        }}
         title={hasUnsavedChanges ? "Save your changes before accepting." : undefined}
       >
         Accept
       </button>
-      <button type="button" className={styles.decline} onClick={() => open("decline")}>
+      <button type="button" className={styles.decline} onClick={() => setDeclineOpen(true)}>
         Decline
       </button>
+      {status === "SENT" ? (
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => {
+            setError(null);
+            setExpireOpen(true);
+          }}
+        >
+          Mark expired
+        </button>
+      ) : null}
 
-      <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="decision-title">
+      <dialog ref={acceptRef} className={styles.dialog} aria-labelledby="decision-title">
         <div className={styles.body}>
           <h2 id="decision-title" className={styles.title}>
-            {accepting ? "Accept this quote?" : "Decline this quote?"}
+            Accept this quote?
           </h2>
           <p className={styles.summary}>
             Quote #{quoteNumber} &middot; {customerName} &middot; {formatMoney(total)}
           </p>
           <p className={styles.note}>
-            {accepting
-              ? "This marks the quote accepted, creates the job, and takes you to it to generate the contract."
-              : "This marks the quote declined and locks it from further edits."}
+            This marks the quote accepted, creates the job, and takes you to it to generate the contract.
           </p>
           {error ? (
             <p role="alert" className={styles.error}>
@@ -88,25 +123,39 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, total, hasUn
             </p>
           ) : null}
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.cancel}
-              disabled={isPending}
-              onClick={() => dialogRef.current?.close()}
-            >
+            <button type="button" className={styles.cancel} disabled={isPending} onClick={() => acceptRef.current?.close()}>
               Cancel
             </button>
-            <button
-              type="button"
-              className={accepting ? styles.confirmAccept : styles.confirmDecline}
-              disabled={isPending}
-              onClick={confirm}
-            >
-              {isPending ? "Working…" : accepting ? "Accept & open job" : "Decline quote"}
+            <button type="button" className={styles.confirmAccept} disabled={isPending} onClick={accept}>
+              {isPending ? "Working…" : "Accept & open job"}
             </button>
           </div>
         </div>
       </dialog>
+
+      <DeclineModal
+        open={declineOpen}
+        context="rep"
+        onClose={() => setDeclineOpen(false)}
+        onSubmit={async ({ reason, detail, notify }) => {
+          const result = await declineQuoteAction(quoteId, reason, detail, notify);
+          if (!result.ok) return result.error;
+          setDeclineOpen(false);
+          router.refresh();
+          return null;
+        }}
+      />
+
+      <NotifyCustomerDialog
+        open={expireOpen}
+        title="Mark this quote expired?"
+        defaultNotify
+        confirmLabel="Mark expired"
+        pending={isPending}
+        onConfirm={expire}
+        onCancel={() => setExpireOpen(false)}
+      />
+      {error && !acceptRef.current?.open ? <span role="alert" className={styles.error}>{error}</span> : null}
     </>
   );
 }

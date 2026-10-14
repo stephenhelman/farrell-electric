@@ -8,7 +8,7 @@ export default async function DashboardPage() {
 
   const open = quotes.filter((q) => q.status === "DRAFT" || q.status === "SENT");
   const sold = quotes.filter((q) => q.status === "ACCEPTED");
-  const closed = quotes.filter((q) => q.status === "ACCEPTED" || q.status === "DECLINED");
+  const closed = quotes.filter((q) => q.status === "ACCEPTED" || q.status === "DECLINED" || q.status === "EXPIRED");
   const scheduled = jobs.filter((j) => j.status === "SCHEDULED");
   const closeRate = closed.length > 0 ? Math.round((sold.length / closed.length) * 100) : 0;
   const recentQuotes = quotes.slice(0, 6);

@@ -6,6 +6,7 @@ import type { RepoCatalogItem, RepoQuoteDetail } from "@/lib/app/repo/types";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
 import { formatMoney } from "@/lib/app/format";
+import { NotifyCustomerDialog } from "@/components/app/NotifyCustomerDialog";
 import { CatalogPicker } from "./CatalogPicker";
 import { QuoteDecision } from "./QuoteDecision";
 import { saveQuoteAction } from "./actions";
@@ -104,7 +105,8 @@ export function QuoteBuilder({
   const invoicePath =
     initialQuote?.status === "ACCEPTED" && initialQuote.publicToken ? `${sharePath}/invoice` : null;
 
-  const isLocked = initialQuote?.status === "ACCEPTED" || initialQuote?.status === "DECLINED";
+  const isLocked =
+    initialQuote?.status === "ACCEPTED" || initialQuote?.status === "DECLINED" || initialQuote?.status === "EXPIRED";
 
   // Accept/decline act on the SAVED quote, so edits not yet saved must block accepting.
   const hasUnsavedChanges = useMemo(() => {
@@ -149,6 +151,7 @@ export function QuoteBuilder({
     );
   }, [initialQuote, customerName, customerPhone, customerEmail, customerAddress, message, notes, discount, scopeOfWork, lineItems]);
   const canDecide = initialQuote !== null && (initialQuote.status === "DRAFT" || initialQuote.status === "SENT");
+  const showDecision = canDecide || initialQuote?.status === "ACCEPTED";
 
   function addItem(item: RepoCatalogItem) {
     setLineItems((current) => {
@@ -182,8 +185,12 @@ export function QuoteBuilder({
     setLineItems((current) => current.filter((line) => line.key !== key));
   }
 
-  function save(status: "DRAFT" | "SENT") {
+  // Editing the total of a quote the customer has already been sent asks whether to tell them.
+  const [pendingSave, setPendingSave] = useState<"DRAFT" | "SENT" | null>(null);
+
+  function save(status: "DRAFT" | "SENT", confirmed = false, notify?: boolean) {
     setError(null);
+    setPendingSave(null);
 
     if (saveBlockedBySync) {
       setError("Sync with GHL first — see the warning below.");
@@ -195,6 +202,11 @@ export function QuoteBuilder({
     }
     if (lineItems.length === 0) {
       setError("Add at least one item.");
+      return;
+    }
+
+    if (!confirmed && initialQuote?.status === "SENT" && totals.total !== initialQuote.total) {
+      setPendingSave(status);
       return;
     }
 
@@ -220,7 +232,7 @@ export function QuoteBuilder({
           cost: line.cost,
           taxable: line.taxable,
         })),
-      });
+      }, { notify });
       router.push(`/quotes/${result.id}`);
       router.refresh();
     });
@@ -261,11 +273,12 @@ export function QuoteBuilder({
           >
             Mark Sent
           </button>
-          {initialQuote && canDecide ? (
+          {initialQuote && showDecision ? (
             <QuoteDecision
               quoteId={initialQuote.id}
               quoteNumber={initialQuote.number}
               customerName={initialQuote.customerName}
+              status={initialQuote.status as "DRAFT" | "SENT" | "ACCEPTED"}
               total={initialQuote.total}
               hasUnsavedChanges={hasUnsavedChanges || isPending}
             />
@@ -504,6 +517,15 @@ export function QuoteBuilder({
       ) : null}
       </>
       )}
+      <NotifyCustomerDialog
+        open={pendingSave !== null}
+        title="The total changed. Notify the customer?"
+        defaultNotify
+        confirmLabel="Save"
+        pending={isPending}
+        onConfirm={(notify) => pendingSave && save(pendingSave, true, notify)}
+        onCancel={() => setPendingSave(null)}
+      />
     </div>
   );
 }

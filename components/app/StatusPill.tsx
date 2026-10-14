@@ -5,6 +5,7 @@ const TONE_BY_STATUS: Record<string, "neutral" | "gold" | "green" | "red"> = {
   SENT: "gold",
   ACCEPTED: "green",
   DECLINED: "red",
+  EXPIRED: "neutral",
   UNSCHEDULED: "neutral",
   SCHEDULED: "gold",
   DONE: "green",
