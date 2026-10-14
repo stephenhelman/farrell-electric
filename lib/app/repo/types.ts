@@ -182,6 +182,11 @@ export interface JobUpdateInput {
   actualCost?: number | null;
 }
 
+export interface QuoteDeclineInput {
+  reason: QuoteDeclineReason;
+  detail: string | null;
+}
+
 export interface RepoQuoteLineItem {
   id: string;
   catalogItemId: string | null;
@@ -384,9 +389,21 @@ export interface Repo {
   /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */
   getInvoiceByPublicToken(token: string): Promise<PublicInvoice | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
-  /** Idempotent. Returns the id of the Job spawned (or already existing) for the accepted quote. */
-  acceptQuote(id: string): Promise<string>;
-  declineQuote(id: string): Promise<void>;
+  /** Resolves the quote id behind a public token (the token IS the authorization), or null. */
+  findQuoteIdByPublicToken(token: string): Promise<string | null>;
+  /**
+   * Status-only and atomic: DRAFT|SENT → ACCEPTED, minting a publicToken if
+   * none exists. Resolves true for exactly the one call that made the
+   * transition (the one that fires quote.accepted), false for every repeat.
+   * Does NOT create the Job — see ensureJobForQuote.
+   */
+  acceptQuote(id: string): Promise<boolean>;
+  /** Idempotent. The Job for an ACCEPTED quote (created if missing); null if the quote isn't ACCEPTED. */
+  ensureJobForQuote(id: string): Promise<string | null>;
+  /** Atomic DRAFT|SENT → DECLINED with the reason; true only for the call that made the transition. */
+  declineQuote(id: string, input: QuoteDeclineInput): Promise<boolean>;
+  /** Atomic SENT → EXPIRED; true only for the call that made the transition. */
+  expireQuote(id: string): Promise<boolean>;
   /** Overwrites the customer identity fields on a quote; no-op if the id doesn't exist. */
   updateQuoteCustomer(id: string, input: QuoteCustomerInput): Promise<void>;
   /** Written only by the inbound GHL webhook handler (app/api/webhooks/ghl). */

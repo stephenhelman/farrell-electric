@@ -23,7 +23,8 @@ import type { RepoQuoteDetail } from "@/lib/app/repo/types";
  * the lead and are read through it.
  */
 export type QuoteDispatch =
-  | { event: "CREATED" | "SENT" }
+  | { event: "CREATED" }
+  | { event: "SENT" }
   | { event: "ACCEPTED"; source: QuoteEventSource }
   | { event: "UPDATED"; reason: QuoteUpdateReason; notify: boolean; source: QuoteEventSource };
 

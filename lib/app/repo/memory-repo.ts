@@ -200,6 +200,8 @@ export const memoryRepo: Repo = {
       publicToken: input.status === "SENT" ? randomUUID() : null,
       ghlContactId: null,
       ghlCustomObjectId: null,
+      declineReason: null,
+      declineReasonDetail: null,
       lineItems,
       createdAt: new Date(),
       ...totals,
@@ -208,14 +210,24 @@ export const memoryRepo: Repo = {
     return toRepoQuote(created);
   },
 
+  async findQuoteIdByPublicToken(token) {
+    return memoryStore.quotes.find((q) => q.publicToken === token)?.id ?? null;
+  },
+
   async acceptQuote(id) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
-    if (!quote) throw new Error(`Quote ${id} not found`);
+    if (!quote || (quote.status !== "DRAFT" && quote.status !== "SENT")) return false;
     quote.status = "ACCEPTED";
     // A quote can be accepted straight from DRAFT (never marked Sent), which
-    // means no publicToken exists yet — mint one now so the Task 10 invoice
-    // link always resolves once a quote is ACCEPTED.
+    // means no publicToken exists yet — mint one now so the invoice link
+    // always resolves once a quote is ACCEPTED.
     quote.publicToken ??= randomUUID();
+    return true;
+  },
+
+  async ensureJobForQuote(id) {
+    const quote = memoryStore.quotes.find((q) => q.id === id);
+    if (!quote || quote.status !== "ACCEPTED") return null;
 
     const existingJob = memoryStore.jobs.find((j) => j.quoteId === id);
     if (existingJob) return existingJob.id;
@@ -245,10 +257,20 @@ export const memoryRepo: Repo = {
     return job.id;
   },
 
-  async declineQuote(id) {
+  async declineQuote(id, input) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
-    if (!quote) return;
+    if (!quote || (quote.status !== "DRAFT" && quote.status !== "SENT")) return false;
     quote.status = "DECLINED";
+    quote.declineReason = input.reason;
+    quote.declineReasonDetail = input.detail;
+    return true;
+  },
+
+  async expireQuote(id) {
+    const quote = memoryStore.quotes.find((q) => q.id === id);
+    if (!quote || quote.status !== "SENT") return false;
+    quote.status = "EXPIRED";
+    return true;
   },
 
   async updateQuoteCustomer(id, input) {

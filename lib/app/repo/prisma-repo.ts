@@ -69,6 +69,8 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     profit: Number(quote.profit),
     margin: Number(quote.margin),
     scopeOfWork: quote.scopeOfWork ?? "",
+    declineReason: quote.declineReason,
+    declineReasonDetail: quote.declineReasonDetail,
     publicToken: quote.publicToken,
     ghlContactId: quote.ghlContactId ?? quote.lead?.ghlContactId ?? null,
     ghlSalesOpportunityId: quote.lead?.ghlSalesOpportunityId ?? null,
@@ -373,25 +375,51 @@ export const prismaRepo: Repo = {
     return mapQuoteDetail(created);
   },
 
+  async findQuoteIdByPublicToken(token) {
+    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, select: { id: true } });
+    return quote?.id ?? null;
+  },
+
   async acceptQuote(id) {
     // A quote can be accepted straight from DRAFT (never marked Sent), which
-    // means no publicToken exists yet — mint one now so the Task 10 invoice
-    // link always resolves once a quote is ACCEPTED.
-    const existing = await prisma.quote.findUniqueOrThrow({ where: { id } });
-    const publicToken = existing.publicToken ?? randomUUID();
+    // means no publicToken exists yet — mint one now so the invoice link
+    // always resolves once a quote is ACCEPTED. The status guard in the WHERE
+    // makes this atomic: of N concurrent calls exactly one sees count === 1.
+    const existing = await prisma.quote.findUnique({ where: { id }, select: { publicToken: true } });
+    if (!existing) return false;
+    const { count } = await prisma.quote.updateMany({
+      where: { id, status: { in: ["DRAFT", "SENT"] } },
+      data: { status: "ACCEPTED", publicToken: existing.publicToken ?? randomUUID() },
+    });
+    return count === 1;
+  },
 
-    await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", publicToken } });
+  async ensureJobForQuote(id) {
+    const quote = await prisma.quote.findUnique({ where: { id } });
+    if (!quote || quote.status !== "ACCEPTED") return null;
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
     if (existingJob) return existingJob.id;
 
     const job = await prisma.job.create({
-      data: { quoteId: id, status: "UNSCHEDULED", revenue: existing.total },
+      data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total },
     });
     return job.id;
   },
 
-  async declineQuote(id) {
-    await prisma.quote.update({ where: { id }, data: { status: "DECLINED" } });
+  async declineQuote(id, input) {
+    const { count } = await prisma.quote.updateMany({
+      where: { id, status: { in: ["DRAFT", "SENT"] } },
+      data: { status: "DECLINED", declineReason: input.reason, declineReasonDetail: input.detail },
+    });
+    return count === 1;
+  },
+
+  async expireQuote(id) {
+    const { count } = await prisma.quote.updateMany({
+      where: { id, status: "SENT" },
+      data: { status: "EXPIRED" },
+    });
+    return count === 1;
   },
 
   async updateQuoteCustomer(id, input) {

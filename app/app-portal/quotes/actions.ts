@@ -2,55 +2,54 @@
 
 import { getRepo } from "@/lib/app/repo";
 import type { SaveQuoteInput } from "@/lib/app/repo/types";
-import { dispatchQuoteToGhl } from "@/lib/app/ghl/dispatch-quote";
+import { requireRepSession } from "@/lib/app/auth/require-session";
+import { acceptQuote, declineQuote, expireQuote, saveQuote } from "@/lib/app/quotes/transitions";
 
-export async function saveQuoteAction(input: SaveQuoteInput) {
-  const repo = await getRepo();
-  // A save with no id is the quote's FIRST persist — the one and only create
-  // path (builder, estimator and lead-prefill all land here), so quote.created
-  // fires exactly once per quote. Every later save carries the id and can
-  // only ever re-fire quote.sent. Awaited in order: created, then sent.
-  const isFirstSave = !input.id;
+// Every export here is a reachable POST endpoint. Each rep action authenticates
+// first, then passes source "rep" as a literal to the shared transition core —
+// no action takes `source` as a parameter, so it can't be supplied by a caller.
 
-  // Orphan-quote guard: a new quote must hang off an existing lead (which owns
-  // the GHL contact id). The UI forces a lead choice, but this is the real
-  // enforcement — the estimator, a hand-edited URL, or a stale tab all land here.
-  if (isFirstSave) {
-    if (!input.leadId) {
-      throw new Error("A quote must be created for a lead — choose or create one first.");
-    }
-    if (!(await repo.getLeadById(input.leadId))) {
-      throw new Error("That lead no longer exists — choose or create one first.");
-    }
-  }
-
-  const quote = await repo.saveQuote(input);
-
-  if (isFirstSave) {
-    await dispatchQuoteToGhl(quote, "CREATED");
-  }
-
-  if (quote.status === "SENT") {
-    await dispatchQuoteToGhl(quote, "SENT");
-  }
-
-  return { id: quote.id, number: quote.number };
+export async function saveQuoteAction(input: SaveQuoteInput, options?: { notify?: boolean }) {
+  await requireRepSession();
+  return saveQuote(input, options);
 }
 
-/** Returns the spawned Job's id — the caller lands the rep on the Job page. */
+/**
+ * Marks the quote accepted (same core the customer's Accept uses) and then
+ * creates the Job — the rep's authoritative step. Returns the Job id.
+ */
 export async function acceptQuoteAction(id: string): Promise<string> {
+  await requireRepSession();
+  const result = await acceptQuote(id, "rep");
+  if (!result.ok) throw new Error(result.error);
+  return createJobAction(id);
+}
+
+/** For a quote the customer already accepted: the rep's path to its Job. Idempotent. */
+export async function createJobAction(id: string): Promise<string> {
+  await requireRepSession();
   const repo = await getRepo();
-  const jobId = await repo.acceptQuote(id);
-
-  const quote = await repo.getQuote(id);
-  if (quote) {
-    await dispatchQuoteToGhl(quote, "ACCEPTED");
-  }
-
+  const jobId = await repo.ensureJobForQuote(id);
+  if (!jobId) throw new Error("Only an accepted quote can have a job.");
   return jobId;
 }
 
-export async function declineQuoteAction(id: string) {
-  const repo = await getRepo();
-  await repo.declineQuote(id);
+export async function declineQuoteAction(
+  id: string,
+  reason: string,
+  detail: string,
+  notify: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRepSession();
+  const result = await declineQuote({ quoteId: id, source: "rep", reason, detail, notify });
+  return result.ok ? { ok: true } : result;
+}
+
+export async function expireQuoteAction(
+  id: string,
+  notify: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRepSession();
+  const result = await expireQuote(id, notify);
+  return result.ok ? { ok: true } : result;
 }
