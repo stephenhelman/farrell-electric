@@ -92,6 +92,11 @@ export const ENV_VARS: EnvVarSpec[] = [
     whenUnset: "the contact form renders no Turnstile widget. Turnstile only turns on when this AND TURNSTILE_SECRET_KEY are set.",
   },
   {
+    name: "BLOB_READ_WRITE_TOKEN",
+    tier: "stub",
+    whenUnset: "lib/app/blob no-ops and logs instead of uploading; document generation can't store files, but the app builds and runs.",
+  },
+  {
     name: "GHL_WEBHOOK_SECRET",
     tier: "stub",
     whenUnset: "app/api/webhooks/ghl rejects every inbound callback (401) — no secret configured means nothing is trusted.",
