@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getRepo } from "@/lib/app/repo";
-import { formatMoney } from "@/lib/app/format";
+import { PublicLineItems } from "@/components/public/PublicLineItems";
 import styles from "../page.module.css";
 
 export default async function PublicInvoicePage({ params }: { params: Promise<{ token: string }> }) {
@@ -20,36 +20,13 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
         <h1 className={styles.heading}>{invoice.customerName}</h1>
         {invoice.customerAddress ? <p className={styles.address}>{invoice.customerAddress}</p> : null}
 
-        <div className={styles.items}>
-          {invoice.lineItems.map((item, index) => (
-            <div key={index} className={styles.item}>
-              <div>
-                <div className={styles.itemName}>
-                  {item.qty}&times; {item.name}
-                </div>
-                {item.description ? <div className={styles.itemDesc}>{item.description}</div> : null}
-              </div>
-              <div className={styles.itemPrice}>{formatMoney(item.qty * item.unitPrice)}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.totals}>
-          <div className={styles.sumRow}>
-            <span>Subtotal</span>
-            <span>{formatMoney(invoice.subtotal)}</span>
-          </div>
-          {invoice.discount ? (
-            <div className={styles.sumRow}>
-              <span>Discount</span>
-              <span>-{formatMoney(invoice.discount)}</span>
-            </div>
-          ) : null}
-          <div className={`${styles.sumRow} ${styles.sumRowTotal}`}>
-            <span>Amount Due</span>
-            <span>{formatMoney(invoice.total)}</span>
-          </div>
-        </div>
+        <PublicLineItems
+          lineItems={invoice.lineItems}
+          subtotal={invoice.subtotal}
+          discount={invoice.discount}
+          totalLabel="Amount Due"
+          total={invoice.total}
+        />
 
         {invoice.scopeOfWork ? (
           <div className={styles.scope}>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getRepo } from "@/lib/app/repo";
-import { formatMoney } from "@/lib/app/format";
+import { PublicLineItems } from "@/components/public/PublicLineItems";
 import { QuoteResponse } from "./QuoteResponse";
 import styles from "./page.module.css";
 
@@ -21,36 +21,13 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
 
         {quote.message ? <p className={styles.message}>{quote.message}</p> : null}
 
-        <div className={styles.items}>
-          {quote.lineItems.map((item, index) => (
-            <div key={index} className={styles.item}>
-              <div>
-                <div className={styles.itemName}>
-                  {item.qty}&times; {item.name}
-                </div>
-                {item.description ? <div className={styles.itemDesc}>{item.description}</div> : null}
-              </div>
-              <div className={styles.itemPrice}>{formatMoney(item.qty * item.unitPrice)}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.totals}>
-          <div className={styles.sumRow}>
-            <span>Subtotal</span>
-            <span>{formatMoney(quote.subtotal)}</span>
-          </div>
-          {quote.discount ? (
-            <div className={styles.sumRow}>
-              <span>Discount</span>
-              <span>-{formatMoney(quote.discount)}</span>
-            </div>
-          ) : null}
-          <div className={`${styles.sumRow} ${styles.sumRowTotal}`}>
-            <span>Total</span>
-            <span>{formatMoney(quote.total)}</span>
-          </div>
-        </div>
+        <PublicLineItems
+          lineItems={quote.lineItems}
+          subtotal={quote.subtotal}
+          discount={quote.discount}
+          totalLabel="Total"
+          total={quote.total}
+        />
 
         {quote.scopeOfWork ? (
           <div className={styles.scope}>
