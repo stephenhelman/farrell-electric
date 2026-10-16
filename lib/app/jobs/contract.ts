@@ -1,7 +1,7 @@
 import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
 import type { JobDealTermsInput, PaymentType, QuoteCustomerInput, RepoQuoteDetail } from "@/lib/app/repo/types";
 
-export const PAYMENT_TYPES: readonly PaymentType[] = ["CARD", "CHECK", "CASH", "FINANCING", "OTHER"];
+export const PAYMENT_TYPES: readonly PaymentType[] = ["CARD", "CHECK", "CASH", "ZELLE", "FINANCING", "OTHER"];
 
 /** What the Generate Contract modal submits. Untrusted — the server re-validates everything. */
 export interface GenerateContractInput {

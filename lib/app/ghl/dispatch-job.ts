@@ -1,5 +1,6 @@
 import { dispatchGhlEvent } from "@/lib/ghl/dispatch";
-import type { RepoJob, RepoQuoteDetail } from "@/lib/app/repo/types";
+import type { RepoJob, RepoPayment, RepoQuoteDetail } from "@/lib/app/repo/types";
+import { balanceDue } from "@/lib/app/jobs/lifecycle";
 
 /**
  * Fires job.contract_sent from STORED values (the persisted job + quote), never
@@ -72,4 +73,31 @@ export async function dispatchJobCompleted(job: RepoJob): Promise<void> {
     completedAt: job.completedAt.toISOString(),
     installedDate: job.installedDate.toISOString(),
   });
+}
+
+/**
+ * job.deposit_paid / job.balance_paid, from the ledger row just recorded plus
+ * the job as stored AFTER that payment (so balanceRemaining is current).
+ * Hand-mapped — RepoJob carries revenue/actualCost, which never cross. Money on
+ * the wire is this payment's amount and what remains; nothing else. Best-effort, non-fatal.
+ */
+export async function dispatchJobPaymentReceived(job: RepoJob, payment: RepoPayment): Promise<void> {
+  const common = {
+    jobId: job.id,
+    quoteId: job.quoteId,
+    quoteNumber: job.quoteNumber,
+    ...(job.leadId && { leadId: job.leadId }),
+    ghlContactId: job.ghlContactId,
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
+    amountPaid: payment.amount,
+    method: payment.method,
+    balanceRemaining: Math.max(0, balanceDue(job)),
+    paidAt: payment.paidAt.toISOString(),
+  };
+
+  await dispatchGhlEvent(
+    payment.kind === "DEPOSIT"
+      ? { event: "job.deposit_paid", kind: "DEPOSIT", ...common }
+      : { event: "job.balance_paid", kind: "BALANCE", ...common },
+  );
 }

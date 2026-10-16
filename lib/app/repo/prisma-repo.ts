@@ -3,7 +3,7 @@ import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import type { LeadPayload } from "@/lib/leads/types";
-import type { QuoteGhlIdsResult, Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
+import type { QuoteGhlIdsResult, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 
 // Quotes and jobs are READERS of the GHL ids — the Lead owns them. ghlContactId
 // is read through the lead too (falling back to the quote's own column for
@@ -15,11 +15,32 @@ const QUOTE_DETAIL_INCLUDE = {
 
 const JOB_INCLUDE = {
   quote: { include: { lead: { select: { ghlContactId: true, ghlOpsOpportunityId: true } } } },
+  payments: { select: { amount: true } },
 } satisfies Prisma.JobInclude;
 
 type QuoteWithLineItems = Prisma.QuoteGetPayload<{ include: typeof QUOTE_DETAIL_INCLUDE }>;
 
 type JobWithQuote = Prisma.JobGetPayload<{ include: typeof JOB_INCLUDE }>;
+
+/** Sums dollar amounts without float drift by adding in whole cents. */
+function sumCents(amounts: number[]): number {
+  return amounts.reduce((cents, amount) => cents + Math.round(amount * 100), 0) / 100;
+}
+
+function mapPayment(payment: Prisma.PaymentGetPayload<object>): RepoPayment {
+  return {
+    id: payment.id,
+    jobId: payment.jobId,
+    kind: payment.kind,
+    method: payment.method,
+    amount: Number(payment.amount),
+    paidAt: payment.paidAt,
+    reference: payment.reference,
+    recordedBy: payment.recordedBy,
+    externalRef: payment.externalRef,
+    createdAt: payment.createdAt,
+  };
+}
 
 function mapJob(job: JobWithQuote): RepoJob {
   return {
@@ -32,6 +53,8 @@ function mapJob(job: JobWithQuote): RepoJob {
     ghlContactId: job.quote.ghlContactId ?? job.quote.lead?.ghlContactId ?? null,
     ghlOpsOpportunityId: job.quote.lead?.ghlOpsOpportunityId ?? null,
     total: Number(job.quote.total),
+    leadId: job.quote.leadId,
+    amountPaid: sumCents(job.payments.map((payment) => Number(payment.amount))),
     paymentType: job.paymentType,
     depositRequired: job.depositRequired,
     depositAmount: job.depositAmount === null ? null : Number(job.depositAmount),
@@ -247,6 +270,30 @@ export const prismaRepo: Repo = {
       data: { completedAt: new Date(), status: "DONE" },
     });
     return count === 1;
+  },
+
+  async createPayment(input) {
+    try {
+      const payment = await prisma.payment.create({ data: input });
+      return { payment: mapPayment(payment), created: true };
+    } catch (error) {
+      // P2002 on the externalRef unique index: already recorded — return the existing row.
+      if (error instanceof Error && "code" in error && error.code === "P2002") {
+        const existing = await prisma.payment.findUnique({ where: { externalRef: input.externalRef } });
+        if (existing) return { payment: mapPayment(existing), created: false };
+      }
+      throw error;
+    }
+  },
+
+  async listPaymentsForJob(jobId) {
+    const payments = await prisma.payment.findMany({ where: { jobId }, orderBy: { paidAt: "asc" } });
+    return payments.map(mapPayment);
+  },
+
+  async sumPaymentsForJob(jobId) {
+    const payments = await prisma.payment.findMany({ where: { jobId }, select: { amount: true } });
+    return sumCents(payments.map((payment) => Number(payment.amount)));
   },
 
   async getQuote(id) {

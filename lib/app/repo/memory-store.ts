@@ -1,6 +1,6 @@
 import { normalizedCatalogSeed } from "@/lib/app/catalog/normalized-seed";
 import { normalizedOptionSeed } from "@/lib/app/options/normalized-seed";
-import type { RepoCatalogItem, RepoJob, RepoLead, RepoOption, RepoQuoteDetail, RepoUser } from "./types";
+import type { RepoCatalogItem, RepoJob, RepoLead, RepoOption, RepoPayment, RepoQuoteDetail, RepoUser } from "./types";
 
 /**
  * Seeds the same admin identity the Prisma seed script (prisma/seed.ts)
@@ -54,7 +54,7 @@ const catalogItems = seedCatalogItems();
 /** Job fields owned by the job itself; the quote-derived ones are joined in on read so client-info edits on the quote show through. */
 export type MemoryJobRecord = Omit<
   RepoJob,
-  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "ghlOpsOpportunityId" | "total"
+  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "ghlOpsOpportunityId" | "total" | "leadId" | "amountPaid"
 >;
 
 /** Quote fields owned by the quote; the sales opp id is joined in from the lead on read. */
@@ -69,6 +69,7 @@ export const memoryStore = {
   // survive a process restart, which is expected until DATABASE_URL is set.
   quotes: [] as MemoryQuoteRecord[],
   jobs: [] as MemoryJobRecord[],
+  payments: [] as RepoPayment[],
   leads: [] as RepoLead[],
 };
 

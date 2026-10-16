@@ -86,6 +86,12 @@ enum PaymentType {
   CASH
   FINANCING
   OTHER
+  ZELLE
+}
+
+enum PaymentKind {
+  DEPOSIT
+  BALANCE
 }
 
 enum ContractStatus {
@@ -255,7 +261,30 @@ model Job {
   closedAt    DateTime?
   completedAt DateTime?
 
-  quote Quote @relation(fields: [quoteId], references: [id])
+  quote    Quote     @relation(fields: [quoteId], references: [id])
+  payments Payment[]
+}
+
+// The money-received ledger. Every row is a payment that actually arrived — there
+// is no pending state. externalRef is the idempotency key (a QuickBooks payment id
+// or a generated key for manual entry), so a redelivered webhook can never insert twice.
+model Payment {
+  id          String      @id @default(cuid())
+  jobId       String
+  kind        PaymentKind
+  method      PaymentType
+  amount      Decimal
+  paidAt      DateTime
+  // Check number, Zelle memo, etc.
+  reference   String?
+  // Rep id for a manual entry; "quickbooks" for the webhook.
+  recordedBy  String?
+  externalRef String      @unique
+  createdAt   DateTime    @default(now())
+
+  job Job @relation(fields: [jobId], references: [id])
+
+  @@index([jobId])
 }
 
 // System of record for leads submitted from the site. The Lead owns all three

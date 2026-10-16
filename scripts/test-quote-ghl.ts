@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 
 delete process.env.DATABASE_URL;
 process.env.GHL_WEBHOOK_URL_QUOTE = "http://ghl.test/quote";
+process.env.GHL_WEBHOOK_URL_JOB = "http://ghl.test/job";
 process.env.NEXT_PUBLIC_SITE_URL ??= "https://farrellelectric.test";
 
 const sent: Record<string, unknown>[] = [];
@@ -173,6 +174,68 @@ async function main() {
     assert.match(b.split("\n").slice(0, 12).join("\n"), /await requireRepSession\(\)/, `rep action missing session check: ${b.split("(")[0]}`);
   }
   assert.doesNotMatch(readFileSync("app/(public)/q/[token]/actions.ts", "utf8"), /"rep"/, "public actions never mention source rep");
+
+  // --- payments: ONE converged confirm path ------------------------------
+  {
+    const { confirmPayment } = await import("@/lib/app/jobs/payments");
+    const { balanceDue } = await import("@/lib/app/jobs/lifecycle");
+    const pq = await mk("SENT", 1000);
+    await acceptQuote(pq.id, "rep"); take();
+    const jobId = (await repo.ensureJobForQuote(pq.id))!;
+    await repo.sendJobContract(jobId, { paymentType: "ZELLE", depositRequired: true, depositAmount: 300 });
+    await repo.updateJob(jobId, { contractStatus: "SIGNED", contractSignedAt: new Date(), installedDate: new Date() });
+    take();
+
+    const fresh = (await repo.getJob(jobId))!;
+    assert.equal(balanceDue(fresh), 1000, "a required-but-unpaid deposit does not reduce balanceDue");
+
+    const dep = { jobId, kind: "DEPOSIT" as const, method: "CHECK" as const, amount: 300, reference: "#1042", externalRef: "manual:d1", recordedBy: "rep-1" };
+    const r1 = await confirmPayment(repo, dep);
+    assert.ok(r1.ok && r1.recorded, "deposit recorded");
+    let j = (await repo.getJob(jobId))!;
+    assert.equal(j.depositPaid, true); assert.ok(j.depositPaidAt);
+    assert.equal(j.finalInvoicePaid, false);
+    assert.equal(balanceDue(j), 700, "balanceDue = revenue - sum(payments)");
+    assert.equal(await repo.sumPaymentsForJob(jobId), 300);
+    const depEvents = take();
+    assert.deepEqual(depEvents.map((e) => e.event), ["job.closed", "job.deposit_paid"], "gate then payment event");
+    const depPayload = depEvents[1];
+    assert.equal(depPayload.kind, "DEPOSIT"); assert.equal(depPayload.amountPaid, 300);
+    assert.equal(depPayload.method, "CHECK"); assert.equal(depPayload.balanceRemaining, 700);
+    assert.equal(depPayload.leadId, lead.id);
+    assert.ok(j.closedAt && !j.completedAt);
+
+    // a redelivery (same externalRef) is a clean no-op: no second row, no second event
+    const r2 = await confirmPayment(repo, dep);
+    assert.ok(r2.ok && !r2.recorded && r2.payment.id === (r1.ok && r1.payment.id));
+    assert.deepEqual(events(), [], "redelivered externalRef fires nothing");
+    assert.equal((await repo.listPaymentsForJob(jobId)).length, 1);
+    assert.equal(await repo.sumPaymentsForJob(jobId), 300);
+
+    // the balance payment clears the balance, sets finalInvoicePaid, trips the complete gate
+    const r3 = await confirmPayment(repo, { jobId, kind: "BALANCE", method: "ZELLE", amount: 700, reference: "memo", externalRef: "qbo:b1", recordedBy: "quickbooks" });
+    assert.ok(r3.ok && r3.recorded);
+    j = (await repo.getJob(jobId))!;
+    assert.equal(j.finalInvoicePaid, true); assert.ok(j.finalInvoicePaidAt);
+    assert.equal(balanceDue(j), 0);
+    assert.ok(j.completedAt && j.status === "DONE", "complete gate tripped");
+    const balEvents = take();
+    assert.deepEqual(balEvents.map((e) => e.event), ["job.completed", "job.balance_paid"]);
+    assert.equal(balEvents[1].kind, "BALANCE"); assert.equal(balEvents[1].balanceRemaining, 0);
+
+    // economics wall: nothing but the agreed keys
+    for (const payload of [depPayload, balEvents[1]]) {
+      assert.deepEqual(Object.keys(payload).sort(), [
+        "amountPaid", "balanceRemaining", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId",
+        "kind", "leadId", "method", "paidAt", "quoteId", "quoteNumber",
+      ]);
+    }
+
+    // validation
+    assert.equal((await confirmPayment(repo, { ...dep, amount: 0, externalRef: "x1" })).ok, false);
+    assert.equal((await confirmPayment(repo, { ...dep, jobId: "nope", externalRef: "x2" })).ok, false);
+    assert.deepEqual(events(), []);
+  }
 
   console.log("quote ghl sync: all assertions passed");
 

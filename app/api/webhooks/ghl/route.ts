@@ -22,8 +22,9 @@ import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/
  * re-delivery just rewrites the same values.
  *
  * type "job" carries a lifecycle `action` instead of ids (contract signed,
- * deposit paid, install scheduled, installed, final paid). Those are written
- * to the Job as facts, idempotently — see lib/app/jobs/inbound.ts. Whether a
+ * install scheduled, installed), written to the Job as facts, idempotently — see
+ * lib/app/jobs/inbound.ts. Payments are NOT inbound: the app originates them
+ * (lib/app/jobs/payments.ts) and tells GHL via job.deposit_paid / job.balance_paid. Whether a
  * deal closes or a job completes is decided separately by the lifecycle gates.
  */
 const SECRET_HEADER = "x-ghl-webhook-secret";

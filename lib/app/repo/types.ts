@@ -85,7 +85,8 @@ export interface RepoQuote {
 }
 
 export type JobStatus = "UNSCHEDULED" | "SCHEDULED" | "DONE";
-export type PaymentType = "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER";
+export type PaymentType = "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER" | "ZELLE";
+export type PaymentKind = "DEPOSIT" | "BALANCE";
 export type ContractStatus = "NONE" | "SENT" | "SIGNED";
 
 /**
@@ -115,6 +116,10 @@ export interface RepoJob {
   ghlOpsOpportunityId: string | null;
   /** The accepted quote's customer-facing total. */
   total: number;
+  /** The quote's lead id — immutable GHL lookup key; null for an orphan quote. */
+  leadId: string | null;
+  /** Sum of the Payment ledger (money actually received). Joined in on read; never written directly. */
+  amountPaid: number;
 
   // Deal terms — null/false until the Generate Contract modal sets them.
   paymentType: PaymentType | null;
@@ -141,6 +146,38 @@ export interface RepoJob {
   /** Set once, by claimJobClosed / claimJobCompleted — records that the gate already fired. */
   closedAt: Date | null;
   completedAt: Date | null;
+}
+
+/** One row of the money-received ledger. Every row is money that arrived — there is no pending state. */
+export interface RepoPayment {
+  id: string;
+  jobId: string;
+  kind: PaymentKind;
+  method: PaymentType;
+  amount: number;
+  paidAt: Date;
+  reference: string | null;
+  recordedBy: string | null;
+  /** Idempotency key: a redelivered payment with the same externalRef is a no-op. */
+  externalRef: string;
+  createdAt: Date;
+}
+
+export interface CreatePaymentInput {
+  jobId: string;
+  kind: PaymentKind;
+  method: PaymentType;
+  amount: number;
+  paidAt: Date;
+  reference: string | null;
+  recordedBy: string | null;
+  externalRef: string;
+}
+
+/** `created` is false when the externalRef already existed — `payment` is then the existing row. */
+export interface CreatePaymentResult {
+  payment: RepoPayment;
+  created: boolean;
 }
 
 /** Client info as confirmed in the Generate Contract modal — written back to the Quote (the single source). */
@@ -384,6 +421,11 @@ export interface Repo {
   claimJobClosed(id: string): Promise<boolean>;
   /** Same guard for completedAt; the winning call also sets status = DONE. */
   claimJobCompleted(id: string): Promise<boolean>;
+  /** Idempotent on externalRef: a repeat returns the existing row with created=false and writes nothing. */
+  createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
+  listPaymentsForJob(jobId: string): Promise<RepoPayment[]>;
+  /** Total money received for the job, in dollars (cent-rounded). */
+  sumPaymentsForJob(jobId: string): Promise<number>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;
   getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
   /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */

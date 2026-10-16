@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoQuoteDetail } from "./types";
+import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 
@@ -55,6 +55,13 @@ function toRepoQuote(quote: MemoryQuoteRecord): RepoQuoteDetail {
   };
 }
 
+function sumPayments(jobId: string): number {
+  const cents = memoryStore.payments
+    .filter((payment) => payment.jobId === jobId)
+    .reduce((total, payment) => total + Math.round(payment.amount * 100), 0);
+  return cents / 100;
+}
+
 function toRepoJob(record: MemoryJobRecord): RepoJob {
   const quote = memoryStore.quotes.find((q) => q.id === record.quoteId);
   return {
@@ -65,6 +72,8 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
     ghlContactId: quote?.ghlContactId ?? leadFor(quote)?.ghlContactId ?? null,
     ghlOpsOpportunityId: leadFor(quote)?.ghlOpsOpportunityId ?? null,
     total: quote?.total ?? 0,
+    leadId: quote?.leadId ?? null,
+    amountPaid: sumPayments(record.id),
   };
 }
 
@@ -223,6 +232,26 @@ export const memoryRepo: Repo = {
     // always resolves once a quote is ACCEPTED.
     quote.publicToken ??= randomUUID();
     return true;
+  },
+
+  // Single-threaded, so check-then-insert is atomic — the twin of the unique externalRef index.
+  async createPayment(input) {
+    const existing = memoryStore.payments.find((p) => p.externalRef === input.externalRef);
+    if (existing) return { payment: { ...existing }, created: false };
+    const payment: RepoPayment = { id: randomUUID(), ...input, createdAt: new Date() };
+    memoryStore.payments.push(payment);
+    return { payment: { ...payment }, created: true };
+  },
+
+  async listPaymentsForJob(jobId) {
+    return memoryStore.payments
+      .filter((payment) => payment.jobId === jobId)
+      .sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime())
+      .map((payment) => ({ ...payment }));
+  },
+
+  async sumPaymentsForJob(jobId) {
+    return sumPayments(jobId);
   },
 
   async ensureJobForQuote(id) {

@@ -15,15 +15,19 @@ type GateInput = Pick<
   | "contractStatus"
   | "depositRequired"
   | "depositAmount"
+  | "amountPaid"
   | "depositPaid"
   | "installedDate"
   | "finalInvoicePaid"
 >;
 
-/** What remains after the deposit: revenue - (depositRequired ? depositAmount : 0). <= 0 means none due. */
-export function balanceDue(job: Pick<GateInput, "revenue" | "depositRequired" | "depositAmount">): number {
-  const deposit = job.depositRequired ? (job.depositAmount ?? 0) : 0;
-  return job.revenue - deposit;
+/**
+ * What is still owed: revenue minus money actually received (the Payment
+ * ledger, joined onto the job as amountPaid). <= 0 means nothing due. A
+ * required-but-unpaid deposit does NOT reduce the balance.
+ */
+export function balanceDue(job: Pick<GateInput, "revenue" | "amountPaid">): number {
+  return Math.round((job.revenue - job.amountPaid) * 100) / 100;
 }
 
 /** Closed = contract signed AND (deposit paid OR no deposit required). */

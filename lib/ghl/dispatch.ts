@@ -142,7 +142,7 @@ export interface JobContractSentPayload {
   /** Ops-pipeline opp, read through the lead. Null for orphan jobs / before the ops echo-back. */
   ghlOpsOpportunityId: string | null;
   scopeOfWork: string;
-  paymentType: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER";
+  paymentType: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER" | "ZELLE";
   depositRequired: boolean;
   depositAmount: number | null;
   total: number;
@@ -187,6 +187,36 @@ export interface JobCompletedPayload {
   installedDate: string;
 }
 
+/**
+ * Fired once per recorded payment (deduped on the Payment's externalRef). Money
+ * received only — amountPaid is this payment, balanceRemaining what is still owed
+ * after it. Never revenue/cost/margin; `total` is intentionally absent too.
+ */
+interface JobPaymentPayload {
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
+  ghlContactId: string | null;
+  ghlOpsOpportunityId: string | null;
+  amountPaid: number;
+  method: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER" | "ZELLE";
+  balanceRemaining: number;
+  /** ISO timestamp the payment was received. */
+  paidAt: string;
+}
+
+export interface JobDepositPaidPayload extends JobPaymentPayload {
+  event: "job.deposit_paid";
+  kind: "DEPOSIT";
+}
+
+export interface JobBalancePaidPayload extends JobPaymentPayload {
+  event: "job.balance_paid";
+  kind: "BALANCE";
+}
+
 export type GhlEventPayload =
   | LeadCreatedPayload
   | QuoteCreatedPayload
@@ -195,7 +225,9 @@ export type GhlEventPayload =
   | QuoteAcceptedPayload
   | JobContractSentPayload
   | JobClosedPayload
-  | JobCompletedPayload;
+  | JobCompletedPayload
+  | JobDepositPaidPayload
+  | JobBalancePaidPayload;
 
 /** Entity prefix → the env var naming that entity's outbound webhook URL. */
 const ENTITY_WEBHOOKS = {
@@ -210,9 +242,12 @@ function isGhlEntity(value: string): value is GhlEntity {
   return value in ENTITY_WEBHOOKS;
 }
 
+/** A slow GHL must not hang the caller (e.g. a payment webhook response). */
+const DISPATCH_TIMEOUT_MS = 5000;
+
 /**
  * POSTs the event payload to its entity's webhook URL. No-ops when that URL
- * is unset. Never throws — a webhook failure logs loudly but must never
+ * is unset. Aborts after DISPATCH_TIMEOUT_MS. Never throws — a webhook failure logs loudly but must never
  * block or roll back the caller's DB write.
  */
 export async function dispatchGhlEvent(payload: GhlEventPayload): Promise<void> {
@@ -230,11 +265,14 @@ export async function dispatchGhlEvent(payload: GhlEventPayload): Promise<void> 
     return;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DISPATCH_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -242,5 +280,7 @@ export async function dispatchGhlEvent(payload: GhlEventPayload): Promise<void> 
     }
   } catch (error) {
     console.error(`[GHL:dispatch] ${payload.event} threw (best-effort, non-fatal)`, error);
+  } finally {
+    clearTimeout(timer);
   }
 }
