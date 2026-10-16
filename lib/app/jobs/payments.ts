@@ -3,6 +3,10 @@ import { dispatchJobPaymentReceived } from "@/lib/app/ghl/dispatch-job";
 import { advanceJobLifecycle } from "./gates";
 import { balanceDue } from "./lifecycle";
 
+function sumCents(amounts: number[]): number {
+  return amounts.reduce((cents, amount) => cents + Math.round(amount * 100), 0) / 100;
+}
+
 export interface ConfirmPaymentInput {
   jobId: string;
   kind: PaymentKind;
@@ -27,13 +31,18 @@ export type ConfirmPaymentResult =
  * THE converged path for a received payment — the rep's mark-paid action and
  * the QuickBooks webhook both land here. In order:
  *   1. record the money in the ledger (idempotent on externalRef),
- *   2. set depositPaid (DEPOSIT) and finalInvoicePaid (balance now <= 0),
+ *   2. set depositPaid once CUMULATIVE deposit payments reach depositAmount
+ *      (a partial deposit sets nothing), and finalInvoicePaid once the balance is <= 0,
  *   3. run the lifecycle gates (job.closed / job.completed, each exactly-once),
- *   4. fire job.deposit_paid / job.balance_paid — only for the call that actually recorded the row.
+ *   4. fire the payment event: job.deposit_paid at the moment the deposit is
+ *      completed (the depositPaid flip — a partial deposit is silent, since GHL
+ *      reads "deposit paid" as "deposit satisfied"), job.balance_paid for each
+ *      balance payment recorded by this call.
  *
- * A repeat externalRef is not a failure and fires no payment event, but steps
+ * A repeat externalRef is not a failure and fires no balance event, but steps
  * 2–3 still run: they're idempotent, and it lets a redelivery finish the work
- * if an earlier attempt died after the ledger write. A failed dispatch is
+ * (including a deposit_paid whose flag flip never landed) if an earlier attempt
+ * died after the ledger write. A failed dispatch is
  * logged by dispatchGhlEvent and never rolls anything back. DB errors propagate
  * so the caller (a webhook) can answer 500 and be redelivered.
  */
@@ -60,8 +69,16 @@ export async function confirmPayment(repo: Repo, input: ConfirmPaymentInput): Pr
   // Flags are judged from the ledger, not the request, so any order/redelivery converges.
   const job = (await repo.getJob(input.jobId)) ?? before;
   const now = new Date();
+  let depositCompleted = false;
   if (payment.kind === "DEPOSIT" && !job.depositPaid) {
-    await repo.updateJob(job.id, { depositPaid: true, depositPaidAt: payment.paidAt });
+    const received = sumCents(
+      (await repo.listPaymentsForJob(job.id)).filter((p) => p.kind === "DEPOSIT").map((p) => p.amount),
+    );
+    // No deposit terms (depositAmount null) means any deposit payment satisfies it.
+    if (received >= (job.depositAmount ?? 0)) {
+      await repo.updateJob(job.id, { depositPaid: true, depositPaidAt: payment.paidAt });
+      depositCompleted = true;
+    }
   }
   if (balanceDue(job) <= 0 && !job.finalInvoicePaid) {
     await repo.updateJob(job.id, { finalInvoicePaid: true, finalInvoicePaidAt: now });
@@ -69,7 +86,7 @@ export async function confirmPayment(repo: Repo, input: ConfirmPaymentInput): Pr
 
   await advanceJobLifecycle(repo, job.id);
 
-  if (created) {
+  if (payment.kind === "BALANCE" ? created : depositCompleted) {
     const settled = await repo.getJob(job.id);
     if (settled) await dispatchJobPaymentReceived(settled, payment);
   }

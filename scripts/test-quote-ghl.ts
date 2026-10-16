@@ -231,6 +231,50 @@ async function main() {
       ]);
     }
 
+    // partial deposit: recorded in the ledger, but sets no flag, closes nothing, fires nothing
+    const sq = await mk("SENT", 1000);
+    await acceptQuote(sq.id, "rep"); take();
+    const sJob = (await repo.ensureJobForQuote(sq.id))!;
+    await repo.sendJobContract(sJob, { paymentType: "CHECK", depositRequired: true, depositAmount: 300 });
+    await repo.updateJob(sJob, { contractStatus: "SIGNED", contractSignedAt: new Date() });
+    take();
+    const part = { jobId: sJob, kind: "DEPOSIT" as const, method: "CHECK" as const, reference: null, recordedBy: "rep-1" };
+    const p1 = await confirmPayment(repo, { ...part, amount: 100, externalRef: "manual:p1" });
+    assert.ok(p1.ok && p1.recorded);
+    let sj = (await repo.getJob(sJob))!;
+    assert.equal(sj.depositPaid, false, "partial deposit does not set depositPaid");
+    assert.equal(sj.closedAt, null, "partial deposit does not close the job");
+    assert.equal(sj.amountPaid, 100);
+    assert.deepEqual(events(), [], "partial deposit fires no job.deposit_paid");
+    const p2 = await confirmPayment(repo, { ...part, amount: 200, externalRef: "manual:p2" });
+    assert.ok(p2.ok && p2.recorded);
+    sj = (await repo.getJob(sJob))!;
+    assert.equal(sj.depositPaid, true, "second deposit reaching depositAmount sets depositPaid");
+    assert.ok(sj.closedAt, "and trips the Closed gate");
+    const sEvents = take();
+    assert.deepEqual(sEvents.map((e) => e.event), ["job.closed", "job.deposit_paid"]);
+    assert.equal(sEvents[1].amountPaid, 200); assert.equal(sEvents[1].balanceRemaining, 700);
+    // redelivering the first partial after completion changes nothing
+    await confirmPayment(repo, { ...part, amount: 100, externalRef: "manual:p1" });
+    assert.deepEqual(events(), []);
+
+    // manual-payment validation: CARD is never recordable by hand
+    const { validateMarkPaid, MANUAL_PAYMENT_METHODS } = await import("@/lib/app/jobs/manual-payment");
+    assert.ok(!(MANUAL_PAYMENT_METHODS as readonly string[]).includes("CARD"), "CARD not offered");
+    const mp = { kind: "DEPOSIT", method: "CHECK", amount: 10 };
+    assert.equal(validateMarkPaid({ ...mp, method: "CARD" }).ok, false, "manual CARD rejected");
+    assert.equal(validateMarkPaid({ ...mp, amount: 0 }).ok, false);
+    assert.equal(validateMarkPaid({ ...mp, amount: -5 }).ok, false);
+    assert.equal(validateMarkPaid({ ...mp, kind: "REFUND" }).ok, false);
+    assert.equal(validateMarkPaid({ ...mp, paidAt: "not-a-date" }).ok, false);
+    assert.equal(validateMarkPaid({ ...mp, idempotencyKey: "x" }).ok, false);
+    for (const method of ["CHECK", "ZELLE", "CASH", "FINANCING", "OTHER"]) assert.equal(validateMarkPaid({ ...mp, method }).ok, true);
+
+    // the rep action authenticates first
+    const jobsActions = readFileSync("app/app-portal/jobs/actions.ts", "utf8");
+    const markBody = jobsActions.split("export async function markPaidAction")[1];
+    assert.match(markBody.split("\n").slice(0, 3).join("\n"), /await requireRepSession\(\)/, "markPaidAction checks the session first");
+
     // validation
     assert.equal((await confirmPayment(repo, { ...dep, amount: 0, externalRef: "x1" })).ok, false);
     assert.equal((await confirmPayment(repo, { ...dep, jobId: "nope", externalRef: "x2" })).ok, false);

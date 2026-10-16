@@ -1,6 +1,11 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { getRepo } from "@/lib/app/repo";
+import { requireRepSession } from "@/lib/app/auth/require-session";
+import { confirmPayment } from "@/lib/app/jobs/payments";
+import { validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-payment";
 import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
 import { dispatchJobContractSent } from "@/lib/app/ghl/dispatch-job";
 import {
@@ -71,5 +76,39 @@ export async function updateActualCostAction(
     actualCost: actualCost === null ? null : Math.round(actualCost * 100) / 100,
   });
   if (!job) return { ok: false, error: "Job not found." };
+  return { ok: true };
+}
+
+/**
+ * Rep-recorded payment for money settled outside the app (check / Zelle / cash
+ * / financing / other). Goes through the same confirmPayment as the QuickBooks
+ * webhook, so the ledger, depositPaid/finalInvoicePaid, the lifecycle gates and
+ * the GHL event all behave identically. CARD is rejected here (see
+ * MANUAL_PAYMENT_METHODS) — card money comes only from the QuickBooks webhook.
+ *
+ * externalRef is "manual:<key>"; the modal supplies one key per open dialog so
+ * a double-click or retried request records once, otherwise a fresh uuid.
+ */
+export async function markPaidAction(jobId: string, input: MarkPaidInput): Promise<JobActionResult> {
+  const { userId } = await requireRepSession();
+
+  const validated = validateMarkPaid(input);
+  if (!validated.ok) return validated;
+
+  const repo = await getRepo();
+  const result = await confirmPayment(repo, {
+    jobId,
+    kind: validated.kind,
+    method: validated.method,
+    amount: validated.amount,
+    reference: validated.reference,
+    paidAt: validated.paidAt,
+    recordedBy: userId,
+    externalRef: `manual:${validated.idempotencyKey ?? randomUUID()}`,
+  });
+  if (!result.ok) return result;
+
+  revalidatePath(`/app-portal/jobs/${jobId}`);
+  revalidatePath("/app-portal/jobs");
   return { ok: true };
 }

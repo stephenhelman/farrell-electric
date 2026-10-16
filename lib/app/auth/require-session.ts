@@ -6,7 +6,8 @@ import { auth } from "@/lib/app/auth";
  * makes `source: "rep"` trustworthy: only an authenticated session can reach
  * a code path that stamps it.
  */
-export async function requireRepSession(): Promise<void> {
+export async function requireRepSession(): Promise<{ userId: string }> {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
+  return { userId: session.user.id };
 }

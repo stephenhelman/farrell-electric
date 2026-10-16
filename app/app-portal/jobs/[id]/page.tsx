@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/app/StatusPill";
 import { resolveScopeOfWork } from "@/lib/app/jobs/contract";
 import { ActualCostForm } from "./ActualCostForm";
 import { GenerateContract } from "./GenerateContract";
+import { RecordPayment } from "./RecordPayment";
 import styles from "./page.module.css";
 
 function formatDate(date: Date | null): string {
@@ -35,6 +36,8 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   const quote = await repo.getQuote(job.quoteId);
   const termsSet = job.paymentType !== null;
   const remaining = balanceDue(job);
+  const payments = await repo.listPaymentsForJob(job.id);
+  const depositReceived = payments.filter((p) => p.kind === "DEPOSIT").reduce((sum, p) => sum + p.amount, 0);
   const margin = job.actualCost === null ? null : job.revenue - job.actualCost;
   const marginPct = margin === null || job.revenue === 0 ? null : (margin / job.revenue) * 100;
 
@@ -127,10 +130,32 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
               : "No"
             : "N/A — no deposit required"}
         </Field>
-        <Field label="Balance due after deposit">{formatMoney(Math.max(remaining, 0))}</Field>
+        <Field label="Received">{formatMoney(job.amountPaid)}</Field>
+        <Field label="Balance due">{formatMoney(Math.max(remaining, 0))}</Field>
         <Field label="Final invoice paid">
           {job.finalInvoicePaid ? `Yes · ${formatDate(job.finalInvoicePaidAt)}` : "No"}
         </Field>
+        {payments.length > 0 ? (
+          <ul className={styles.lines}>
+            {payments.map((payment) => (
+              <li key={payment.id} className={styles.line}>
+                <span>
+                  {formatDate(payment.paidAt)} · {titleCase(payment.kind)} · {titleCase(payment.method)}
+                  {payment.reference ? ` · ${payment.reference}` : ""}
+                </span>
+                <span>{formatMoney(payment.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <RecordPayment
+          jobId={job.id}
+          depositRequired={job.depositRequired}
+          depositAmount={job.depositAmount}
+          depositPaid={job.depositPaid}
+          depositReceived={depositReceived}
+          balanceDue={remaining}
+        />
       </div>
 
       <div className={styles.section}>
