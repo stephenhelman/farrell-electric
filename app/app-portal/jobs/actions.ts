@@ -28,6 +28,7 @@ export async function generateContractAction(
   jobId: string,
   input: GenerateContractInput,
 ): Promise<JobActionResult> {
+  await requireRepSession();
   const repo = await getRepo();
 
   const job = await repo.getJob(jobId);
@@ -67,6 +68,7 @@ export async function updateActualCostAction(
   jobId: string,
   actualCost: number | null,
 ): Promise<JobActionResult> {
+  await requireRepSession();
   if (actualCost !== null && (!Number.isFinite(actualCost) || actualCost < 0)) {
     return { ok: false, error: "Enter a cost of zero or more." };
   }

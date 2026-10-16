@@ -173,6 +173,27 @@ async function main() {
   for (const b of bodies) {
     assert.match(b.split("\n").slice(0, 12).join("\n"), /await requireRepSession\(\)/, `rep action missing session check: ${b.split("(")[0]}`);
   }
+  // every server action under app-portal authenticates first (public token actions live outside it)
+  {
+    const { readdirSync } = await import("node:fs");
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(`${dir}/${e.name}`) : e.name === "actions.ts" ? [`${dir}/${e.name}`] : [],
+      );
+    const files = walk("app/app-portal");
+    assert.ok(files.length >= 3, "found the portal action files");
+    for (const file of files) {
+      const parts = readFileSync(file, "utf8").split(/export async function /).slice(1);
+      assert.ok(parts.length > 0, file);
+      for (const body of parts) {
+        assert.match(
+          body.split("\n").slice(0, 12).join("\n"),
+          /await requireRepSession\(\)/,
+          `${file}: ${body.split("(")[0]} must call requireRepSession() first`,
+        );
+      }
+    }
+  }
   assert.doesNotMatch(readFileSync("app/(public)/q/[token]/actions.ts", "utf8"), /"rep"/, "public actions never mention source rep");
 
   // --- payments: ONE converged confirm path ------------------------------

@@ -1,6 +1,7 @@
 "use server";
 
 import { getRepo } from "@/lib/app/repo";
+import { requireRepSession } from "@/lib/app/auth/require-session";
 import type { LeadType } from "@/lib/app/repo/types";
 import type { LeadPayload } from "@/lib/leads/types";
 import { EMAIL_PATTERN, LEAD_FIELD_LIMITS, PHONE_MAX_DIGITS, PHONE_MIN_DIGITS } from "@/lib/leads/validation";
@@ -27,6 +28,7 @@ export type CreatePortalLeadResult = { ok: true; leadId: string } | { ok: false;
  * provable opt-in, and the GHL workflow must not text off it.
  */
 export async function createPortalLeadAction(input: CreatePortalLeadInput): Promise<CreatePortalLeadResult> {
+  await requireRepSession();
   const name = input.name.trim();
   const phone = input.phone.trim();
   const email = input.email.trim();
@@ -101,6 +103,7 @@ export async function createPortalLeadAction(input: CreatePortalLeadInput): Prom
 
 /** Polled by the quote screen — reads only the contact id the GHL echo-back writes onto the lead. */
 export async function getLeadSyncAction(leadId: string): Promise<{ ghlContactId: string | null }> {
+  await requireRepSession();
   const repo = await getRepo();
   const lead = await repo.getLeadById(leadId);
   return { ghlContactId: lead?.ghlContactId ?? null };
