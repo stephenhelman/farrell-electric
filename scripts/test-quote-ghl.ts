@@ -196,6 +196,43 @@ async function main() {
   }
   assert.doesNotMatch(readFileSync("app/(public)/q/[token]/actions.ts", "utf8"), /"rep"/, "public actions never mention source rep");
 
+  // --- acceptance is persisted once: first acceptance wins -------------
+  {
+    const before = Date.now();
+    const rq = await mk("SENT");
+    assert.equal(rq.acceptedAt, null); assert.equal(rq.acceptedSource, null);
+    await acceptQuote(rq.id, "rep"); take();
+    const rAcc = (await repo.getQuote(rq.id))!;
+    assert.equal(rAcc.acceptedSource, "rep");
+    assert.ok(rAcc.acceptedAt && rAcc.acceptedAt.getTime() >= before, "acceptedAt set on acceptance");
+
+    await new Promise((r) => setTimeout(r, 15));
+    assert.deepEqual(await acceptQuote(rq.id, "rep"), { ok: true, transitioned: false });
+    assert.deepEqual(await acceptQuote(rq.id, "customer"), { ok: true, transitioned: false });
+    const rAgain = (await repo.getQuote(rq.id))!;
+    assert.equal(rAgain.acceptedAt!.getTime(), rAcc.acceptedAt!.getTime(), "re-accept never moves acceptedAt");
+    assert.equal(rAgain.acceptedSource, "rep", "a later accept never changes the source");
+
+    // the public token path stamps "customer" server-side (it takes no source argument)
+    const cq = await mk("SENT");
+    assert.equal((await acceptQuoteByTokenAction(cq.publicToken!)).ok, true); take();
+    const cAcc = (await repo.getQuote(cq.id))!;
+    assert.equal(cAcc.acceptedSource, "customer");
+    assert.ok(cAcc.acceptedAt);
+    const firstAt = cAcc.acceptedAt!.getTime();
+    await new Promise((r) => setTimeout(r, 15));
+    await acceptQuoteByTokenAction(cq.publicToken!);
+    await acceptQuote(cq.id, "rep");
+    const cAgain = (await repo.getQuote(cq.id))!;
+    assert.equal(cAgain.acceptedAt!.getTime(), firstAt); assert.equal(cAgain.acceptedSource, "customer");
+
+    // a declined quote is never stamped
+    const dq = await mk("SENT");
+    await declineQuote({ quoteId: dq.id, source: "rep", reason: "TIMING", detail: "" }); take();
+    await acceptQuote(dq.id, "rep");
+    assert.equal((await repo.getQuote(dq.id))!.acceptedAt, null);
+  }
+
   // --- payments: ONE converged confirm path ------------------------------
   {
     const { confirmPayment } = await import("@/lib/app/jobs/payments");

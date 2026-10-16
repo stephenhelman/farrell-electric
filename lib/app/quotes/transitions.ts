@@ -29,7 +29,7 @@ export async function acceptQuote(quoteId: string, source: QuoteEventSource): Pr
   // A customer can only act on a quote that was actually sent to them.
   if (source === "customer" && quote.status !== "SENT") return { ok: false, error: "This quote isn't available." };
 
-  const transitioned = await repo.acceptQuote(quoteId);
+  const transitioned = await repo.acceptQuote(quoteId, source);
   if (transitioned) {
     const accepted = await repo.getQuote(quoteId);
     if (accepted) await dispatchQuoteToGhl(accepted, { event: "ACCEPTED", source });

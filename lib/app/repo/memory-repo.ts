@@ -211,6 +211,8 @@ export const memoryRepo: Repo = {
       ghlCustomObjectId: null,
       declineReason: null,
       declineReasonDetail: null,
+      acceptedAt: null,
+      acceptedSource: null,
       lineItems,
       createdAt: new Date(),
       ...totals,
@@ -223,10 +225,12 @@ export const memoryRepo: Repo = {
     return memoryStore.quotes.find((q) => q.publicToken === token)?.id ?? null;
   },
 
-  async acceptQuote(id) {
+  async acceptQuote(id, source) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote || (quote.status !== "DRAFT" && quote.status !== "SENT")) return false;
     quote.status = "ACCEPTED";
+    quote.acceptedAt = new Date();
+    quote.acceptedSource = source;
     // A quote can be accepted straight from DRAFT (never marked Sent), which
     // means no publicToken exists yet — mint one now so the invoice link
     // always resolves once a quote is ACCEPTED.

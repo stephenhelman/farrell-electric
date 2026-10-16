@@ -94,6 +94,8 @@ function mapQuoteDetail(quote: QuoteWithLineItems): RepoQuoteDetail {
     scopeOfWork: quote.scopeOfWork ?? "",
     declineReason: quote.declineReason,
     declineReasonDetail: quote.declineReasonDetail,
+    acceptedAt: quote.acceptedAt,
+    acceptedSource: quote.acceptedSource === null ? null : quote.acceptedSource === "CUSTOMER" ? "customer" : "rep",
     publicToken: quote.publicToken,
     ghlContactId: quote.ghlContactId ?? quote.lead?.ghlContactId ?? null,
     ghlSalesOpportunityId: quote.lead?.ghlSalesOpportunityId ?? null,
@@ -427,7 +429,7 @@ export const prismaRepo: Repo = {
     return quote?.id ?? null;
   },
 
-  async acceptQuote(id) {
+  async acceptQuote(id, source) {
     // A quote can be accepted straight from DRAFT (never marked Sent), which
     // means no publicToken exists yet — mint one now so the invoice link
     // always resolves once a quote is ACCEPTED. The status guard in the WHERE
@@ -436,7 +438,12 @@ export const prismaRepo: Repo = {
     if (!existing) return false;
     const { count } = await prisma.quote.updateMany({
       where: { id, status: { in: ["DRAFT", "SENT"] } },
-      data: { status: "ACCEPTED", publicToken: existing.publicToken ?? randomUUID() },
+      data: {
+        status: "ACCEPTED",
+        publicToken: existing.publicToken ?? randomUUID(),
+        acceptedAt: new Date(),
+        acceptedSource: source === "customer" ? "CUSTOMER" : "REP",
+      },
     });
     return count === 1;
   },

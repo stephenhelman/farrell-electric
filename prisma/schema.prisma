@@ -74,6 +74,12 @@ enum QuoteDeclineReason {
   OTHER
 }
 
+// Who accepted a quote — stamped server-side by the endpoint that was hit.
+enum QuoteAcceptanceSource {
+  CUSTOMER
+  REP
+}
+
 enum JobStatus {
   UNSCHEDULED
   SCHEDULED
@@ -165,9 +171,9 @@ model OptionComponent {
 }
 
 model Quote {
-  id                  String              @id @default(cuid())
-  number              Int                 @unique
-  status              QuoteStatus         @default(DRAFT)
+  id                  String                 @id @default(cuid())
+  number              Int                    @unique
+  status              QuoteStatus            @default(DRAFT)
   customerName        String
   customerPhone       String
   customerEmail       String
@@ -177,22 +183,25 @@ model Quote {
   // once lead-on-quote-creation guarantees every quote has a lead.
   // The opportunity ids live on Lead only; quotes/jobs read them via the lead.
   ghlContactId        String?
-  ghlCustomObjectId   String?             @unique
-  publicToken         String?             @unique
+  ghlCustomObjectId   String?                @unique
+  publicToken         String?                @unique
   message             String?
   notes               String?
-  discount            Decimal             @default(0)
-  subtotal            Decimal             @default(0)
-  cost                Decimal             @default(0)
-  total               Decimal             @default(0)
-  profit              Decimal             @default(0)
-  margin              Decimal             @default(0)
+  discount            Decimal                @default(0)
+  subtotal            Decimal                @default(0)
+  cost                Decimal                @default(0)
+  total               Decimal                @default(0)
+  profit              Decimal                @default(0)
+  margin              Decimal                @default(0)
   scopeOfWork         String?
   // Set only when status is DECLINED; the detail is required free text when the reason is OTHER.
   declineReason       QuoteDeclineReason?
   declineReasonDetail String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  // Frozen at the FIRST acceptance and never moved; null for quotes accepted before these existed.
+  acceptedAt          DateTime?
+  acceptedSource      QuoteAcceptanceSource?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
   leadId              String?
 
   lineItems QuoteLineItem[]

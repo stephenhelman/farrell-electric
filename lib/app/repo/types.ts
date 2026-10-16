@@ -72,6 +72,9 @@ export const QUOTE_DECLINE_REASONS = [
 ] as const;
 export type QuoteDeclineReason = (typeof QUOTE_DECLINE_REASONS)[number];
 
+/** Who accepted a quote. Always stamped server-side by the endpoint, never read from a request. */
+export type QuoteAcceptanceSource = "rep" | "customer";
+
 export interface RepoQuote {
   id: string;
   number: number;
@@ -248,6 +251,9 @@ export interface RepoQuoteDetail extends RepoQuote {
   /** Set only while DECLINED. */
   declineReason: QuoteDeclineReason | null;
   declineReasonDetail: string | null;
+  /** Frozen at the first acceptance; null if not accepted (or accepted before this was recorded). */
+  acceptedAt: Date | null;
+  acceptedSource: QuoteAcceptanceSource | null;
   /** Set the moment a quote is first marked SENT; powers the public quote-link route. */
   publicToken: string | null;
   /** Never user-editable — only ever written via updateQuoteGhlIds, by the inbound GHL webhook handler. */
@@ -434,12 +440,13 @@ export interface Repo {
   /** Resolves the quote id behind a public token (the token IS the authorization), or null. */
   findQuoteIdByPublicToken(token: string): Promise<string | null>;
   /**
-   * Status-only and atomic: DRAFT|SENT → ACCEPTED, minting a publicToken if
-   * none exists. Resolves true for exactly the one call that made the
+   * Atomic: DRAFT|SENT → ACCEPTED, minting a publicToken if none exists and
+   * stamping acceptedAt/acceptedSource in the same write — so the first
+   * acceptance wins and a repeat can never move them. Resolves true for exactly the one call that made the
    * transition (the one that fires quote.accepted), false for every repeat.
    * Does NOT create the Job — see ensureJobForQuote.
    */
-  acceptQuote(id: string): Promise<boolean>;
+  acceptQuote(id: string, source: QuoteAcceptanceSource): Promise<boolean>;
   /** Idempotent. The Job for an ACCEPTED quote (created if missing); null if the quote isn't ACCEPTED. */
   ensureJobForQuote(id: string): Promise<string | null>;
   /** Atomic DRAFT|SENT → DECLINED with the reason; true only for the call that made the transition. */
