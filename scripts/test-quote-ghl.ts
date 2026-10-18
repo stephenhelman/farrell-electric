@@ -395,6 +395,53 @@ async function main() {
     assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
   }
 
+  // --- rep "Send payment request": same path + payload as the auto-trigger ---
+  {
+    const { requestCurrentPayment } = await import("@/lib/app/jobs/requests");
+    const { confirmPayment } = await import("@/lib/app/jobs/payments");
+    const KEYS = ["amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber"];
+    const mkJob = async (terms: { depositRequired: boolean; depositAmount: number | null }) => {
+      const q = await mk("SENT", 1000);
+      await acceptQuote(q.id, "rep");
+      const id = (await repo.ensureJobForQuote(q.id))!.id;
+      await repo.sendJobContract(id, { paymentType: "CHECK", ...terms });
+      take();
+      return id;
+    };
+
+    // signed job, deposit owed -> one deposit_requested (and a resend sends it again)
+    const dj = await mkJob({ depositRequired: true, depositAmount: 300 });
+    await repo.updateJob(dj, { contractStatus: "SIGNED", contractSignedAt: new Date() });
+    assert.deepEqual(await requestCurrentPayment(repo, dj), { kind: "deposit", amountDue: 300 });
+    const dEv = take();
+    assert.deepEqual(dEv.map((e) => e.event), ["job.deposit_requested"]);
+    assert.deepEqual(Object.keys(dEv[0]).sort(), KEYS, "same payload shape as the auto-fired request");
+    assert.ok(String(dEv[0].payUrl).startsWith("https://farrellelectric.test/pay/"));
+    assert.deepEqual(await requestCurrentPayment(repo, dj), { kind: "deposit", amountDue: 300 });
+    assert.equal(take().length, 1, "a manual resend fires again");
+
+    // deposit paid, installed, balance remains -> balance_requested for the remainder
+    await confirmPayment(repo, { jobId: dj, kind: "DEPOSIT", method: "CHECK", amount: 300, reference: null, externalRef: "manual:r1", recordedBy: "rep" });
+    await repo.updateJob(dj, { installedDate: new Date() }); take();
+    assert.deepEqual(await requestCurrentPayment(repo, dj), { kind: "balance", amountDue: 700 });
+    const bEv = take();
+    assert.deepEqual(bEv.map((e) => e.event), ["job.balance_requested"]);
+    assert.deepEqual(Object.keys(bEv[0]).sort(), KEYS);
+
+    // no-deposit installed job -> balance for the whole amount
+    const nj = await mkJob({ depositRequired: false, depositAmount: null });
+    await repo.updateJob(nj, { installedDate: new Date() });
+    assert.deepEqual(await requestCurrentPayment(repo, nj), { kind: "balance", amountDue: 1000 });
+    assert.deepEqual(events(), ["job.balance_requested"]);
+
+    // fully paid -> nothing sent
+    await confirmPayment(repo, { jobId: dj, kind: "BALANCE", method: "ZELLE", amount: 700, reference: null, externalRef: "manual:r2", recordedBy: "rep" });
+    take();
+    assert.equal(await requestCurrentPayment(repo, dj), null, "nothing due -> null");
+    assert.deepEqual(events(), [], "and nothing is dispatched");
+    assert.equal(await requestCurrentPayment(repo, "no-such-job"), null);
+  }
+
   // --- payments: ONE converged confirm path ------------------------------
   {
     const { confirmPayment } = await import("@/lib/app/jobs/payments");

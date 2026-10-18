@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getRepo } from "@/lib/app/repo";
 import { requireRepSession } from "@/lib/app/auth/require-session";
 import { confirmPayment } from "@/lib/app/jobs/payments";
+import { requestCurrentPayment } from "@/lib/app/jobs/requests";
 import { validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-payment";
 import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
 import { dispatchJobContractSent } from "@/lib/app/ghl/dispatch-job";
@@ -113,4 +114,28 @@ export async function markPaidAction(jobId: string, input: MarkPaidInput): Promi
   revalidatePath(`/app-portal/jobs/${jobId}`);
   revalidatePath("/app-portal/jobs");
   return { ok: true };
+}
+
+export type SendPaymentRequestResult =
+  | { ok: true; sent: true; kind: "deposit" | "balance"; amount: number }
+  | { ok: true; sent: false; reason: "nothing due" }
+  | { ok: false; error: string };
+
+/**
+ * Rep recovery / proactive resend of the customer's pay link. Same path as the
+ * auto-triggers (requestPaymentIfOwed), so the guard and payload are identical:
+ * fires job.deposit_requested or job.balance_requested for whatever is owed
+ * right now, minting the pay token first if needed. Nothing owed sends nothing.
+ */
+export async function sendPaymentRequestAction(jobId: string): Promise<SendPaymentRequestResult> {
+  await requireRepSession();
+
+  const repo = await getRepo();
+  if (!(await repo.getJob(jobId))) return { ok: false, error: "Job not found." };
+
+  const sent = await requestCurrentPayment(repo, jobId);
+  if (!sent) return { ok: true, sent: false, reason: "nothing due" };
+
+  revalidatePath(`/app-portal/jobs/${jobId}`);
+  return { ok: true, sent: true, kind: sent.kind, amount: sent.amountDue };
 }

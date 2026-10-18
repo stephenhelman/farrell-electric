@@ -216,7 +216,7 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
       if (requestKind && Object.keys(patch).length > 0) {
         try {
           const sent = await requestPaymentIfOwed(repo, job.id, requestKind);
-          log(`${requestKind} request`, { sent });
+          log(`${requestKind} request`, { sent: sent !== null });
         } catch (error) {
           console.error(`[api/webhooks/ghl] ${requestKind} request failed (non-fatal)`, error);
           log(`FAILED ${requestKind} request (non-fatal)`, { error: String(error) });

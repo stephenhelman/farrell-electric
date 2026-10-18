@@ -8,6 +8,8 @@ import { resolveScopeOfWork } from "@/lib/app/jobs/contract";
 import { ActualCostForm } from "./ActualCostForm";
 import { GenerateContract } from "./GenerateContract";
 import { RecordPayment } from "./RecordPayment";
+import { SendPaymentRequest } from "./SendPaymentRequest";
+import { amountDueNow } from "@/lib/app/pay/context";
 import styles from "./page.module.css";
 
 function formatDate(date: Date | null): string {
@@ -178,6 +180,7 @@ export default async function JobPage({
           depositReceived={depositReceived}
           balanceDue={remaining}
         />
+        <SendPaymentRequest jobId={job.id} due={amountDueNow(job, payments)} />
       </div>
 
       <div className={styles.section}>
