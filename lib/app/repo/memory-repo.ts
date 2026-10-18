@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
+import { buildPayContext } from "@/lib/app/pay/context";
 
 function toPublicQuote(quote: MemoryQuoteRecord): PublicQuote {
   return {
@@ -285,11 +286,26 @@ export const memoryRepo: Repo = {
       actualCost: null,
       sowUrl: null,
       sowGeneratedAt: null,
+      payToken: randomUUID(),
       closedAt: null,
       completedAt: null,
     };
     memoryStore.jobs.unshift(job);
     return { id: job.id, created: true };
+  },
+
+  async ensurePayToken(jobId) {
+    const record = memoryStore.jobs.find((j) => j.id === jobId);
+    if (!record) return null;
+    record.payToken ??= randomUUID();
+    return record.payToken;
+  },
+
+  async getPayContextByToken(payToken) {
+    const record = memoryStore.jobs.find((j) => j.payToken === payToken);
+    if (!record) return null;
+    const payments = memoryStore.payments.filter((p) => p.jobId === record.id).sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime());
+    return buildPayContext(toRepoJob(record), payments);
   },
 
   async declineQuote(id, input) {

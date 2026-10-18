@@ -15,6 +15,9 @@ const PUBLIC_QUOTE_PREFIX = "/q/";
 // by its own shared-secret check (app/api/webhooks/ghl/route.ts). Must stay
 // reachable pre-auth on either host, same as PUBLIC_QUOTE_PREFIX.
 const WEBHOOKS_PREFIX = "/api/webhooks/";
+// Public, tokenized payment page — same posture as /q/: unauthenticated by
+// design (the unguessable payToken is the authorization), either host.
+const PUBLIC_PAY_PREFIX = "/pay/";
 
 function isAppHost(host: string | null): boolean {
   return host === APP_HOST || host === DEV_APP_HOST;
@@ -37,6 +40,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith(PUBLIC_QUOTE_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(PUBLIC_PAY_PREFIX)) {
     return NextResponse.next();
   }
 

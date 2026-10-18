@@ -1,6 +1,7 @@
 import { dispatchGhlEvent } from "@/lib/ghl/dispatch";
 import type { RepoJob, RepoPayment, RepoQuoteDetail } from "@/lib/app/repo/types";
 import { balanceDue } from "@/lib/app/jobs/lifecycle";
+import { buildPayLink } from "@/lib/config";
 
 /**
  * Fires job.contract_sent from STORED values (the persisted job + quote), never
@@ -30,6 +31,7 @@ export async function dispatchJobContractSent(
     paymentType: job.paymentType,
     depositRequired: job.depositRequired,
     depositAmount: job.depositAmount,
+    balanceDue: Math.max(0, balanceDue(job)),
     total: quote.total,
     customerName: quote.customerName,
     customerPhone: quote.customerPhone,
@@ -119,4 +121,33 @@ export async function dispatchJobCreated(job: RepoJob): Promise<void> {
     customerName: job.customerName,
     sowUrl: job.sowUrl,
   });
+}
+
+/**
+ * job.deposit_requested / job.balance_requested. Hand-mapped like the rest —
+ * RepoJob carries revenue/actualCost. Needs a minted payToken (the caller,
+ * requestPaymentIfOwed, ensures one). Best-effort, non-fatal.
+ */
+export async function dispatchJobPaymentRequested(
+  job: RepoJob,
+  kind: "deposit" | "balance",
+  amountDue: number,
+  payToken: string,
+): Promise<void> {
+  const common = {
+    jobId: job.id,
+    quoteId: job.quoteId,
+    quoteNumber: job.quoteNumber,
+    ...(job.leadId && { leadId: job.leadId }),
+    ghlContactId: job.ghlContactId,
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
+    amountDue,
+    payUrl: buildPayLink(payToken),
+  };
+
+  await dispatchGhlEvent(
+    kind === "deposit"
+      ? { event: "job.deposit_requested", kind: "deposit", ...common }
+      : { event: "job.balance_requested", kind: "balance", ...common },
+  );
 }

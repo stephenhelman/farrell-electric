@@ -149,6 +149,8 @@ export interface RepoJob {
   /** Scope-of-Work PDF (public, unguessable Blob URL); null if not generated. */
   sowUrl: string | null;
   sowGeneratedAt: Date | null;
+  /** Token for the public /pay/[token] page; null only for jobs created before it existed (see ensurePayToken). */
+  payToken: string | null;
 
   /** Set once, by claimJobClosed / claimJobCompleted — records that the gate already fired. */
   closedAt: Date | null;
@@ -372,6 +374,20 @@ export interface PublicInvoice {
   lineItems: PublicQuoteLineItem[];
 }
 
+/**
+ * Everything (and ONLY everything) the public /pay/[token] page may show: no
+ * revenue/cost/margin, no ids beyond the quote number, no payment references.
+ */
+export interface PublicPayContext {
+  customerName: string;
+  /** The quote number. */
+  referenceNumber: string;
+  sowUrl: string | null;
+  /** What is owed right now; null when nothing is due (paid in full / nothing outstanding). */
+  due: { kind: "deposit" | "balance"; amount: number } | null;
+  payments: { method: PaymentType; amount: number; paidAt: Date }[];
+}
+
 export type LeadType = "LIGHTING" | "ELECTRICAL";
 export type LeadStatus = "NEW" | "SYNCED";
 
@@ -459,6 +475,10 @@ export interface Repo {
    * inserted the row — the only call that should generate the SOW / fire job.created.
    */
   ensureJobForQuote(id: string): Promise<{ id: string; created: boolean } | null>;
+  /** The job's pay token, minting one atomically if it has none (a concurrent mint can't overwrite). Null if the job doesn't exist. */
+  ensurePayToken(jobId: string): Promise<string | null>;
+  /** The economics-safe /pay view for a token, or null for an unknown token. */
+  getPayContextByToken(payToken: string): Promise<PublicPayContext | null>;
   /** Atomic DRAFT|SENT → DECLINED with the reason; true only for the call that made the transition. */
   declineQuote(id: string, input: QuoteDeclineInput): Promise<boolean>;
   /** Atomic SENT → EXPIRED; true only for the call that made the transition. */

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
+import { buildPayContext } from "@/lib/app/pay/context";
 import type { LeadPayload } from "@/lib/leads/types";
 import type { QuoteGhlIdsResult, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 
@@ -71,6 +72,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     actualCost: job.actualCost === null ? null : Number(job.actualCost),
     sowUrl: job.sowUrl,
     sowGeneratedAt: job.sowGeneratedAt,
+    payToken: job.payToken,
     closedAt: job.closedAt,
     completedAt: job.completedAt,
   };
@@ -458,7 +460,7 @@ export const prismaRepo: Repo = {
 
     try {
       const job = await prisma.job.create({
-        data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total },
+        data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total, payToken: randomUUID() },
       });
       return { id: job.id, created: true };
     } catch (error) {
@@ -469,6 +471,20 @@ export const prismaRepo: Repo = {
       }
       throw error;
     }
+  },
+
+  async ensurePayToken(jobId) {
+    // The WHERE is the guard: only a job with no token takes the new one.
+    await prisma.job.updateMany({ where: { id: jobId, payToken: null }, data: { payToken: randomUUID() } });
+    const job = await prisma.job.findUnique({ where: { id: jobId }, select: { payToken: true } });
+    return job?.payToken ?? null;
+  },
+
+  async getPayContextByToken(payToken) {
+    const job = await prisma.job.findUnique({ where: { payToken }, include: JOB_INCLUDE });
+    if (!job) return null;
+    const payments = await prisma.payment.findMany({ where: { jobId: job.id }, orderBy: { paidAt: "asc" } });
+    return buildPayContext(mapJob(job), payments.map(mapPayment));
   },
 
   async declineQuote(id, input) {

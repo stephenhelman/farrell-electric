@@ -10,6 +10,7 @@ delete process.env.DATABASE_URL;
 delete process.env.BLOB_READ_WRITE_TOKEN;
 process.env.GHL_WEBHOOK_URL_QUOTE = "http://ghl.test/quote";
 process.env.GHL_WEBHOOK_URL_JOB = "http://ghl.test/job";
+process.env.GHL_WEBHOOK_SECRET = "test-secret";
 process.env.NEXT_PUBLIC_SITE_URL ??= "https://farrellelectric.test";
 
 const sent: Record<string, unknown>[] = [];
@@ -296,6 +297,102 @@ async function main() {
     assert.equal(buildSowInput(stamped).acceptance.source, "customer");
     const legacy = buildSowInput({ ...stamped, acceptedAt: null, acceptedSource: null });
     assert.equal(legacy.acceptance.source, "rep"); assert.ok(legacy.acceptance.acceptedAt instanceof Date);
+  }
+
+  // --- /pay context + suppression-guarded payment requests -------------
+  {
+    const { POST } = await import("@/app/api/webhooks/ghl/route");
+    const { confirmPayment } = await import("@/lib/app/jobs/payments");
+    const deliver = async (dbId: string, action: string) => {
+      const res = await POST(new Request("http://app.test/api/webhooks/ghl", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-ghl-webhook-secret": "test-secret" },
+        body: JSON.stringify({ type: "job", dbId, action }),
+      }));
+      assert.equal(res.status, 200, `${action} delivery accepted`);
+    };
+    const logSilently = async <T,>(fn: () => Promise<T>) => { const l = console.log; console.log = () => {}; try { return await fn(); } finally { console.log = l; } };
+    const newJob = async (price: number, terms: { depositRequired: boolean; depositAmount: number | null }) => {
+      const q = await mk("SENT", price);
+      await acceptQuote(q.id, "rep"); take();
+      const j = (await repo.ensureJobForQuote(q.id))!.id;
+      await repo.sendJobContract(j, { paymentType: "CHECK", ...terms });
+      take();
+      return { q, jobId: j };
+    };
+
+    // contract_signed, deposit owed -> job.deposit_requested (and nothing closes yet)
+    const a = await newJob(1000, { depositRequired: true, depositAmount: 300 });
+    const aTok = (await repo.getJob(a.jobId))!.payToken!;
+    assert.ok(aTok.length >= 16, "payToken minted at job creation");
+    await logSilently(() => deliver(a.jobId, "contract_signed"));
+    const aEv = take();
+    assert.deepEqual(aEv.map((e) => e.event), ["job.deposit_requested"]);
+    assert.equal(aEv[0].kind, "deposit"); assert.equal(aEv[0].amountDue, 300);
+    assert.equal(aEv[0].payUrl, `https://farrellelectric.test/pay/${aTok}`);
+    assert.deepEqual(Object.keys(aEv[0]).sort(), [
+      "amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber",
+    ]);
+    // a re-delivery of contract_signed records nothing new -> no second request
+    await logSilently(() => deliver(a.jobId, "contract_signed"));
+    assert.deepEqual(events(), [], "redelivered contract_signed sends no second request");
+
+    // contract_signed AFTER the deposit was already paid -> no request, job closes
+    const b = await newJob(1000, { depositRequired: true, depositAmount: 300 });
+    await confirmPayment(repo, { jobId: b.jobId, kind: "DEPOSIT", method: "CHECK", amount: 300, reference: null, externalRef: "manual:pre", recordedBy: "rep" });
+    take();
+    await logSilently(() => deliver(b.jobId, "contract_signed"));
+    assert.deepEqual(events(), ["job.closed"], "pre-paid deposit: no request, job closes");
+
+    // no deposit required -> signing requests nothing
+    const n = await newJob(1000, { depositRequired: false, depositAmount: null });
+    await logSilently(() => deliver(n.jobId, "contract_signed"));
+    assert.deepEqual(events().filter((e) => e === "job.deposit_requested"), []);
+
+    // installed with a balance owed -> job.balance_requested for exactly what's left
+    await logSilently(() => deliver(a.jobId, "installed"));
+    const iEv = take();
+    assert.deepEqual(iEv.map((e) => e.event), ["job.balance_requested"]);
+    assert.equal(iEv[0].kind, "balance"); assert.equal(iEv[0].amountDue, 1000, "nothing paid yet, so the full balance is owed");
+
+    // installed with nothing owed -> no request (completes instead)
+    await confirmPayment(repo, { jobId: b.jobId, kind: "BALANCE", method: "ZELLE", amount: 700, reference: null, externalRef: "manual:rest", recordedBy: "rep" });
+    take();
+    await logSilently(() => deliver(b.jobId, "installed"));
+    const dEv = take().map((e) => e.event);
+    assert.ok(!dEv.includes("job.balance_requested"), "nothing owed: no balance request");
+    assert.deepEqual(dEv, ["job.completed"]);
+
+    // getPayContextByToken: deposit vs balance vs nothing due, economics-free
+    const ctxA = (await repo.getPayContextByToken(aTok))!;
+    assert.deepEqual(ctxA.due, { kind: "deposit", amount: 300 });
+    assert.equal(ctxA.referenceNumber, String(a.q.number));
+    await confirmPayment(repo, { jobId: a.jobId, kind: "DEPOSIT", method: "CHECK", amount: 100, reference: "secret-ref", externalRef: "manual:a1", recordedBy: "rep" }); take();
+    assert.deepEqual((await repo.getPayContextByToken(aTok))!.due, { kind: "deposit", amount: 200 }, "partial deposit leaves the remainder due");
+    await confirmPayment(repo, { jobId: a.jobId, kind: "DEPOSIT", method: "CHECK", amount: 200, reference: null, externalRef: "manual:a2", recordedBy: "rep" }); take();
+    assert.deepEqual((await repo.getPayContextByToken(aTok))!.due, { kind: "balance", amount: 700 }, "deposit satisfied -> balance");
+    const bTok = (await repo.getJob(b.jobId))!.payToken!;
+    const ctxB = (await repo.getPayContextByToken(bTok))!;
+    assert.equal(ctxB.due, null, "paid in full -> nothing due");
+    assert.equal(ctxB.payments.length, 2);
+    assert.equal(await repo.getPayContextByToken("no-such-token"), null);
+    assert.doesNotMatch(JSON.stringify(ctxA), /cost|profit|margin|revenue|secret-ref|recordedBy|reference"/i);
+    assert.deepEqual(Object.keys(ctxA).sort(), ["customerName", "due", "payments", "referenceNumber", "sowUrl"]);
+
+    // lazy mint for a job that predates payToken
+    const legacyJob = (await repo.getJob(n.jobId))!;
+    (await import("@/lib/app/repo/memory-store")).memoryStore.jobs.find((j) => j.id === legacyJob.id)!.payToken = null;
+    const minted = await repo.ensurePayToken(legacyJob.id);
+    assert.ok(minted); assert.equal(await repo.ensurePayToken(legacyJob.id), minted, "minting is idempotent");
+
+    // the contract payload carries the deposit terms + balanceDue for GHL merge fields
+    const csJob = (await repo.getJob(a.jobId))!;
+    const csQuote = (await repo.getQuote(a.q.id))!;
+    const { dispatchJobContractSent } = await import("@/lib/app/ghl/dispatch-job");
+    await dispatchJobContractSent(csJob, csQuote, "scope");
+    const cs = take()[0];
+    assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.depositRequired, true);
+    assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
   }
 
   // --- payments: ONE converged confirm path ------------------------------

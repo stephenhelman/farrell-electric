@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { getRepo } from "@/lib/app/repo";
 import { advanceJobLifecycle, type AdvanceResult } from "@/lib/app/jobs/gates";
+import { requestPaymentIfOwed } from "@/lib/app/jobs/requests";
 import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/inbound";
 
 /**
@@ -204,6 +205,23 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
       // exactly-once via the claimJob* guards, so re-checking is always safe.
       advanced = await advanceJobLifecycle(repo, job.id);
       log("lifecycle gates", advanced);
+
+      // Payment requests go out only on the delivery that RECORDED the fact (a
+      // re-delivery has an empty patch), and only if money is actually still
+      // owed — requestPaymentIfOwed is the suppression guard. After the gates, so
+      // a pre-paid deposit has already closed the job. Failure here must not 500
+      // the delivery: the fact is written, and a retry would find an empty patch anyway.
+      const requestKind =
+        body.action === "contract_signed" ? "deposit" : body.action === "installed" ? "balance" : null;
+      if (requestKind && Object.keys(patch).length > 0) {
+        try {
+          const sent = await requestPaymentIfOwed(repo, job.id, requestKind);
+          log(`${requestKind} request`, { sent });
+        } catch (error) {
+          console.error(`[api/webhooks/ghl] ${requestKind} request failed (non-fatal)`, error);
+          log(`FAILED ${requestKind} request (non-fatal)`, { error: String(error) });
+        }
+      }
     } catch (error) {
       // 500 so GHL redelivers; every step above is idempotent.
       console.error("[api/webhooks/ghl] failed to write job event", error);

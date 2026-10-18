@@ -8,6 +8,10 @@ export function getSiteBaseUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.farrellelectric.com";
 }
 
+export function buildPayLink(payToken: string): string {
+  return `${getSiteBaseUrl()}/pay/${payToken}`;
+}
+
 export function buildQuoteLink(publicToken: string): string {
   return `${getSiteBaseUrl()}/q/${publicToken}`;
 }

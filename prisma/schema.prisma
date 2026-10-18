@@ -271,6 +271,10 @@ model Job {
   sowUrl         String?
   sowGeneratedAt DateTime?
 
+  // Unguessable token for the public /pay/[token] page. Minted at job creation;
+  // lazily minted for older jobs the first time a pay URL is needed.
+  payToken String? @unique
+
   // Lifecycle gate markers.
   closedAt    DateTime?
   completedAt DateTime?

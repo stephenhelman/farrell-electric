@@ -1,0 +1,175 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-surface-base);
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+  height: fit-content;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  color: var(--color-text-primary);
+  box-shadow: 0 24px 48px -24px rgb(10 10 12 / 0.6);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--duration-reveal) var(--ease-out-quart), transform var(--duration-reveal) var(--ease-out-quart);
+}
+
+/* Progressive enhancement: unsupported browsers render the final state
+   directly, so content is never gated behind an animation that might not run. */
+@starting-style {
+  .card {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: var(--space-6) var(--space-8);
+  }
+}
+
+.brand {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: var(--space-4);
+}
+
+.heading {
+  font-size: var(--text-heading-lg);
+  margin-top: var(--space-2);
+  letter-spacing: -0.01em;
+}
+
+
+.due {
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border);
+}
+
+.dueLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.dueAmount {
+  margin-top: var(--space-1);
+  font-size: var(--text-heading-lg);
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: -0.01em;
+}
+
+.dueMeta {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.link {
+  color: var(--color-accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.settled {
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.methods {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.methodsHeading,
+.historyHeading {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.method {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.methodTitle {
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+.methodBody {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.mailing {
+  white-space: pre-line;
+}
+
+.history {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.historyRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.footnote {
+  margin-top: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

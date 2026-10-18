@@ -145,6 +145,8 @@ export interface JobContractSentPayload {
   paymentType: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER" | "ZELLE";
   depositRequired: boolean;
   depositAmount: number | null;
+  /** What is still owed after payments received (revenue − received). For GHL merge fields. */
+  balanceDue: number;
   total: number;
   customerName: string;
   customerPhone: string;
@@ -238,6 +240,35 @@ export interface JobCreatedPayload {
   sowUrl: string | null;
 }
 
+/**
+ * Server-originated "payment is owed" signals — GHL turns them into the
+ * customer message carrying payUrl. Fired only when money is actually owed
+ * (lib/app/jobs/requests.ts), so a customer who already paid gets no request.
+ * amountDue is customer-facing; never revenue/cost/margin.
+ */
+interface JobPaymentRequestedPayload {
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
+  ghlContactId: string | null;
+  ghlOpsOpportunityId: string | null;
+  amountDue: number;
+  /** The public /pay/<token> page. */
+  payUrl: string;
+}
+
+export interface JobDepositRequestedPayload extends JobPaymentRequestedPayload {
+  event: "job.deposit_requested";
+  kind: "deposit";
+}
+
+export interface JobBalanceRequestedPayload extends JobPaymentRequestedPayload {
+  event: "job.balance_requested";
+  kind: "balance";
+}
+
 export type GhlEventPayload =
   | LeadCreatedPayload
   | QuoteCreatedPayload
@@ -248,6 +279,8 @@ export type GhlEventPayload =
   | JobContractSentPayload
   | JobClosedPayload
   | JobCompletedPayload
+  | JobDepositRequestedPayload
+  | JobBalanceRequestedPayload
   | JobDepositPaidPayload
   | JobBalancePaidPayload;
 
