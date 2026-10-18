@@ -146,6 +146,10 @@ export interface RepoJob {
   revenue: number;
   actualCost: number | null;
 
+  /** Scope-of-Work PDF (public, unguessable Blob URL); null if not generated. */
+  sowUrl: string | null;
+  sowGeneratedAt: Date | null;
+
   /** Set once, by claimJobClosed / claimJobCompleted — records that the gate already fired. */
   closedAt: Date | null;
   completedAt: Date | null;
@@ -220,6 +224,8 @@ export interface JobUpdateInput {
   installedDate?: Date | null;
   revenue?: number;
   actualCost?: number | null;
+  sowUrl?: string | null;
+  sowGeneratedAt?: Date | null;
 }
 
 export interface QuoteDeclineInput {
@@ -447,8 +453,12 @@ export interface Repo {
    * Does NOT create the Job — see ensureJobForQuote.
    */
   acceptQuote(id: string, source: QuoteAcceptanceSource): Promise<boolean>;
-  /** Idempotent. The Job for an ACCEPTED quote (created if missing); null if the quote isn't ACCEPTED. */
-  ensureJobForQuote(id: string): Promise<string | null>;
+  /**
+   * Idempotent. The Job for an ACCEPTED quote (created if missing); null if the
+   * quote isn't ACCEPTED. `created` is true for exactly the one call that
+   * inserted the row — the only call that should generate the SOW / fire job.created.
+   */
+  ensureJobForQuote(id: string): Promise<{ id: string; created: boolean } | null>;
   /** Atomic DRAFT|SENT → DECLINED with the reason; true only for the call that made the transition. */
   declineQuote(id: string, input: QuoteDeclineInput): Promise<boolean>;
   /** Atomic SENT → EXPIRED; true only for the call that made the transition. */

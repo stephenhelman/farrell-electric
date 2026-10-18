@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 delete process.env.DATABASE_URL;
+delete process.env.BLOB_READ_WRITE_TOKEN;
 process.env.GHL_WEBHOOK_URL_QUOTE = "http://ghl.test/quote";
 process.env.GHL_WEBHOOK_URL_JOB = "http://ghl.test/job";
 process.env.NEXT_PUBLIC_SITE_URL ??= "https://farrellelectric.test";
@@ -96,7 +97,7 @@ async function main() {
   assert.equal(accCust[0].source, "customer");
   assert.deepEqual(Object.keys(accRep[0]).sort(), Object.keys(accCust[0]).sort(), "same payload shape");
   assert.deepEqual({ ...accRep[0], source: "", quoteId: "", quoteNumber: 0, publicQuoteUrl: "" }, { ...accCust[0], source: "", quoteId: "", quoteNumber: 0, publicQuoteUrl: "" });
-  assert.equal(await repo.ensureJobForQuote(b.id) !== null, true);
+  assert.equal((await repo.ensureJobForQuote(b.id))?.created, true, "first ensure creates");
   assert.equal(await repo.getQuote(b.id).then((x) => x!.status), "ACCEPTED");
 
   // idempotent: second click / rep after customer = clean no-op, single event
@@ -105,7 +106,9 @@ async function main() {
   assert.deepEqual(await acceptQuote(b.id, "rep"), { ok: true, transitioned: false });
   assert.deepEqual(events(), []);
   const j1 = await repo.ensureJobForQuote(b.id);
-  assert.equal(j1, await repo.ensureJobForQuote(b.id), "job creation is idempotent");
+  const j2 = await repo.ensureJobForQuote(b.id);
+  assert.equal(j1?.id, j2?.id, "job creation is idempotent");
+  assert.equal(j2?.created, false, "a repeat never reports created");
 
   // customer accept does NOT create the job
   const c = await mk("SENT");
@@ -233,13 +236,75 @@ async function main() {
     assert.equal((await repo.getQuote(dq.id))!.acceptedAt, null);
   }
 
+  // --- job creation: SOW PDF + job.created, exactly once ----------------
+  {
+    const { createJobForQuote } = await import("@/lib/app/jobs/create");
+    const { buildSowInput } = await import("@/lib/app/sow/input");
+    const { putDocument } = await import("@/lib/app/blob");
+
+    let renders = 0;
+    const renderSowPdf = async () => { renders++; return new Uint8Array([37, 80, 68, 70]); };
+    const putOk = async () => ({ url: "https://blob.test/sow/quote-x-abc123.pdf" });
+
+    const jq = await mk("SENT");
+    await acceptQuote(jq.id, "customer"); take();
+    const first = await createJobForQuote(repo, jq.id, { renderSowPdf, putDocument: putOk });
+    assert.ok(first.ok && first.created && first.warning === null);
+    const created = take();
+    assert.deepEqual(created.map((e) => e.event), ["job.created"], "job.created fires exactly once");
+    assert.deepEqual(Object.keys(created[0]).sort(), [
+      "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "leadId", "quoteId", "quoteNumber", "sowUrl", "total", "customerName",
+    ].sort(), "job.created key set is pinned — no economics");
+    assert.equal(created[0].sowUrl, "https://blob.test/sow/quote-x-abc123.pdf");
+    assert.equal(created[0].leadId, lead.id);
+    const jobRow = (await repo.getJob(first.ok ? first.jobId : ""))!;
+    assert.equal(jobRow.sowUrl, "https://blob.test/sow/quote-x-abc123.pdf"); assert.ok(jobRow.sowGeneratedAt);
+    assert.equal(renders, 1);
+
+    // a second call: nothing regenerated, nothing fired
+    const again = await createJobForQuote(repo, jq.id, { renderSowPdf, putDocument: putOk });
+    assert.ok(again.ok && !again.created && again.jobId === (first.ok && first.jobId));
+    assert.deepEqual(events(), [], "repeat fires nothing"); assert.equal(renders, 1, "repeat regenerates nothing");
+
+    // Blob token unset: the REAL putDocument returns null -> sowUrl stays null, warning, job.created still fires
+    assert.equal(await putDocument("sow/x.pdf", new Uint8Array([1]), "application/pdf"), null);
+    const nq = await mk("SENT"); await acceptQuote(nq.id, "rep"); take();
+    const noBlob = await createJobForQuote(repo, nq.id, { renderSowPdf, putDocument });
+    assert.ok(noBlob.ok && noBlob.created && noBlob.warning !== null, "warning surfaced");
+    const nb = take();
+    assert.deepEqual(nb.map((e) => e.event), ["job.created"], "job.created still fires without Blob");
+    assert.equal(nb[0].sowUrl, null);
+    assert.equal((await repo.getJob(noBlob.ok ? noBlob.jobId : ""))!.sowUrl, null);
+
+    // render failure: non-fatal — job exists, event fires, warning returned
+    const eq = await mk("SENT"); await acceptQuote(eq.id, "rep"); take();
+    const origErr = console.error; console.error = () => {};
+    const boom = await createJobForQuote(repo, eq.id, { renderSowPdf: async () => { throw new Error("boom"); }, putDocument: putOk });
+    console.error = origErr;
+    assert.ok(boom.ok && boom.created && boom.warning !== null);
+    assert.deepEqual(events(), ["job.created"]);
+    assert.ok(await repo.getJob(boom.ok ? boom.jobId : ""), "job survives a SOW failure");
+
+    // not accepted -> no job, no event
+    const uq = await mk("SENT");
+    assert.equal((await createJobForQuote(repo, uq.id, { renderSowPdf, putDocument: putOk })).ok, false);
+    assert.deepEqual(events(), []);
+
+    // the SOW input is economics-free and falls back for a legacy (unstamped) acceptance
+    const stamped = (await repo.getQuote(jq.id))!;
+    assert.doesNotMatch(JSON.stringify(buildSowInput(stamped)), /cost|profit|margin|revenue/i);
+    assert.equal(buildSowInput(stamped).acceptance.source, "customer");
+    const legacy = buildSowInput({ ...stamped, acceptedAt: null, acceptedSource: null });
+    assert.equal(legacy.acceptance.source, "rep"); assert.ok(legacy.acceptance.acceptedAt instanceof Date);
+  }
+
   // --- payments: ONE converged confirm path ------------------------------
   {
     const { confirmPayment } = await import("@/lib/app/jobs/payments");
     const { balanceDue } = await import("@/lib/app/jobs/lifecycle");
     const pq = await mk("SENT", 1000);
     await acceptQuote(pq.id, "rep"); take();
-    const jobId = (await repo.ensureJobForQuote(pq.id))!;
+    const jobId = (await repo.ensureJobForQuote(pq.id))!.id;
     await repo.sendJobContract(jobId, { paymentType: "ZELLE", depositRequired: true, depositAmount: 300 });
     await repo.updateJob(jobId, { contractStatus: "SIGNED", contractSignedAt: new Date(), installedDate: new Date() });
     take();
@@ -292,7 +357,7 @@ async function main() {
     // partial deposit: recorded in the ledger, but sets no flag, closes nothing, fires nothing
     const sq = await mk("SENT", 1000);
     await acceptQuote(sq.id, "rep"); take();
-    const sJob = (await repo.ensureJobForQuote(sq.id))!;
+    const sJob = (await repo.ensureJobForQuote(sq.id))!.id;
     await repo.sendJobContract(sJob, { paymentType: "CHECK", depositRequired: true, depositAmount: 300 });
     await repo.updateJob(sJob, { contractStatus: "SIGNED", contractSignedAt: new Date() });
     take();

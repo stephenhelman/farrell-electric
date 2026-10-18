@@ -217,12 +217,34 @@ export interface JobBalancePaidPayload extends JobPaymentPayload {
   kind: "BALANCE";
 }
 
+/**
+ * Fired exactly once, when a rep creates the Job for an accepted quote — after
+ * the Scope-of-Work PDF has been generated and stored (or failed: sowUrl is then
+ * null and the event still fires). `total` is the quote's customer-facing total.
+ * Never revenue/actualCost/margin.
+ */
+export interface JobCreatedPayload {
+  event: "job.created";
+  jobId: string;
+  quoteId: string;
+  quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
+  ghlContactId: string | null;
+  ghlOpsOpportunityId: string | null;
+  total: number;
+  customerName: string;
+  /** Public, unguessable PDF URL; null if generation/upload failed or Blob isn't configured. */
+  sowUrl: string | null;
+}
+
 export type GhlEventPayload =
   | LeadCreatedPayload
   | QuoteCreatedPayload
   | QuoteSentPayload
   | QuoteUpdatedPayload
   | QuoteAcceptedPayload
+  | JobCreatedPayload
   | JobContractSentPayload
   | JobClosedPayload
   | JobCompletedPayload

@@ -69,6 +69,8 @@ function mapJob(job: JobWithQuote): RepoJob {
     installedDate: job.installedDate,
     revenue: Number(job.revenue),
     actualCost: job.actualCost === null ? null : Number(job.actualCost),
+    sowUrl: job.sowUrl,
+    sowGeneratedAt: job.sowGeneratedAt,
     closedAt: job.closedAt,
     completedAt: job.completedAt,
   };
@@ -452,12 +454,21 @@ export const prismaRepo: Repo = {
     const quote = await prisma.quote.findUnique({ where: { id } });
     if (!quote || quote.status !== "ACCEPTED") return null;
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
-    if (existingJob) return existingJob.id;
+    if (existingJob) return { id: existingJob.id, created: false };
 
-    const job = await prisma.job.create({
-      data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total },
-    });
-    return job.id;
+    try {
+      const job = await prisma.job.create({
+        data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total },
+      });
+      return { id: job.id, created: true };
+    } catch (error) {
+      // P2002 on the unique quoteId: a concurrent call inserted first — it owns `created`.
+      if (error instanceof Error && "code" in error && error.code === "P2002") {
+        const winner = await prisma.job.findUnique({ where: { quoteId: id } });
+        if (winner) return { id: winner.id, created: false };
+      }
+      throw error;
+    }
   },
 
   async declineQuote(id, input) {

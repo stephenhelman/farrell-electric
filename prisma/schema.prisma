@@ -266,6 +266,11 @@ model Job {
   revenue    Decimal
   actualCost Decimal?
 
+  // Scope-of-Work PDF generated at job creation (public Blob URL, unguessable).
+  // Null when generation/upload failed or Blob isn't configured.
+  sowUrl         String?
+  sowGeneratedAt DateTime?
+
   // Lifecycle gate markers.
   closedAt    DateTime?
   completedAt DateTime?

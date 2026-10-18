@@ -3,7 +3,14 @@
 import { getRepo } from "@/lib/app/repo";
 import type { SaveQuoteInput } from "@/lib/app/repo/types";
 import { requireRepSession } from "@/lib/app/auth/require-session";
+import { createJobForQuote } from "@/lib/app/jobs/create";
 import { acceptQuote, declineQuote, expireQuote, saveQuote } from "@/lib/app/quotes/transitions";
+
+export interface CreateJobActionResult {
+  jobId: string;
+  /** Non-null when the SOW PDF wasn't produced/stored — surfaced to the rep; the job was still created. */
+  warning: string | null;
+}
 
 // Every export here is a reachable POST endpoint. Each rep action authenticates
 // first, then passes source "rep" as a literal to the shared transition core —
@@ -18,20 +25,23 @@ export async function saveQuoteAction(input: SaveQuoteInput, options?: { notify?
  * Marks the quote accepted (same core the customer's Accept uses) and then
  * creates the Job — the rep's authoritative step. Returns the Job id.
  */
-export async function acceptQuoteAction(id: string): Promise<string> {
+export async function acceptQuoteAction(id: string): Promise<CreateJobActionResult> {
   await requireRepSession();
   const result = await acceptQuote(id, "rep");
   if (!result.ok) throw new Error(result.error);
   return createJobAction(id);
 }
 
-/** For a quote the customer already accepted: the rep's path to its Job. Idempotent. */
-export async function createJobAction(id: string): Promise<string> {
+/**
+ * For a quote the customer already accepted: the rep's path to its Job.
+ * Idempotent — only the call that creates the Job generates the SOW PDF and
+ * fires job.created. `warning` is set when the PDF couldn't be stored; the job exists regardless.
+ */
+export async function createJobAction(id: string): Promise<CreateJobActionResult> {
   await requireRepSession();
-  const repo = await getRepo();
-  const jobId = await repo.ensureJobForQuote(id);
-  if (!jobId) throw new Error("Only an accepted quote can have a job.");
-  return jobId;
+  const result = await createJobForQuote(await getRepo(), id);
+  if (!result.ok) throw new Error(result.error);
+  return { jobId: result.jobId, warning: result.warning };
 }
 
 export async function declineQuoteAction(

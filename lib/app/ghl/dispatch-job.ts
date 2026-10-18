@@ -101,3 +101,22 @@ export async function dispatchJobPaymentReceived(job: RepoJob, payment: RepoPaym
       : { event: "job.balance_paid", kind: "BALANCE", ...common },
   );
 }
+
+/**
+ * job.created — hand-mapped from the stored job (RepoJob carries
+ * revenue/actualCost, which never cross). Best-effort, non-fatal.
+ */
+export async function dispatchJobCreated(job: RepoJob): Promise<void> {
+  await dispatchGhlEvent({
+    event: "job.created",
+    jobId: job.id,
+    quoteId: job.quoteId,
+    quoteNumber: job.quoteNumber,
+    ...(job.leadId && { leadId: job.leadId }),
+    ghlContactId: job.ghlContactId,
+    ghlOpsOpportunityId: job.ghlOpsOpportunityId,
+    total: job.total,
+    customerName: job.customerName,
+    sowUrl: job.sowUrl,
+  });
+}

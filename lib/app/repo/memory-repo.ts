@@ -263,7 +263,7 @@ export const memoryRepo: Repo = {
     if (!quote || quote.status !== "ACCEPTED") return null;
 
     const existingJob = memoryStore.jobs.find((j) => j.quoteId === id);
-    if (existingJob) return existingJob.id;
+    if (existingJob) return { id: existingJob.id, created: false };
 
     const job: MemoryJobRecord = {
       id: randomUUID(),
@@ -283,11 +283,13 @@ export const memoryRepo: Repo = {
       installedDate: null,
       revenue: quote.total,
       actualCost: null,
+      sowUrl: null,
+      sowGeneratedAt: null,
       closedAt: null,
       completedAt: null,
     };
     memoryStore.jobs.unshift(job);
-    return job.id;
+    return { id: job.id, created: true };
   },
 
   async declineQuote(id, input) {

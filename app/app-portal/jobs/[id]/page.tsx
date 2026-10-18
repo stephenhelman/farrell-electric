@@ -27,8 +27,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function JobPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ sow?: string }>;
+}) {
   const { id } = await params;
+  const { sow } = await searchParams;
   const repo = await getRepo();
   const job = await repo.getJob(id);
   if (!job) notFound();
@@ -54,6 +61,12 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
+      {sow === "missing" && !job.sowUrl ? (
+        <p role="alert" className={styles.empty}>
+          The job was created, but its scope-of-work PDF wasn&apos;t stored (file storage isn&apos;t configured or the upload failed).
+        </p>
+      ) : null}
+
       <div className={styles.section}>
         <div className={styles.sectionTitle}>Accepted quote</div>
         <Field label="Quote">
@@ -62,6 +75,15 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </Link>
         </Field>
         <Field label="Total">{formatMoney(job.total)}</Field>
+        <Field label="Scope of work PDF">
+          {job.sowUrl ? (
+            <a href={job.sowUrl} className={styles.link} target="_blank" rel="noreferrer">
+              Open PDF
+            </a>
+          ) : (
+            "Not generated"
+          )}
+        </Field>
         {quote && quote.lineItems.length > 0 ? (
           <ul className={styles.lines}>
             {quote.lineItems.map((item) => (

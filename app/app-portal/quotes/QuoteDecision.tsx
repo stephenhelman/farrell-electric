@@ -8,6 +8,11 @@ import { NotifyCustomerDialog } from "@/components/app/NotifyCustomerDialog";
 import { acceptQuoteAction, createJobAction, declineQuoteAction, expireQuoteAction } from "./actions";
 import styles from "./QuoteDecision.module.css";
 
+/** The job page shows the SOW warning banner when sent here with ?sow=missing. */
+function jobHref({ jobId, warning }: { jobId: string; warning: string | null }): string {
+  return `/jobs/${jobId}${warning ? "?sow=missing" : ""}`;
+}
+
 interface Props {
   quoteId: string;
   quoteNumber: number;
@@ -35,7 +40,7 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
   function accept() {
     startTransition(async () => {
       try {
-        router.push(`/jobs/${await acceptQuoteAction(quoteId)}`);
+        router.push(jobHref(await acceptQuoteAction(quoteId)));
       } catch {
         setError("Something went wrong — nothing was changed. Try again.");
       }
@@ -45,7 +50,7 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
   function openJob() {
     startTransition(async () => {
       try {
-        router.push(`/jobs/${await createJobAction(quoteId)}`);
+        router.push(jobHref(await createJobAction(quoteId)));
       } catch {
         setError("Couldn't open the job. Try again.");
       }
