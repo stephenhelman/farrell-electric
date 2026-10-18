@@ -95,7 +95,7 @@ async function main() {
   // `event` and `kind` take several values across the real events; the superset carries one
   // representative and the legend lists them all so the workflow can branch on the real ones.
   merged.event = "job.deposit_paid";
-  merged.kind = "DEPOSIT";
+  merged.kind = "deposit";
 
   const distinct = (key: string) => [...new Set(captured.filter((p) => key in p).map((p) => String(p[key])))];
   const json = JSON.stringify(merged, null, 2);
@@ -114,7 +114,7 @@ async function main() {
     console.log(`#   ${key.padEnd(width)}  ${all ? "ALL events" : events.join(", ")}`);
   }
   console.log(`\n# event values: ${distinct("event").join(" | ")}`);
-  console.log(`# kind values:  ${distinct("kind").join(" | ")}   (requested = lowercase, paid = UPPERCASE)`);
+  console.log(`# kind values:  ${distinct("kind").join(" | ")}   (lowercase on all four payment events)`);
   console.log(`# events captured, in order: ${captured.map((c) => c.event).join(", ")}`);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

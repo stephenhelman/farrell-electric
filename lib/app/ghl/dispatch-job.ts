@@ -24,6 +24,7 @@ export async function dispatchJobContractSent(
     jobId: job.id,
     quoteId: quote.id,
     quoteNumber: quote.number,
+    ...(job.leadId && { leadId: job.leadId }),
     ghlContactId: quote.ghlContactId,
     // Read through the lead via the job; the quote row carries no opp id.
     ghlOpsOpportunityId: job.ghlOpsOpportunityId,
@@ -54,6 +55,7 @@ export async function dispatchJobClosed(job: RepoJob): Promise<void> {
     jobId: job.id,
     quoteId: job.quoteId,
     quoteNumber: job.quoteNumber,
+    ...(job.leadId && { leadId: job.leadId }),
     ghlContactId: job.ghlContactId,
     ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     total: job.total,
@@ -69,6 +71,7 @@ export async function dispatchJobCompleted(job: RepoJob): Promise<void> {
     jobId: job.id,
     quoteId: job.quoteId,
     quoteNumber: job.quoteNumber,
+    ...(job.leadId && { leadId: job.leadId }),
     ghlContactId: job.ghlContactId,
     ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     total: job.total,
@@ -99,8 +102,8 @@ export async function dispatchJobPaymentReceived(job: RepoJob, payment: RepoPaym
 
   await dispatchGhlEvent(
     payment.kind === "DEPOSIT"
-      ? { event: "job.deposit_paid", kind: "DEPOSIT", ...common }
-      : { event: "job.balance_paid", kind: "BALANCE", ...common },
+      ? { event: "job.deposit_paid", kind: "deposit", ...common }
+      : { event: "job.balance_paid", kind: "balance", ...common },
   );
 }
 

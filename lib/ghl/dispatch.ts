@@ -137,6 +137,8 @@ export interface JobContractSentPayload {
   jobId: string;
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
   /** Ops-pipeline opp, read through the lead. Null for orphan jobs / before the ops echo-back. */
@@ -164,6 +166,8 @@ export interface JobClosedPayload {
   jobId: string;
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
   ghlContactId: string | null;
   ghlOpsOpportunityId: string | null;
   total: number;
@@ -180,6 +184,8 @@ export interface JobCompletedPayload {
   jobId: string;
   quoteId: string;
   quoteNumber: number;
+  /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
+  leadId?: string;
   ghlContactId: string | null;
   ghlOpsOpportunityId: string | null;
   total: number;
@@ -211,12 +217,12 @@ interface JobPaymentPayload {
 
 export interface JobDepositPaidPayload extends JobPaymentPayload {
   event: "job.deposit_paid";
-  kind: "DEPOSIT";
+  kind: "deposit";
 }
 
 export interface JobBalancePaidPayload extends JobPaymentPayload {
   event: "job.balance_paid";
-  kind: "BALANCE";
+  kind: "balance";
 }
 
 /**

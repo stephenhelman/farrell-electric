@@ -391,7 +391,7 @@ async function main() {
     const { dispatchJobContractSent } = await import("@/lib/app/ghl/dispatch-job");
     await dispatchJobContractSent(csJob, csQuote, "scope");
     const cs = take()[0];
-    assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.depositRequired, true);
+    assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.leadId, lead.id, "job.contract_sent carries leadId"); assert.equal(cs.depositRequired, true);
     assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
   }
 
@@ -466,8 +466,9 @@ async function main() {
     assert.equal(await repo.sumPaymentsForJob(jobId), 300);
     const depEvents = take();
     assert.deepEqual(depEvents.map((e) => e.event), ["job.closed", "job.deposit_paid"], "gate then payment event");
+    assert.equal(depEvents[0].leadId, lead.id, "job.closed carries leadId");
     const depPayload = depEvents[1];
-    assert.equal(depPayload.kind, "DEPOSIT"); assert.equal(depPayload.amountPaid, 300);
+    assert.equal(depPayload.kind, "deposit", "payload kind is lowercase"); assert.equal(depPayload.amountPaid, 300);
     assert.equal(depPayload.method, "CHECK"); assert.equal(depPayload.balanceRemaining, 700);
     assert.equal(depPayload.leadId, lead.id);
     assert.ok(j.closedAt && !j.completedAt);
@@ -488,7 +489,8 @@ async function main() {
     assert.ok(j.completedAt && j.status === "DONE", "complete gate tripped");
     const balEvents = take();
     assert.deepEqual(balEvents.map((e) => e.event), ["job.completed", "job.balance_paid"]);
-    assert.equal(balEvents[1].kind, "BALANCE"); assert.equal(balEvents[1].balanceRemaining, 0);
+    assert.equal(balEvents[0].leadId, lead.id, "job.completed carries leadId");
+    assert.equal(balEvents[1].kind, "balance"); assert.equal(balEvents[1].balanceRemaining, 0);
 
     // economics wall: nothing but the agreed keys
     for (const payload of [depPayload, balEvents[1]]) {
