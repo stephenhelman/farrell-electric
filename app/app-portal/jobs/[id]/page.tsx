@@ -9,6 +9,7 @@ import { ActualCostForm } from "./ActualCostForm";
 import { GenerateContract } from "./GenerateContract";
 import { RecordPayment } from "./RecordPayment";
 import { SendPaymentRequest } from "./SendPaymentRequest";
+import { ScheduleInstall } from "./ScheduleInstall";
 import { amountDueNow } from "@/lib/app/pay/context";
 import styles from "./page.module.css";
 
@@ -187,6 +188,14 @@ export default async function JobPage({
         <div className={styles.sectionTitle}>Install</div>
         <Field label="Scheduled">{formatDate(job.installScheduledDate)}</Field>
         <Field label="Installed (warranty start)">{formatDate(job.installedDate)}</Field>
+        <ScheduleInstall
+          jobId={job.id}
+          customerName={job.customerName}
+          customerPhone={quote?.customerPhone ?? ""}
+          customerEmail={quote?.customerEmail ?? ""}
+          eligible={jobStage(job) === "Closed" && !job.installedDate}
+          scheduledDate={job.installScheduledDate ? formatDate(job.installScheduledDate) : null}
+        />
       </div>
 
       <div className={`${styles.section} ${styles.internal}`}>
