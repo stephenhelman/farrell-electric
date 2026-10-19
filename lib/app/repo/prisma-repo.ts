@@ -15,7 +15,7 @@ const QUOTE_DETAIL_INCLUDE = {
 } satisfies Prisma.QuoteInclude;
 
 const JOB_INCLUDE = {
-  quote: { include: { lead: { select: { ghlContactId: true, ghlOpsOpportunityId: true } } } },
+  quote: { include: { lead: { select: { ghlContactId: true, ghlSalesOpportunityId: true, ghlOpsOpportunityId: true } } } },
   payments: { select: { amount: true } },
 } satisfies Prisma.JobInclude;
 
@@ -52,6 +52,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     customerName: job.quote.customerName,
     customerAddress: job.quote.customerAddress,
     ghlContactId: job.quote.ghlContactId ?? job.quote.lead?.ghlContactId ?? null,
+    ghlSalesOpportunityId: job.quote.lead?.ghlSalesOpportunityId ?? null,
     ghlOpsOpportunityId: job.quote.lead?.ghlOpsOpportunityId ?? null,
     total: Number(job.quote.total),
     leadId: job.quote.leadId,

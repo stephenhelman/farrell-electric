@@ -247,6 +247,7 @@ async function main() {
     const renderSowPdf = async () => { renders++; return new Uint8Array([37, 80, 68, 70]); };
     const putOk = async () => ({ url: "https://blob.test/sow/quote-x-abc123.pdf" });
 
+    await repo.updateLeadGhlIds(lead.id, { ghlSalesOpportunityId: "sales_opp_1", ghlOpsOpportunityId: "ops_opp_1" });
     const jq = await mk("SENT");
     await acceptQuote(jq.id, "customer"); take();
     const first = await createJobForQuote(repo, jq.id, { renderSowPdf, putDocument: putOk });
@@ -254,10 +255,12 @@ async function main() {
     const created = take();
     assert.deepEqual(created.map((e) => e.event), ["job.created"], "job.created fires exactly once");
     assert.deepEqual(Object.keys(created[0]).sort(), [
-      "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "leadId", "quoteId", "quoteNumber", "sowUrl", "total", "customerName",
+      "event", "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId", "leadId", "quoteId", "quoteNumber", "sowUrl", "total", "customerName",
     ].sort(), "job.created key set is pinned — no economics");
     assert.equal(created[0].sowUrl, "https://blob.test/sow/quote-x-abc123.pdf");
     assert.equal(created[0].leadId, lead.id);
+    assert.equal(created[0].ghlSalesOpportunityId, "sales_opp_1", "sales opp id read through the lead");
+    assert.equal(created[0].ghlOpsOpportunityId, "ops_opp_1");
     const jobRow = (await repo.getJob(first.ok ? first.jobId : ""))!;
     assert.equal(jobRow.sowUrl, "https://blob.test/sow/quote-x-abc123.pdf"); assert.ok(jobRow.sowGeneratedAt);
     assert.equal(renders, 1);
@@ -331,7 +334,7 @@ async function main() {
     assert.equal(aEv[0].kind, "deposit"); assert.equal(aEv[0].amountDue, 300);
     assert.equal(aEv[0].payUrl, `https://farrellelectric.test/pay/${aTok}`);
     assert.deepEqual(Object.keys(aEv[0]).sort(), [
-      "amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber",
+      "amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber",
     ]);
     // a re-delivery of contract_signed records nothing new -> no second request
     await logSilently(() => deliver(a.jobId, "contract_signed"));
@@ -391,7 +394,8 @@ async function main() {
     const { dispatchJobContractSent } = await import("@/lib/app/ghl/dispatch-job");
     await dispatchJobContractSent(csJob, csQuote);
     const cs = take()[0];
-    assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.leadId, lead.id, "job.contract_sent carries leadId"); assert.equal(cs.depositRequired, true);
+    assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.leadId, lead.id, "job.contract_sent carries leadId");
+    assert.equal(cs.ghlSalesOpportunityId, "sales_opp_1", "contract_sent carries the sales opp id"); assert.equal(cs.depositRequired, true);
     assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
     assert.ok(!("scopeOfWork" in cs) && !("paymentType" in cs), "scopeOfWork and paymentType are not sent on contract_sent");
   }
@@ -400,7 +404,7 @@ async function main() {
   {
     const { requestCurrentPayment } = await import("@/lib/app/jobs/requests");
     const { confirmPayment } = await import("@/lib/app/jobs/payments");
-    const KEYS = ["amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber"];
+    const KEYS = ["amountDue", "event", "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId", "kind", "leadId", "payUrl", "quoteId", "quoteNumber"];
     const mkJob = async (terms: { depositRequired: boolean; depositAmount: number | null }) => {
       const q = await mk("SENT", 1000);
       await acceptQuote(q.id, "rep");
@@ -496,7 +500,7 @@ async function main() {
     // economics wall: nothing but the agreed keys
     for (const payload of [depPayload, balEvents[1]]) {
       assert.deepEqual(Object.keys(payload).sort(), [
-        "amountPaid", "balanceRemaining", "event", "ghlContactId", "ghlOpsOpportunityId", "jobId",
+        "amountPaid", "balanceRemaining", "event", "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId",
         "kind", "leadId", "method", "paidAt", "quoteId", "quoteNumber",
       ]);
     }

@@ -71,6 +71,7 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
     customerName: quote?.customerName ?? "",
     customerAddress: quote?.customerAddress ?? "",
     ghlContactId: quote?.ghlContactId ?? leadFor(quote)?.ghlContactId ?? null,
+    ghlSalesOpportunityId: leadFor(quote)?.ghlSalesOpportunityId ?? null,
     ghlOpsOpportunityId: leadFor(quote)?.ghlOpsOpportunityId ?? null,
     total: quote?.total ?? 0,
     leadId: quote?.leadId ?? null,

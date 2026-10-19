@@ -112,6 +112,12 @@ export interface RepoJob {
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
   /**
+   * The Sales-pipeline opportunity id, read through quote → lead like the ops id.
+   * A job spans both pipelines (sales until closed, ops for delivery). Null until
+   * the New Lead echo-back lands, and always null for an orphan job.
+   */
+  ghlSalesOpportunityId: string | null;
+  /**
    * The Operations-pipeline opportunity id, read through quote → lead (the Lead
    * owns it). Null until the ops echo-back lands, and always null for an orphan
    * job whose quote has no lead.

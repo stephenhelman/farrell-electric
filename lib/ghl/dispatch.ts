@@ -145,6 +145,8 @@ export interface JobContractSentPayload {
   /** Null until the GHL lead round-trip has written it back to the quote. */
   ghlContactId: string | null;
   /** Ops-pipeline opp, read through the lead. Null for orphan jobs / before the ops echo-back. */
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   depositRequired: boolean;
   depositAmount: number | null;
@@ -170,6 +172,8 @@ export interface JobClosedPayload {
   /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
   leadId?: string;
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   total: number;
   /** ISO timestamp. */
@@ -188,6 +192,8 @@ export interface JobCompletedPayload {
   /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
   leadId?: string;
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   total: number;
   /** ISO timestamp. */
@@ -208,6 +214,8 @@ interface JobPaymentPayload {
   /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
   leadId?: string;
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   amountPaid: number;
   method: "CARD" | "CHECK" | "CASH" | "FINANCING" | "OTHER" | "ZELLE";
@@ -240,6 +248,8 @@ export interface JobCreatedPayload {
   /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
   leadId?: string;
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   total: number;
   customerName: string;
@@ -260,6 +270,8 @@ interface JobPaymentRequestedPayload {
   /** The DB lead id — immutable GHL lookup key; absent for an orphan quote. */
   leadId?: string;
   ghlContactId: string | null;
+  /** Sales-pipeline opp, read through the lead — a job spans both pipelines. Null for orphan jobs / before the echo-back. */
+  ghlSalesOpportunityId: string | null;
   ghlOpsOpportunityId: string | null;
   amountDue: number;
   /** The public /pay/<token> page. */
