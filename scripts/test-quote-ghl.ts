@@ -389,10 +389,11 @@ async function main() {
     const csJob = (await repo.getJob(a.jobId))!;
     const csQuote = (await repo.getQuote(a.q.id))!;
     const { dispatchJobContractSent } = await import("@/lib/app/ghl/dispatch-job");
-    await dispatchJobContractSent(csJob, csQuote, "scope");
+    await dispatchJobContractSent(csJob, csQuote);
     const cs = take()[0];
     assert.equal(cs.event, "job.contract_sent"); assert.equal(cs.leadId, lead.id, "job.contract_sent carries leadId"); assert.equal(cs.depositRequired, true);
     assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
+    assert.ok(!("scopeOfWork" in cs) && !("paymentType" in cs), "scopeOfWork and paymentType are not sent on contract_sent");
   }
 
   // --- rep "Send payment request": same path + payload as the auto-trigger ---

@@ -65,7 +65,7 @@ async function main() {
 
   // job.contract_sent (deposit required)
   const withTerms = (await repo.sendJobContract(jobId, { paymentType: "CHECK", depositRequired: true, depositAmount: 1000 }))!;
-  await dispatchJobContractSent(withTerms, (await repo.getQuote(saved.id))!, "• Path lighting — 12 fixtures");
+  await dispatchJobContractSent(withTerms, (await repo.getQuote(saved.id))!);
 
   // job.deposit_requested
   await requestPaymentIfOwed(repo, jobId, "deposit");

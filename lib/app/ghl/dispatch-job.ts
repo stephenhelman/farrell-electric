@@ -10,15 +10,10 @@ import { buildPayLink } from "@/lib/config";
  *
  * The payload is hand-mapped field by field on purpose. RepoJob carries
  * revenue/actualCost, so it must never be spread into a GHL payload
- * (economics wall). Only the quote's customer-facing `total` crosses.
+ * (economics wall). Only the quote's customer-facing `total` crosses. The scope of
+ * work and payment type are intentionally not sent (see JobContractSentPayload).
  */
-export async function dispatchJobContractSent(
-  job: RepoJob,
-  quote: RepoQuoteDetail,
-  scopeOfWork: string,
-): Promise<void> {
-  if (job.paymentType === null) return; // unreachable after sendJobContract; narrows the type.
-
+export async function dispatchJobContractSent(job: RepoJob, quote: RepoQuoteDetail): Promise<void> {
   await dispatchGhlEvent({
     event: "job.contract_sent",
     jobId: job.id,
@@ -28,8 +23,6 @@ export async function dispatchJobContractSent(
     ghlContactId: quote.ghlContactId,
     // Read through the lead via the job; the quote row carries no opp id.
     ghlOpsOpportunityId: job.ghlOpsOpportunityId,
-    scopeOfWork,
-    paymentType: job.paymentType,
     depositRequired: job.depositRequired,
     depositAmount: job.depositAmount,
     balanceDue: Math.max(0, balanceDue(job)),

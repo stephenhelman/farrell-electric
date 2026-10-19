@@ -10,7 +10,6 @@ import { validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-paym
 import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
 import { dispatchJobContractSent } from "@/lib/app/ghl/dispatch-job";
 import {
-  resolveScopeOfWork,
   validateContractInput,
   type GenerateContractInput,
 } from "@/lib/app/jobs/contract";
@@ -50,7 +49,7 @@ export async function generateContractAction(
 
   const quote = await repo.getQuote(job.quoteId);
   if (quote) {
-    await dispatchJobContractSent(updated, quote, resolveScopeOfWork(quote));
+    await dispatchJobContractSent(updated, quote);
   }
 
   // New terms can change the balance due. If the job was already installed, no
