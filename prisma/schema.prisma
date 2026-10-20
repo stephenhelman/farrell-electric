@@ -274,6 +274,10 @@ model Job {
   // lazily minted for older jobs the first time a pay URL is needed.
   payToken String? @unique
 
+  // Short url-safe slug (10 chars) for the branded /sow/[slug] link. Minted at job
+  // creation; lazily for older jobs the first time a SOW link is needed.
+  sowSlug String? @unique
+
   // Payment-request send-once markers: stamped when job.deposit_requested /
   // job.balance_requested is dispatched, so a redelivered trigger can't send twice.
   depositRequestedAt DateTime?

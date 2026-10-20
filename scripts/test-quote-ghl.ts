@@ -257,17 +257,25 @@ async function main() {
     assert.deepEqual(Object.keys(created[0]).sort(), [
       "event", "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId", "leadId", "quoteId", "quoteNumber", "sowUrl", "total", "customerName",
     ].sort(), "job.created key set is pinned — no economics");
-    const sowToken = (await repo.getQuote(jq.id))!.publicToken!;
-    assert.match(String(created[0].sowUrl), new RegExp(`/sow/${sowToken}$`), "payload carries the branded link");
+    const sowSlug = (await repo.getJob(String(created[0].jobId)))!.sowSlug!;
+    assert.match(sowSlug, /^[0-9A-Za-z]{10}$/, "10-char base62 slug minted at job creation");
+    assert.match(String(created[0].sowUrl), new RegExp(`/sow/${sowSlug}$`), "payload carries the short branded link");
     assert.doesNotMatch(String(created[0].sowUrl), /blob\.test/, "raw blob URL never leaves");
     assert.equal(created[0].leadId, lead.id);
     assert.equal(created[0].ghlSalesOpportunityId, "sales_opp_1", "sales opp id read through the lead");
     assert.equal(created[0].ghlOpsOpportunityId, "ops_opp_1");
     const jobRow = (await repo.getJob(first.ok ? first.jobId : ""))!;
     assert.equal(jobRow.sowUrl, "https://blob.test/sow/quote-x-abc123.pdf"); assert.ok(jobRow.sowGeneratedAt);
-    // /sow/[token] redirect target: the internal blob URL; unknown token / ungenerated -> null (404)
-    assert.equal(await repo.getSowBlobUrlByQuoteToken(sowToken), "https://blob.test/sow/quote-x-abc123.pdf");
-    assert.equal(await repo.getSowBlobUrlByQuoteToken("no-such-token"), null);
+    // /sow/[slug] redirect target: the internal blob URL; unknown slug -> null (404)
+    assert.equal(await repo.getSowBlobUrlBySlug(sowSlug), "https://blob.test/sow/quote-x-abc123.pdf");
+    assert.equal(await repo.getSowBlobUrlBySlug("no-such-slug"), null);
+    // lazy mint: a legacy job without a slug gets one, idempotently, and the old slug stops resolving
+    const jid = String(created[0].jobId);
+    (await import("@/lib/app/repo/memory-store")).memoryStore.jobs.find((j) => j.id === jid)!.sowSlug = null;
+    assert.equal(await repo.getSowBlobUrlBySlug(sowSlug), null);
+    const lazy = await repo.ensureSowSlug(jid);
+    assert.match(String(lazy), /^[0-9A-Za-z]{10}$/); assert.equal(await repo.ensureSowSlug(jid), lazy, "lazy mint is idempotent");
+    assert.equal(await repo.getSowBlobUrlBySlug(lazy!), "https://blob.test/sow/quote-x-abc123.pdf");
     assert.equal(renders, 1);
 
     // a second call: nothing regenerated, nothing fired

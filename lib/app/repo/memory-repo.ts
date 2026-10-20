@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { generateSowSlug } from "@/lib/app/sow/slug";
 import type { PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
@@ -65,6 +66,12 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
  * In-memory fallback used whenever DATABASE_URL is unset — the app builds,
  * runs, and authenticates with zero database credentials.
  */
+function generateUniqueSowSlug(): string {
+  let slug = generateSowSlug();
+  while (memoryStore.jobs.some((j) => j.sowSlug === slug)) slug = generateSowSlug();
+  return slug;
+}
+
 export const memoryRepo: Repo = {
   async getUserByEmail(email) {
     const normalized = email.trim().toLowerCase();
@@ -87,10 +94,8 @@ export const memoryRepo: Repo = {
     return memoryStore.jobs.map(toRepoJob).sort((a, b) => b.quoteNumber - a.quoteNumber);
   },
 
-  async getSowBlobUrlByQuoteToken(token) {
-    const quote = memoryStore.quotes.find((q) => q.publicToken === token);
-    if (!quote) return null;
-    return memoryStore.jobs.find((j) => j.quoteId === quote.id)?.sowUrl ?? null;
+  async getSowBlobUrlBySlug(slug) {
+    return memoryStore.jobs.find((j) => j.sowSlug === slug)?.sowUrl ?? null;
   },
 
   async getJob(id) {
@@ -284,6 +289,7 @@ export const memoryRepo: Repo = {
       sowUrl: null,
       sowGeneratedAt: null,
       payToken: randomUUID(),
+      sowSlug: generateUniqueSowSlug(),
       depositRequestedAt: null,
       balanceRequestedAt: null,
       closedAt: null,
@@ -300,9 +306,17 @@ export const memoryRepo: Repo = {
     return record.payToken;
   },
 
+  async ensureSowSlug(jobId) {
+    const record = memoryStore.jobs.find((j) => j.id === jobId);
+    if (!record) return null;
+    record.sowSlug ??= generateUniqueSowSlug();
+    return record.sowSlug;
+  },
+
   async getPayContextByToken(payToken) {
     const record = memoryStore.jobs.find((j) => j.payToken === payToken);
     if (!record) return null;
+    if (record.sowUrl) await memoryRepo.ensureSowSlug(record.id);
     const payments = memoryStore.payments.filter((p) => p.jobId === record.id).sort((a, b) => a.paidAt.getTime() - b.paidAt.getTime());
     return buildPayContext(toRepoJob(record), payments);
   },

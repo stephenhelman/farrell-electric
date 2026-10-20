@@ -38,6 +38,7 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
   const [isPending, startTransition] = useTransition();
 
   function accept() {
+    setError(null);
     startTransition(async () => {
       try {
         router.push(jobHref(await acceptQuoteAction(quoteId)));
@@ -48,6 +49,7 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
   }
 
   function openJob() {
+    setError(null);
     startTransition(async () => {
       try {
         router.push(jobHref(await createJobAction(quoteId)));
@@ -73,9 +75,17 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
   if (status === "ACCEPTED") {
     return (
       <>
-        <button type="button" className={styles.accept} disabled={isPending} onClick={openJob}>
-          Open job
+        <button type="button" className={styles.accept} disabled={isPending} aria-busy={isPending} onClick={openJob}>
+          {isPending ? (
+            <>
+              <span className={styles.spinner} aria-hidden="true" />
+              Creating job…
+            </>
+          ) : (
+            "Open job"
+          )}
         </button>
+        <span role="status" className={styles.srOnly}>{isPending ? "Creating job, generating the scope of work…" : ""}</span>
         {error ? <span role="alert" className={styles.error}>{error}</span> : null}
       </>
     );
@@ -131,8 +141,15 @@ export function QuoteDecision({ quoteId, quoteNumber, customerName, status, tota
             <button type="button" className={styles.cancel} disabled={isPending} onClick={() => acceptRef.current?.close()}>
               Cancel
             </button>
-            <button type="button" className={styles.confirmAccept} disabled={isPending} onClick={accept}>
-              {isPending ? "Working…" : "Accept & open job"}
+            <button type="button" className={styles.confirmAccept} disabled={isPending} aria-busy={isPending} onClick={accept}>
+              {isPending ? (
+                <>
+                  <span className={styles.spinner} aria-hidden="true" />
+                  Creating job…
+                </>
+              ) : (
+                "Accept & open job"
+              )}
             </button>
           </div>
         </div>

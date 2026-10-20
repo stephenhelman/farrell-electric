@@ -154,8 +154,10 @@ export interface RepoJob {
   /** Scope-of-Work PDF (public, unguessable Blob URL); null if not generated. */
   sowUrl: string | null;
   sowGeneratedAt: Date | null;
-  /** The quote's publicToken — what the branded /sow/[token] link is keyed on. Never expose sowUrl itself to customers. */
+  /** The quote's publicToken (the /q/[token] link). */
   quotePublicToken: string | null;
+  /** Short slug the branded /sow/[slug] link is keyed on; null only for jobs created before it existed (see ensureSowSlug). Never expose sowUrl itself to customers. */
+  sowSlug: string | null;
   /** Token for the public /pay/[token] page; null only for jobs created before it existed (see ensurePayToken). */
   payToken: string | null;
 
@@ -455,7 +457,7 @@ export interface Repo {
   getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   /** The internal SOW blob URL for the job behind a quote's public token, or null (unknown token / not generated). */
-  getSowBlobUrlByQuoteToken(token: string): Promise<string | null>;
+  getSowBlobUrlBySlug(slug: string): Promise<string | null>;
   /** Resolves the quote id behind a public token (the token IS the authorization), or null. */
   findQuoteIdByPublicToken(token: string): Promise<string | null>;
   /**
@@ -474,6 +476,8 @@ export interface Repo {
   ensureJobForQuote(id: string): Promise<{ id: string; created: boolean } | null>;
   /** The job's pay token, minting one atomically if it has none (a concurrent mint can't overwrite). Null if the job doesn't exist. */
   ensurePayToken(jobId: string): Promise<string | null>;
+  /** The job's SOW slug, minting one atomically if it has none (collision-retried). Null if the job doesn't exist. */
+  ensureSowSlug(jobId: string): Promise<string | null>;
   /** The economics-safe /pay view for a token, or null for an unknown token. */
   getPayContextByToken(payToken: string): Promise<PublicPayContext | null>;
   /** Atomic DRAFT|SENT → DECLINED with the reason; true only for the call that made the transition. */

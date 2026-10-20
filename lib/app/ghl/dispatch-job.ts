@@ -121,7 +121,7 @@ export async function dispatchJobCreated(job: RepoJob): Promise<void> {
     total: job.total,
     customerName: job.customerName,
     // Branded short link, never the raw blob URL (Job.sowUrl stays internal).
-    sowUrl: job.sowUrl && job.quotePublicToken ? buildSowLink(job.quotePublicToken) : null,
+    sowUrl: job.sowUrl && job.sowSlug ? buildSowLink(job.sowSlug) : null,
   });
 }
 

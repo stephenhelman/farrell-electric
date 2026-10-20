@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { generateSowSlug, SOW_SLUG_ATTEMPTS } from "@/lib/app/sow/slug";
 import type { Lead, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
@@ -74,6 +75,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     sowGeneratedAt: job.sowGeneratedAt,
     quotePublicToken: job.quote.publicToken,
     payToken: job.payToken,
+    sowSlug: job.sowSlug,
     depositRequestedAt: job.depositRequestedAt,
     balanceRequestedAt: job.balanceRequestedAt,
     closedAt: job.closedAt,
@@ -427,8 +429,8 @@ export const prismaRepo: Repo = {
     return mapQuoteDetail(created);
   },
 
-  async getSowBlobUrlByQuoteToken(token) {
-    const job = await prisma.job.findFirst({ where: { quote: { publicToken: token } }, select: { sowUrl: true } });
+  async getSowBlobUrlBySlug(slug) {
+    const job = await prisma.job.findUnique({ where: { sowSlug: slug }, select: { sowUrl: true } });
     return job?.sowUrl ?? null;
   },
 
@@ -462,19 +464,35 @@ export const prismaRepo: Repo = {
     const existingJob = await prisma.job.findUnique({ where: { quoteId: id } });
     if (existingJob) return { id: existingJob.id, created: false };
 
-    try {
-      const job = await prisma.job.create({
-        data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total, payToken: randomUUID() },
-      });
-      return { id: job.id, created: true };
-    } catch (error) {
-      // P2002 on the unique quoteId: a concurrent call inserted first — it owns `created`.
-      if (error instanceof Error && "code" in error && error.code === "P2002") {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const job = await prisma.job.create({
+          data: { quoteId: id, status: "UNSCHEDULED", revenue: quote.total, payToken: randomUUID(), sowSlug: generateSowSlug() },
+        });
+        return { id: job.id, created: true };
+      } catch (error) {
+        if (!(error instanceof Error && "code" in error && error.code === "P2002")) throw error;
+        // P2002 on the unique quoteId: a concurrent call inserted first — it owns `created`.
         const winner = await prisma.job.findUnique({ where: { quoteId: id } });
         if (winner) return { id: winner.id, created: false };
+        // Otherwise the slug collided: retry with a fresh one.
+        if (attempt >= SOW_SLUG_ATTEMPTS) throw error;
       }
-      throw error;
     }
+  },
+
+  async ensureSowSlug(jobId) {
+    for (let attempt = 0; attempt < SOW_SLUG_ATTEMPTS; attempt++) {
+      try {
+        // The WHERE is the guard: only a job with no slug takes the new one.
+        await prisma.job.updateMany({ where: { id: jobId, sowSlug: null }, data: { sowSlug: generateSowSlug() } });
+        break;
+      } catch (error) {
+        if (!(error instanceof Error && "code" in error && error.code === "P2002")) throw error;
+      }
+    }
+    const job = await prisma.job.findUnique({ where: { id: jobId }, select: { sowSlug: true } });
+    return job?.sowSlug ?? null;
   },
 
   async ensurePayToken(jobId) {
@@ -487,8 +505,9 @@ export const prismaRepo: Repo = {
   async getPayContextByToken(payToken) {
     const job = await prisma.job.findUnique({ where: { payToken }, include: JOB_INCLUDE });
     if (!job) return null;
+    const sowSlug = job.sowUrl && !job.sowSlug ? await prismaRepo.ensureSowSlug(job.id) : job.sowSlug;
     const payments = await prisma.payment.findMany({ where: { jobId: job.id }, orderBy: { paidAt: "asc" } });
-    return buildPayContext(mapJob(job), payments.map(mapPayment));
+    return buildPayContext(mapJob({ ...job, sowSlug }), payments.map(mapPayment));
   },
 
   async declineQuote(id, input) {

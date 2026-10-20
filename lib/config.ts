@@ -12,9 +12,9 @@ export function buildPayLink(payToken: string): string {
   return `${getSiteBaseUrl()}/pay/${payToken}`;
 }
 
-/** Branded short link to the Scope-of-Work PDF; /sow/[token] 302s to the internal blob URL. */
-export function buildSowLink(publicToken: string): string {
-  return `${getSiteBaseUrl()}/sow/${publicToken}`;
+/** Branded short link to the Scope-of-Work PDF; /sow/[slug] 302s to the internal blob URL. */
+export function buildSowLink(sowSlug: string): string {
+  return `${getSiteBaseUrl()}/sow/${sowSlug}`;
 }
 
 export function buildQuoteLink(publicToken: string): string {

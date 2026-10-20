@@ -44,7 +44,7 @@ export function buildPayContext(job: RepoJob, payments: RepoPayment[]): PublicPa
   return {
     customerName: job.customerName,
     referenceNumber: String(job.quoteNumber),
-    sowUrl: job.sowUrl && job.quotePublicToken ? buildSowLink(job.quotePublicToken) : null,
+    sowUrl: job.sowUrl && job.sowSlug ? buildSowLink(job.sowSlug) : null,
     due: amountDueNow(job, payments),
     payments: payments.map((p) => ({ method: p.method, amount: p.amount, paidAt: p.paidAt })),
   };
