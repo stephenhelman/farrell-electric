@@ -146,6 +146,13 @@ export const memoryRepo: Repo = {
     return true;
   },
 
+  async claimJobInstalled(id, installedDate) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    if (!record || record.installedDate !== null) return false;
+    record.installedDate = installedDate;
+    return true;
+  },
+
   async claimJobCompleted(id) {
     const record = memoryStore.jobs.find((j) => j.id === id);
     if (!record || record.completedAt !== null) return false;

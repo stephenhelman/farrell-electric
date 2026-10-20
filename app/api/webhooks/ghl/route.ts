@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { getRepo } from "@/lib/app/repo";
 import { advanceJobLifecycle, type AdvanceResult } from "@/lib/app/jobs/gates";
+import { markJobInstalled } from "@/lib/app/jobs/install";
 import { requestPaymentIfOwed } from "@/lib/app/jobs/requests";
 import { buildJobEventPatch, isJobAction, type JobAction } from "@/lib/app/jobs/inbound";
 
@@ -185,6 +186,15 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
         return NextResponse.json({ ok: true, ignored: "job not found" }, { status: 200 });
       }
 
+      // `installed` shares one completion path with the in-app "Mark Installed"
+      // (claim-style stamp -> gates -> balance request), so the two can't double-fire.
+      if (body.action === "installed") {
+        const result = await markJobInstalled(repo, job.id, body.occurredAt ? new Date(body.occurredAt) : new Date());
+        advanced = result.advanced;
+        log("job installed", { claimed: result.claimed, balanceRequested: result.balanceRequest !== null, ...advanced });
+        return NextResponse.json({ ok: true, ...advanced }, { status: 200 });
+      }
+
       const patch = buildJobEventPatch(
         job,
         body.action,
@@ -212,7 +222,7 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
       // a pre-paid deposit has already closed the job. Failure here must not 500
       // the delivery: the fact is written, and a retry would find an empty patch anyway.
       const requestKind =
-        body.action === "contract_signed" ? "deposit" : body.action === "installed" ? "balance" : null;
+        body.action === "contract_signed" ? "deposit" : null;
       if (requestKind && Object.keys(patch).length > 0) {
         try {
           const sent = await requestPaymentIfOwed(repo, job.id, requestKind);

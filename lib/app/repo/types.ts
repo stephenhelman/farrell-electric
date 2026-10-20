@@ -456,6 +456,8 @@ export interface Repo {
    * callers check lib/app/jobs/lifecycle.ts first.
    */
   claimJobClosed(id: string): Promise<boolean>;
+  /** Atomic `WHERE installedDate IS NULL` stamp; true only for the call that set it (the install-completion claim). */
+  claimJobInstalled(id: string, installedDate: Date): Promise<boolean>;
   /** Same guard for completedAt; the winning call also sets status = DONE. */
   claimJobCompleted(id: string): Promise<boolean>;
   /** Idempotent on externalRef: a repeat returns the existing row with created=false and writes nothing. */

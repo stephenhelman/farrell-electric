@@ -7,6 +7,7 @@ import { requireRepSession } from "@/lib/app/auth/require-session";
 import { confirmPayment } from "@/lib/app/jobs/payments";
 import { requestCurrentPayment } from "@/lib/app/jobs/requests";
 import { validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-payment";
+import { markJobInstalled } from "@/lib/app/jobs/install";
 import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
 import { dispatchJobContractSent } from "@/lib/app/ghl/dispatch-job";
 import {
@@ -137,4 +138,40 @@ export async function sendPaymentRequestAction(jobId: string): Promise<SendPayme
 
   revalidatePath(`/app-portal/jobs/${jobId}`);
   return { ok: true, sent: true, kind: sent.kind, amount: sent.amountDue };
+}
+
+/**
+ * Rep "Mark Installed". installedDate (the warranty start) defaults to now and may
+ * be back-dated (yyyy-mm-dd; not in the future). Runs the same markJobInstalled as
+ * the inbound `installed` echo; a repeat (already installed) is a no-op. Emits no
+ * new event — GHL reacts to job.balance_requested / job.completed.
+ */
+export async function markInstalledAction(jobId: string, installedDate?: string | null): Promise<JobActionResult> {
+  await requireRepSession();
+
+  let when = new Date();
+  if (installedDate) {
+    // Noon UTC keeps a date-only value on the same calendar day in US time zones.
+    when = new Date(`${installedDate}T12:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(installedDate) || Number.isNaN(when.getTime())) {
+      return { ok: false, error: "Enter a valid install date." };
+    }
+    if (when.getTime() > Date.now() + 24 * 60 * 60 * 1000) {
+      return { ok: false, error: "The install date can't be in the future." };
+    }
+  }
+
+  const repo = await getRepo();
+  const job = await repo.getJob(jobId);
+  if (!job) return { ok: false, error: "Job not found." };
+  if (job.installedDate) return { ok: true };
+  if (!job.closedAt || !job.installScheduledDate) {
+    return { ok: false, error: "Only a closed job with a scheduled install can be marked installed." };
+  }
+
+  await markJobInstalled(repo, jobId, when);
+
+  revalidatePath(`/app-portal/jobs/${jobId}`);
+  revalidatePath("/app-portal/jobs");
+  return { ok: true };
 }

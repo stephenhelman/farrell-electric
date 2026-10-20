@@ -272,6 +272,14 @@ export const prismaRepo: Repo = {
     return count === 1;
   },
 
+  async claimJobInstalled(id, installedDate) {
+    const { count } = await prisma.job.updateMany({
+      where: { id, installedDate: null },
+      data: { installedDate },
+    });
+    return count === 1;
+  },
+
   async claimJobCompleted(id) {
     const { count } = await prisma.job.updateMany({
       where: { id, completedAt: null },

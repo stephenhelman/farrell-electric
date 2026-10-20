@@ -9,6 +9,7 @@ import { ActualCostForm } from "./ActualCostForm";
 import { GenerateContract } from "./GenerateContract";
 import { RecordPayment } from "./RecordPayment";
 import { SendPaymentRequest } from "./SendPaymentRequest";
+import { MarkInstalled } from "./MarkInstalled";
 import { ScheduleInstall } from "./ScheduleInstall";
 import { amountDueNow } from "@/lib/app/pay/context";
 import styles from "./page.module.css";
@@ -195,6 +196,11 @@ export default async function JobPage({
           customerEmail={quote?.customerEmail ?? ""}
           eligible={jobStage(job) === "Closed" && !job.installedDate}
           scheduledDate={job.installScheduledDate ? formatDate(job.installScheduledDate) : null}
+        />
+        <MarkInstalled
+          jobId={job.id}
+          eligible={job.closedAt !== null && job.installScheduledDate !== null && job.installedDate === null}
+          installedOn={job.installedDate ? formatDate(job.installedDate) : null}
         />
       </div>
 

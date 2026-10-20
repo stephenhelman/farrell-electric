@@ -386,6 +386,25 @@ async function main() {
     assert.ok(!dEv.includes("job.balance_requested"), "nothing owed: no balance request");
     assert.deepEqual(dEv, ["job.completed"]);
 
+    // markJobInstalled (shared by the webhook and the in-app "Mark Installed"): claim-style
+    const { markJobInstalled } = await import("@/lib/app/jobs/install");
+    take();
+    const backdate = new Date("2026-01-05T12:00:00Z");
+    const m1 = await markJobInstalled(repo, n.jobId, backdate);
+    assert.ok(m1.claimed && m1.balanceRequest?.amountDue === 1000);
+    assert.deepEqual(take().map((e) => e.event), ["job.balance_requested"], "balance owed -> request");
+    assert.equal((await repo.getJob(n.jobId))!.installedDate?.getTime(), backdate.getTime(), "back-dated installedDate stamped");
+    const m2 = await markJobInstalled(repo, n.jobId, new Date());
+    assert.ok(!m2.claimed && m2.balanceRequest === null);
+    assert.deepEqual(events(), [], "re-marking is a no-op");
+    assert.equal((await repo.getJob(n.jobId))!.installedDate?.getTime(), backdate.getTime(), "installedDate never moves");
+    const c = await newJob(500, { depositRequired: false, depositAmount: null });
+    await logSilently(() => deliver(c.jobId, "contract_signed")); take();
+    await confirmPayment(repo, { jobId: c.jobId, kind: "BALANCE", method: "CHECK", amount: 500, reference: null, externalRef: "manual:c", recordedBy: "rep" }); take();
+    const m3 = await markJobInstalled(repo, c.jobId, new Date());
+    assert.ok(m3.claimed && m3.balanceRequest === null && m3.advanced.completed);
+    assert.deepEqual(take().map((e) => e.event), ["job.completed"], "fully paid -> completes, no balance request");
+
     // getPayContextByToken: deposit vs balance vs nothing due, economics-free
     const ctxA = (await repo.getPayContextByToken(aTok))!;
     assert.deepEqual(ctxA.due, { kind: "deposit", amount: 300 });
