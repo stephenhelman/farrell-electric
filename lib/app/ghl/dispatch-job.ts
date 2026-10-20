@@ -11,7 +11,8 @@ import { buildPayLink, buildSowLink } from "@/lib/config";
  * The payload is hand-mapped field by field on purpose. RepoJob carries
  * revenue/actualCost, so it must never be spread into a GHL payload
  * (economics wall). Only the quote's customer-facing `total` crosses. The scope of
- * work and payment type are intentionally not sent (see JobContractSentPayload).
+ * work and payment type are intentionally not sent (see JobContractSentPayload); the SOW
+ * crosses only as the branded short link.
  */
 export async function dispatchJobContractSent(job: RepoJob, quote: RepoQuoteDetail): Promise<void> {
   await dispatchGhlEvent({
@@ -32,6 +33,8 @@ export async function dispatchJobContractSent(job: RepoJob, quote: RepoQuoteDeta
     customerPhone: quote.customerPhone,
     customerEmail: quote.customerEmail,
     customerAddress: quote.customerAddress,
+    // Same branded short link job.created carries, never the raw blob URL.
+    sowUrl: job.sowUrl && job.sowSlug ? buildSowLink(job.sowSlug) : null,
   });
 }
 

@@ -445,6 +445,7 @@ async function main() {
     assert.ok(minted); assert.equal(await repo.ensurePayToken(legacyJob.id), minted, "minting is idempotent");
 
     // the contract payload carries the deposit terms + balanceDue for GHL merge fields
+    await repo.updateJob(a.jobId, { sowUrl: "https://blob.test/sow/quote-cs.pdf", sowGeneratedAt: new Date() });
     const csJob = (await repo.getJob(a.jobId))!;
     const csQuote = (await repo.getQuote(a.q.id))!;
     const { dispatchJobContractSent } = await import("@/lib/app/ghl/dispatch-job");
@@ -454,6 +455,11 @@ async function main() {
     assert.equal(cs.ghlSalesOpportunityId, "sales_opp_1", "contract_sent carries the sales opp id"); assert.equal(cs.depositRequired, true);
     assert.equal(cs.depositAmount, 300); assert.equal(cs.balanceDue, 700);
     assert.ok(!("scopeOfWork" in cs) && !("paymentType" in cs), "scopeOfWork and paymentType are not sent on contract_sent");
+    assert.deepEqual(Object.keys(cs).sort(), [
+      "balanceDue", "customerAddress", "customerEmail", "customerName", "customerPhone", "depositAmount", "depositRequired", "event",
+      "ghlContactId", "ghlOpsOpportunityId", "ghlSalesOpportunityId", "jobId", "leadId", "quoteId", "quoteNumber", "sowUrl", "total",
+    ], "contract_sent key set (no economics keys)");
+    assert.match(String(cs.sowUrl), new RegExp(`/sow/${csJob.sowSlug}$`), "contract_sent carries the short /sow/<slug> link"); assert.equal(cs.sowUrl, csJob.sowUrl ? `${(await import("@/lib/config")).buildSowLink(csJob.sowSlug!)}` : null);
   }
 
   // --- rep "Send payment request": same path + payload as the auto-trigger ---

@@ -127,8 +127,8 @@ export interface QuoteAcceptedPayload {
 
 /**
  * Fired when a rep generates/regenerates the contract. Carries the stored deal
- * terms and customer-facing data only. Deliberately NOT carried: scopeOfWork (frozen
- * once a quote is accepted and already delivered as job.created's sowUrl) — `total` is the quote's customer-facing
+ * terms and customer-facing data only. Deliberately NOT carried: scopeOfWork text (frozen
+ * once a quote is accepted; only its branded sowUrl link is carried) — `total` is the quote's customer-facing
  * total. Never revenue/actualCost/margin, and never pipeline/stage ids. The
  * Operations opportunity id is an identifier, not routing config: it is read
  * through the lead and sent so GHL can find the opp to move.
@@ -155,6 +155,8 @@ export interface JobContractSentPayload {
   customerPhone: string;
   customerEmail: string;
   customerAddress: string;
+  /** Branded /sow/<slug> short link (same as job.created's); null if no SOW was generated. */
+  sowUrl: string | null;
 }
 
 /**

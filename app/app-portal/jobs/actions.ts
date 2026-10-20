@@ -51,7 +51,9 @@ export async function generateContractAction(
 
   const quote = await repo.getQuote(job.quoteId);
   if (quote) {
-    await dispatchJobContractSent(updated, quote);
+    // Older jobs predate the slug: mint it so the contract carries the short SOW link.
+    const sowSlug = updated.sowSlug ?? (updated.sowUrl ? await repo.ensureSowSlug(updated.id) : null);
+    await dispatchJobContractSent({ ...updated, sowSlug }, quote);
   }
 
   // New terms can change the balance due. If the job was already installed, no
