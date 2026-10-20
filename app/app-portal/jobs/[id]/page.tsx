@@ -181,6 +181,7 @@ export default async function JobPage({
           depositPaid={job.depositPaid}
           depositReceived={depositReceived}
           balanceDue={remaining}
+          paidInFull={job.finalInvoicePaid || remaining <= 0}
         />
         <SendPaymentRequest jobId={job.id} due={amountDueNow(job, payments)} />
       </div>

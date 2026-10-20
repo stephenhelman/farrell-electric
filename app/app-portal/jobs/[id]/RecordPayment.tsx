@@ -18,6 +18,8 @@ interface Props {
   depositReceived: number;
   /** revenue - everything received. */
   balanceDue: number;
+  /** Final balance settled — nothing left to record. */
+  paidInFull: boolean;
 }
 
 function titleCase(value: string): string {
@@ -29,7 +31,7 @@ function toField(amount: number): string {
 }
 
 /** Rep records money settled outside the app. Card is not offered — it arrives via the QuickBooks webhook. */
-export function RecordPayment({ jobId, depositRequired, depositAmount, depositPaid, depositReceived, balanceDue }: Props) {
+export function RecordPayment({ jobId, depositRequired, depositAmount, depositPaid, depositReceived, balanceDue, paidInFull }: Props) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -89,7 +91,7 @@ export function RecordPayment({ jobId, depositRequired, depositAmount, depositPa
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={open}>
+      <button type="button" className={styles.trigger} onClick={open} disabled={paidInFull} title={paidInFull ? "Paid in full" : undefined}>
         Record payment
       </button>
 
