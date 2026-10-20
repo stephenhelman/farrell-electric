@@ -1,5 +1,6 @@
 import type { PublicPayContext, RepoJob, RepoPayment } from "@/lib/app/repo/types";
 import { balanceDue } from "@/lib/app/jobs/lifecycle";
+import { buildSowLink } from "@/lib/config";
 
 const toCents = (amount: number) => Math.round(amount * 100);
 
@@ -43,7 +44,7 @@ export function buildPayContext(job: RepoJob, payments: RepoPayment[]): PublicPa
   return {
     customerName: job.customerName,
     referenceNumber: String(job.quoteNumber),
-    sowUrl: job.sowUrl,
+    sowUrl: job.sowUrl && job.quotePublicToken ? buildSowLink(job.quotePublicToken) : null,
     due: amountDueNow(job, payments),
     payments: payments.map((p) => ({ method: p.method, amount: p.amount, paidAt: p.paidAt })),
   };

@@ -54,7 +54,7 @@ const catalogItems = seedCatalogItems();
 /** Job fields owned by the job itself; the quote-derived ones are joined in on read so client-info edits on the quote show through. */
 export type MemoryJobRecord = Omit<
   RepoJob,
-  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "ghlSalesOpportunityId" | "ghlOpsOpportunityId" | "total" | "leadId" | "amountPaid"
+  "quoteNumber" | "customerName" | "customerAddress" | "ghlContactId" | "ghlSalesOpportunityId" | "ghlOpsOpportunityId" | "total" | "leadId" | "amountPaid" | "quotePublicToken"
 >;
 
 /** Quote fields owned by the quote; the sales opp id is joined in from the lead on read. */

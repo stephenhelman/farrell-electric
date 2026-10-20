@@ -155,6 +155,8 @@ export interface RepoJob {
   /** Scope-of-Work PDF (public, unguessable Blob URL); null if not generated. */
   sowUrl: string | null;
   sowGeneratedAt: Date | null;
+  /** The quote's publicToken — what the branded /sow/[token] link is keyed on. Never expose sowUrl itself to customers. */
+  quotePublicToken: string | null;
   /** Token for the public /pay/[token] page; null only for jobs created before it existed (see ensurePayToken). */
   payToken: string | null;
 
@@ -388,6 +390,7 @@ export interface PublicPayContext {
   customerName: string;
   /** The quote number. */
   referenceNumber: string;
+  /** Branded /sow/[token] link (never the raw blob URL); null when there's no SOW or no token. */
   sowUrl: string | null;
   /** What is owed right now; null when nothing is due (paid in full / nothing outstanding). */
   due: { kind: "deposit" | "balance"; amount: number } | null;
@@ -465,6 +468,8 @@ export interface Repo {
   /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */
   getInvoiceByPublicToken(token: string): Promise<PublicInvoice | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
+  /** The internal SOW blob URL for the job behind a quote's public token, or null (unknown token / not generated). */
+  getSowBlobUrlByQuoteToken(token: string): Promise<string | null>;
   /** Resolves the quote id behind a public token (the token IS the authorization), or null. */
   findQuoteIdByPublicToken(token: string): Promise<string | null>;
   /**

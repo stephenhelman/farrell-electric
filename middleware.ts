@@ -19,6 +19,9 @@ const WEBHOOKS_PREFIX = "/api/webhooks/";
 // design (the unguessable payToken is the authorization), either host.
 const PUBLIC_PAY_PREFIX = "/pay/";
 
+// Public, tokenized SOW short link — 302s to the stored PDF. Same posture as /q/.
+const PUBLIC_SOW_PREFIX = "/sow/";
+
 function isAppHost(host: string | null): boolean {
   return host === APP_HOST || host === DEV_APP_HOST;
 }
@@ -40,6 +43,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith(PUBLIC_QUOTE_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(PUBLIC_SOW_PREFIX)) {
     return NextResponse.next();
   }
 

@@ -1,7 +1,7 @@
 import { dispatchGhlEvent } from "@/lib/ghl/dispatch";
 import type { RepoJob, RepoPayment, RepoQuoteDetail } from "@/lib/app/repo/types";
 import { balanceDue } from "@/lib/app/jobs/lifecycle";
-import { buildPayLink } from "@/lib/config";
+import { buildPayLink, buildSowLink } from "@/lib/config";
 
 /**
  * Fires job.contract_sent from STORED values (the persisted job + quote), never
@@ -120,7 +120,8 @@ export async function dispatchJobCreated(job: RepoJob): Promise<void> {
     ghlOpsOpportunityId: job.ghlOpsOpportunityId,
     total: job.total,
     customerName: job.customerName,
-    sowUrl: job.sowUrl,
+    // Branded short link, never the raw blob URL (Job.sowUrl stays internal).
+    sowUrl: job.sowUrl && job.quotePublicToken ? buildSowLink(job.quotePublicToken) : null,
   });
 }
 

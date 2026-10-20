@@ -12,6 +12,11 @@ export function buildPayLink(payToken: string): string {
   return `${getSiteBaseUrl()}/pay/${payToken}`;
 }
 
+/** Branded short link to the Scope-of-Work PDF; /sow/[token] 302s to the internal blob URL. */
+export function buildSowLink(publicToken: string): string {
+  return `${getSiteBaseUrl()}/sow/${publicToken}`;
+}
+
 export function buildQuoteLink(publicToken: string): string {
   return `${getSiteBaseUrl()}/q/${publicToken}`;
 }

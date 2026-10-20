@@ -73,6 +73,7 @@ function mapJob(job: JobWithQuote): RepoJob {
     actualCost: job.actualCost === null ? null : Number(job.actualCost),
     sowUrl: job.sowUrl,
     sowGeneratedAt: job.sowGeneratedAt,
+    quotePublicToken: job.quote.publicToken,
     payToken: job.payToken,
     closedAt: job.closedAt,
     completedAt: job.completedAt,
@@ -427,6 +428,11 @@ export const prismaRepo: Repo = {
       include: QUOTE_DETAIL_INCLUDE,
     });
     return mapQuoteDetail(created);
+  },
+
+  async getSowBlobUrlByQuoteToken(token) {
+    const job = await prisma.job.findFirst({ where: { quote: { publicToken: token } }, select: { sowUrl: true } });
+    return job?.sowUrl ?? null;
   },
 
   async findQuoteIdByPublicToken(token) {

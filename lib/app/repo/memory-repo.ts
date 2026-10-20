@@ -68,6 +68,7 @@ function toRepoJob(record: MemoryJobRecord): RepoJob {
   return {
     ...record,
     quoteNumber: quote?.number ?? 0,
+    quotePublicToken: quote?.publicToken ?? null,
     customerName: quote?.customerName ?? "",
     customerAddress: quote?.customerAddress ?? "",
     ghlContactId: quote?.ghlContactId ?? leadFor(quote)?.ghlContactId ?? null,
@@ -103,6 +104,12 @@ export const memoryRepo: Repo = {
 
   async listJobs() {
     return memoryStore.jobs.map(toRepoJob).sort((a, b) => b.quoteNumber - a.quoteNumber);
+  },
+
+  async getSowBlobUrlByQuoteToken(token) {
+    const quote = memoryStore.quotes.find((q) => q.publicToken === token);
+    if (!quote) return null;
+    return memoryStore.jobs.find((j) => j.quoteId === quote.id)?.sowUrl ?? null;
   },
 
   async getJob(id) {
