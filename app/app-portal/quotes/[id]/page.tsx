@@ -9,5 +9,12 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
 
   if (!quote) notFound();
 
-  return <QuoteBuilder catalogItems={catalogItems} initialQuote={quote} />;
+  return (
+    <QuoteBuilder
+      catalogItems={catalogItems}
+      initialQuote={quote}
+      // With no GHL quote webhook (stub mode) nothing will ever echo back — don't gate Send on it.
+      quoteSyncEnabled={Boolean(process.env.GHL_WEBHOOK_URL_QUOTE)}
+    />
+  );
 }

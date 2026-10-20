@@ -468,6 +468,8 @@ export interface Repo {
    * Does NOT create the Job — see ensureJobForQuote.
    */
   acceptQuote(id: string, source: QuoteAcceptanceSource): Promise<boolean>;
+  /** Atomic DRAFT → SENT (mints the publicToken if missing); true only for the call that made the transition. A SENT quote returns false. */
+  markQuoteSent(id: string): Promise<boolean>;
   /**
    * Idempotent. The Job for an ACCEPTED quote (created if missing); null if the
    * quote isn't ACCEPTED. `created` is true for exactly the one call that

@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/app/format";
 import { NotifyCustomerDialog } from "@/components/app/NotifyCustomerDialog";
 import { CatalogPicker } from "./CatalogPicker";
 import { QuoteDecision } from "./QuoteDecision";
+import { QuoteSendButton } from "./QuoteSendButton";
 import { saveQuoteAction } from "./actions";
 import { useLeadSync } from "./useLeadSync";
 import styles from "./QuoteBuilder.module.css";
@@ -52,6 +53,7 @@ export function QuoteBuilder({
   leadId,
   leadPrefill,
   leadSync,
+  quoteSyncEnabled = false,
 }: {
   catalogItems: RepoCatalogItem[];
   initialQuote: RepoQuoteDetail | null;
@@ -63,6 +65,8 @@ export function QuoteBuilder({
   leadPrefill?: LeadPrefill | null;
   /** Lead's GHL sync state — drives the syncing skeleton and the pre-save warning on NEW quotes. */
   leadSync?: LeadSyncInfo | null;
+  /** True when the GHL quote webhook is configured: Send then waits for ghlCustomObjectId. False in stub mode. */
+  quoteSyncEnabled?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -259,18 +263,19 @@ export function QuoteBuilder({
             type="button"
             className={styles.btn}
             disabled={isPending || isLocked || saveBlockedBySync}
-            onClick={() => save("DRAFT")}
+            onClick={() => save(initialQuote?.status === "SENT" ? "SENT" : "DRAFT")}
           >
             Save
           </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            disabled={isPending || isLocked || saveBlockedBySync}
-            onClick={() => save("SENT")}
-          >
-            Mark Sent
-          </button>
+          {initialQuote && canDecide ? (
+            <QuoteSendButton
+              quoteId={initialQuote.id}
+              status={initialQuote.status as "DRAFT" | "SENT"}
+              hasCustomObject={Boolean(initialQuote.ghlCustomObjectId)}
+              gateEnabled={quoteSyncEnabled}
+              disabled={hasUnsavedChanges || isPending}
+            />
+          ) : null}
           {initialQuote && showDecision ? (
             <QuoteDecision
               quoteId={initialQuote.id}
@@ -488,17 +493,9 @@ export function QuoteBuilder({
             type="button"
             className={styles.btn}
             disabled={isPending || saveBlockedBySync}
-            onClick={() => save("DRAFT")}
+            onClick={() => save(initialQuote?.status === "SENT" ? "SENT" : "DRAFT")}
           >
             Save
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            disabled={isPending || saveBlockedBySync}
-            onClick={() => save("SENT")}
-          >
-            Mark Sent
           </button>
         </div>
       ) : null}

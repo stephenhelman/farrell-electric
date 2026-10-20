@@ -439,6 +439,16 @@ export const prismaRepo: Repo = {
     return quote?.id ?? null;
   },
 
+  async markQuoteSent(id) {
+    const existing = await prisma.quote.findUnique({ where: { id }, select: { publicToken: true } });
+    if (!existing) return false;
+    const { count } = await prisma.quote.updateMany({
+      where: { id, status: "DRAFT" },
+      data: { status: "SENT", publicToken: existing.publicToken ?? randomUUID() },
+    });
+    return count === 1;
+  },
+
   async acceptQuote(id, source) {
     // A quote can be accepted straight from DRAFT (never marked Sent), which
     // means no publicToken exists yet — mint one now so the invoice link

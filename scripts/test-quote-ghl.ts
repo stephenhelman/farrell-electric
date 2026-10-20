@@ -78,6 +78,17 @@ async function main() {
   assert.equal(p.notify, false, "notify defaults off unless explicitly true");
 
   const draft = await mk("DRAFT");
+  {
+    // sendQuote: first call transitions DRAFT->SENT and fires quote.sent; a repeat re-fires with no error/transition
+    const { sendQuote } = await import("@/lib/app/quotes/transitions");
+    const s = await saveQuote({ ...base, status: "DRAFT", lineItems: [item(5)] }); take();
+    const r1 = await sendQuote(s.id);
+    assert.deepEqual(r1, { ok: true, transitioned: true }); assert.equal((await repo.getQuote(s.id))!.status, "SENT");
+    assert.deepEqual(take().map((e) => e.event), ["quote.sent"]);
+    const r2 = await sendQuote(s.id);
+    assert.deepEqual(r2, { ok: true, transitioned: false }); assert.deepEqual(take().map((e) => e.event), ["quote.sent"], "re-send re-dispatches");
+    assert.ok((await repo.getQuote(s.id))!.publicToken, "publicToken minted on send");
+  }
   await saveQuote({ ...base, id: draft.id, status: "DRAFT", lineItems: [item(999)] });
   assert.deepEqual(events(), [], "draft total edit is silent");
   await saveQuote({ ...base, id: draft.id, status: "SENT", lineItems: [item(999)] });

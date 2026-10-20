@@ -4,7 +4,7 @@ import { getRepo } from "@/lib/app/repo";
 import type { SaveQuoteInput } from "@/lib/app/repo/types";
 import { requireRepSession } from "@/lib/app/auth/require-session";
 import { createJobForQuote } from "@/lib/app/jobs/create";
-import { acceptQuote, declineQuote, expireQuote, saveQuote } from "@/lib/app/quotes/transitions";
+import { acceptQuote, declineQuote, expireQuote, saveQuote, sendQuote } from "@/lib/app/quotes/transitions";
 
 export interface CreateJobActionResult {
   jobId: string;
@@ -62,4 +62,21 @@ export async function expireQuoteAction(
   await requireRepSession();
   const result = await expireQuote(id, notify);
   return result.ok ? { ok: true } : result;
+}
+
+/**
+ * Rep "Send" / "Re-send": always dispatches quote.sent; the first call also moves
+ * DRAFT → SENT. Repeats re-deliver without a transition error.
+ */
+export async function sendQuoteAction(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireRepSession();
+  const result = await sendQuote(id);
+  return result.ok ? { ok: true } : result;
+}
+
+/** Polled by the Send button — reads only whether the GHL echo-back has written ghlCustomObjectId. */
+export async function getQuoteSyncAction(id: string): Promise<{ hasCustomObject: boolean }> {
+  await requireRepSession();
+  const quote = await (await getRepo()).getQuote(id);
+  return { hasCustomObject: Boolean(quote?.ghlCustomObjectId) };
 }

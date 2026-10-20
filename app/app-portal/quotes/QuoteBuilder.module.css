@@ -312,3 +312,26 @@
   gap: var(--space-2);
   flex-wrap: wrap;
 }
+
+.sendHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.sendRefresh {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-accent);
+  font-size: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sendRefresh:disabled {
+  opacity: 0.5;
+}

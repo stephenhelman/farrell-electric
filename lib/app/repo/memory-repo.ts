@@ -229,6 +229,14 @@ export const memoryRepo: Repo = {
     return memoryStore.quotes.find((q) => q.publicToken === token)?.id ?? null;
   },
 
+  async markQuoteSent(id) {
+    const quote = memoryStore.quotes.find((q) => q.id === id);
+    if (!quote || quote.status !== "DRAFT") return false;
+    quote.status = "SENT";
+    quote.publicToken ??= randomUUID();
+    return true;
+  },
+
   async acceptQuote(id, source) {
     const quote = memoryStore.quotes.find((q) => q.id === id);
     if (!quote || (quote.status !== "DRAFT" && quote.status !== "SENT")) return false;

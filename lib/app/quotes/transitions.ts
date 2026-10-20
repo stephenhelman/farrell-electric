@@ -37,6 +37,25 @@ export async function acceptQuote(quoteId: string, source: QuoteEventSource): Pr
   return { ok: true, transitioned };
 }
 
+/**
+ * The rep's "Send" / "Re-send". ALWAYS dispatches quote.sent (re-delivery is
+ * the point of Re-send); only the first call also transitions DRAFT → SENT.
+ * Dispatch is decoupled from the one-time transition so it is idempotently re-sendable.
+ */
+export async function sendQuote(quoteId: string): Promise<TransitionResult> {
+  const repo = await getRepo();
+  const quote = await repo.getQuote(quoteId);
+  if (!quote) return { ok: false, error: "Quote not found." };
+  if (quote.status !== "DRAFT" && quote.status !== "SENT") {
+    return { ok: false, error: `This quote is ${quote.status.toLowerCase()} and can't be sent.` };
+  }
+
+  const transitioned = quote.status === "DRAFT" ? await repo.markQuoteSent(quoteId) : false;
+  const sent = await repo.getQuote(quoteId);
+  if (sent) await dispatchQuoteToGhl(sent, { event: "SENT" });
+  return { ok: true, transitioned };
+}
+
 export async function declineQuote(input: {
   quoteId: string;
   source: QuoteEventSource;
