@@ -1,4 +1,4 @@
-import type { PaymentKind, PaymentType } from "@/lib/app/repo/types";
+import type { PaymentKind, PaymentType, RepoJob } from "@/lib/app/repo/types";
 
 /**
  * Methods a rep may record by hand. CARD is deliberately EXCLUDED: card money
@@ -72,4 +72,18 @@ export function validateMarkPaid(input: MarkPaidInput, now: Date = new Date()): 
     paidAt,
     idempotencyKey: key,
   };
+}
+
+/**
+ * Why a hand-recorded payment must be refused for this job right now, or null.
+ * A deposit may be recorded any time (a customer can pay before signing); a
+ * BALANCE payment requires the job to be CLOSED (contract signed and deposit
+ * settled) — before that nothing is "the balance", and recording one could mark
+ * the job paid in full early.
+ */
+export function manualPaymentBlockedReason(job: Pick<RepoJob, "closedAt">, kind: PaymentKind): string | null {
+  if (kind === "BALANCE" && !job.closedAt) {
+    return "A balance payment can only be recorded once the job is closed (contract signed and deposit paid).";
+  }
+  return null;
 }

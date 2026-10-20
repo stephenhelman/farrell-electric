@@ -191,6 +191,7 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
       if (body.action === "installed") {
         const result = await markJobInstalled(repo, job.id, body.occurredAt ? new Date(body.occurredAt) : new Date());
         advanced = result.advanced;
+        if (!result.closed) log("IGNORED installed: job is not closed (no-op)");
         log("job installed", { claimed: result.claimed, balanceRequested: result.balanceRequest !== null, ...advanced });
         return NextResponse.json({ ok: true, ...advanced }, { status: 200 });
       }
@@ -216,14 +217,15 @@ async function handle(request: Request, log: Log): Promise<NextResponse> {
       advanced = await advanceJobLifecycle(repo, job.id);
       log("lifecycle gates", advanced);
 
-      // Payment requests go out only on the delivery that RECORDED the fact (a
-      // re-delivery has an empty patch), and only if money is actually still
-      // owed — requestPaymentIfOwed is the suppression guard. After the gates, so
-      // a pre-paid deposit has already closed the job. Failure here must not 500
-      // the delivery: the fact is written, and a retry would find an empty patch anyway.
-      const requestKind =
-        body.action === "contract_signed" ? "deposit" : null;
-      if (requestKind && Object.keys(patch).length > 0) {
+      // The deposit request is attempted on EVERY contract_signed delivery, not
+      // just the one that recorded the fact: requestPaymentIfOwed is both the
+      // suppression guard (only if still owed) and send-once (depositRequestedAt),
+      // so a redelivery after a mid-handler failure still sends it, and a plain
+      // re-delivery sends nothing. After the gates, so a pre-paid deposit has
+      // already closed the job. Failure here must not 500 the delivery: the
+      // fact is written, and a redelivery retries the request.
+      const requestKind = body.action === "contract_signed" ? "deposit" : null;
+      if (requestKind) {
         try {
           const sent = await requestPaymentIfOwed(repo, job.id, requestKind);
           log(`${requestKind} request`, { sent: sent !== null });

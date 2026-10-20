@@ -15,8 +15,15 @@ export interface SentPaymentRequest {
  * request (the job just closes); an installed job with nothing owed sends no
  * balance request.
  *
- * Resolves what was sent ({ kind, amountDue }), or null when nothing was owed
- * (nothing dispatched). Mints the pay token if the job predates it. DB errors
+ * Send-once per owed state: the matching Job.depositRequestedAt / balanceRequestedAt
+ * is claimed atomically (WHERE ... IS NULL) before dispatching, so a redelivered
+ * trigger finds it set and sends nothing — and, because the auto-triggers call this
+ * on EVERY delivery, a redelivery after a mid-handler failure still sends the
+ * request that the first attempt never reached. `force` (the rep's manual resend)
+ * skips the claim, sends regardless, and re-stamps the marker.
+ *
+ * Resolves what was sent ({ kind, amountDue }), or null when nothing was owed or it
+ * was already sent (nothing dispatched). Mints the pay token if the job predates it. DB errors
  * propagate to the caller; dispatch itself never throws.
  *
  * The auto-triggers (inbound contract_signed / installed) and the rep's manual
@@ -26,6 +33,7 @@ export async function requestPaymentIfOwed(
   repo: Repo,
   jobId: string,
   kind: "deposit" | "balance",
+  options: { force?: boolean } = {},
 ): Promise<SentPaymentRequest | null> {
   const job = await repo.getJob(jobId);
   if (!job) return null;
@@ -36,6 +44,12 @@ export async function requestPaymentIfOwed(
 
   const payToken = job.payToken ?? (await repo.ensurePayToken(jobId));
   if (!payToken) return null;
+
+  if (options.force) {
+    await repo.updateJob(jobId, kind === "deposit" ? { depositRequestedAt: new Date() } : { balanceRequestedAt: new Date() });
+  } else if (!(await repo.claimPaymentRequest(jobId, kind))) {
+    return null;
+  }
 
   await dispatchJobPaymentRequested(job, kind, amountDue, payToken);
   return { kind, amountDue };
@@ -50,5 +64,5 @@ export async function requestCurrentPayment(repo: Repo, jobId: string): Promise<
   const job = await repo.getJob(jobId);
   if (!job) return null;
   const due = amountDueNow(job, await repo.listPaymentsForJob(jobId));
-  return due ? requestPaymentIfOwed(repo, jobId, due.kind) : null;
+  return due ? requestPaymentIfOwed(repo, jobId, due.kind, { force: true }) : null;
 }

@@ -114,6 +114,7 @@ export const memoryRepo: Repo = {
     record.depositAmount = terms.depositAmount;
     record.contractStatus = "SENT";
     record.contractSentAt = new Date();
+    record.depositRequestedAt = null;
     return toRepoJob(record);
   },
 
@@ -130,6 +131,14 @@ export const memoryRepo: Repo = {
     const record = memoryStore.jobs.find((j) => j.id === id);
     if (!record || record.installedDate !== null) return false;
     record.installedDate = installedDate;
+    return true;
+  },
+
+  async claimPaymentRequest(id, kind) {
+    const record = memoryStore.jobs.find((j) => j.id === id);
+    const field = kind === "deposit" ? "depositRequestedAt" : "balanceRequestedAt";
+    if (!record || record[field] !== null) return false;
+    record[field] = new Date();
     return true;
   },
 
@@ -275,6 +284,8 @@ export const memoryRepo: Repo = {
       sowUrl: null,
       sowGeneratedAt: null,
       payToken: randomUUID(),
+      depositRequestedAt: null,
+      balanceRequestedAt: null,
       closedAt: null,
       completedAt: null,
     };

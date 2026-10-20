@@ -74,6 +74,8 @@ function mapJob(job: JobWithQuote): RepoJob {
     sowGeneratedAt: job.sowGeneratedAt,
     quotePublicToken: job.quote.publicToken,
     payToken: job.payToken,
+    depositRequestedAt: job.depositRequestedAt,
+    balanceRequestedAt: job.balanceRequestedAt,
     closedAt: job.closedAt,
     completedAt: job.completedAt,
   };
@@ -255,6 +257,8 @@ export const prismaRepo: Repo = {
         depositAmount: terms.depositAmount,
         contractStatus: "SENT",
         contractSentAt: new Date(),
+        // New terms change what is owed up front, so the deposit request is owed afresh.
+        depositRequestedAt: null,
       },
     });
     if (count === 0) return null;
@@ -274,6 +278,15 @@ export const prismaRepo: Repo = {
     const { count } = await prisma.job.updateMany({
       where: { id, installedDate: null },
       data: { installedDate },
+    });
+    return count === 1;
+  },
+
+  async claimPaymentRequest(id, kind) {
+    const field = kind === "deposit" ? "depositRequestedAt" : "balanceRequestedAt";
+    const { count } = await prisma.job.updateMany({
+      where: { id, [field]: null },
+      data: { [field]: new Date() },
     });
     return count === 1;
   },

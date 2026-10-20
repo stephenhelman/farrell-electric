@@ -159,6 +159,10 @@ export interface RepoJob {
   /** Token for the public /pay/[token] page; null only for jobs created before it existed (see ensurePayToken). */
   payToken: string | null;
 
+  /** Stamped when job.deposit_requested / job.balance_requested is sent; the send-once markers. */
+  depositRequestedAt: Date | null;
+  balanceRequestedAt: Date | null;
+
   /** Set once, by claimJobClosed / claimJobCompleted — records that the gate already fired. */
   closedAt: Date | null;
   completedAt: Date | null;
@@ -233,6 +237,8 @@ export interface JobUpdateInput {
   actualCost?: number | null;
   sowUrl?: string | null;
   sowGeneratedAt?: Date | null;
+  depositRequestedAt?: Date | null;
+  balanceRequestedAt?: Date | null;
 }
 
 export interface QuoteDeclineInput {
@@ -436,6 +442,8 @@ export interface Repo {
   claimJobClosed(id: string): Promise<boolean>;
   /** Atomic `WHERE installedDate IS NULL` stamp; true only for the call that set it (the install-completion claim). */
   claimJobInstalled(id: string, installedDate: Date): Promise<boolean>;
+  /** Atomic `WHERE <kind>RequestedAt IS NULL` stamp; true only for the call that set it (the send-once claim). */
+  claimPaymentRequest(id: string, kind: "deposit" | "balance"): Promise<boolean>;
   /** Same guard for completedAt; the winning call also sets status = DONE. */
   claimJobCompleted(id: string): Promise<boolean>;
   /** Idempotent on externalRef: a repeat returns the existing row with created=false and writes nothing. */

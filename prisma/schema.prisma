@@ -274,6 +274,11 @@ model Job {
   // lazily minted for older jobs the first time a pay URL is needed.
   payToken String? @unique
 
+  // Payment-request send-once markers: stamped when job.deposit_requested /
+  // job.balance_requested is dispatched, so a redelivered trigger can't send twice.
+  depositRequestedAt DateTime?
+  balanceRequestedAt DateTime?
+
   // Lifecycle gate markers.
   closedAt    DateTime?
   completedAt DateTime?

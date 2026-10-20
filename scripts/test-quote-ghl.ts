@@ -372,11 +372,20 @@ async function main() {
     await logSilently(() => deliver(n.jobId, "contract_signed"));
     assert.deepEqual(events().filter((e) => e === "job.deposit_requested"), []);
 
-    // installed with a balance owed -> job.balance_requested for exactly what's left
+    // a stray installed on an unclosed job (a: deposit unpaid) is a no-op — no balance request
     await logSilently(() => deliver(a.jobId, "installed"));
+    assert.deepEqual(events(), [], "installed on an unclosed job requests nothing");
+    assert.equal((await repo.getJob(a.jobId))!.installedDate, null, "and stamps nothing");
+
+    // installed on a CLOSED job with a balance owed -> job.balance_requested for exactly what's left
+    const ai = await newJob(1000, { depositRequired: true, depositAmount: 300 });
+    await logSilently(() => deliver(ai.jobId, "contract_signed")); take();
+    await confirmPayment(repo, { jobId: ai.jobId, kind: "DEPOSIT", method: "CHECK", amount: 300, reference: null, externalRef: "manual:ai-dep", recordedBy: "rep" });
+    take();
+    await logSilently(() => deliver(ai.jobId, "installed"));
     const iEv = take();
     assert.deepEqual(iEv.map((e) => e.event), ["job.balance_requested"]);
-    assert.equal(iEv[0].kind, "balance"); assert.equal(iEv[0].amountDue, 1000, "nothing paid yet, so the full balance is owed");
+    assert.equal(iEv[0].kind, "balance"); assert.equal(iEv[0].amountDue, 700, "the deposit is paid, so the rest is owed");
 
     // installed with nothing owed -> no request (completes instead)
     await confirmPayment(repo, { jobId: b.jobId, kind: "BALANCE", method: "ZELLE", amount: 700, reference: null, externalRef: "manual:rest", recordedBy: "rep" });

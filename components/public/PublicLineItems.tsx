@@ -12,7 +12,7 @@ interface Props {
   total: number;
 }
 
-/** Customer-facing line items + totals. Shared by /q, the derived invoice, and later /pay and the SOW. */
+/** Customer-facing line items + totals. Shared by /q. Subtotal and Discount rows appear only when there is a discount (same as the SOW). */
 export function PublicLineItems({ lineItems, subtotal, discount, totalLabel, total }: Props) {
   return (
     <>
@@ -31,15 +31,17 @@ export function PublicLineItems({ lineItems, subtotal, discount, totalLabel, tot
       </div>
 
       <div className={styles.totals}>
-        <div className={styles.sumRow}>
-          <span>Subtotal</span>
-          <span>{formatMoney(subtotal)}</span>
-        </div>
-        {discount ? (
-          <div className={styles.sumRow}>
-            <span>Discount</span>
-            <span>-{formatMoney(discount)}</span>
-          </div>
+        {discount > 0 ? (
+          <>
+            <div className={styles.sumRow}>
+              <span>Subtotal</span>
+              <span>{formatMoney(subtotal)}</span>
+            </div>
+            <div className={styles.sumRow}>
+              <span>Discount</span>
+              <span>-{formatMoney(discount)}</span>
+            </div>
+          </>
         ) : null}
         <div className={`${styles.sumRow} ${styles.sumRowTotal}`}>
           <span>{totalLabel}</span>

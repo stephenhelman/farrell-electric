@@ -6,7 +6,7 @@ import { getRepo } from "@/lib/app/repo";
 import { requireRepSession } from "@/lib/app/auth/require-session";
 import { confirmPayment } from "@/lib/app/jobs/payments";
 import { requestCurrentPayment } from "@/lib/app/jobs/requests";
-import { validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-payment";
+import { manualPaymentBlockedReason, validateMarkPaid, type MarkPaidInput } from "@/lib/app/jobs/manual-payment";
 import { balanceDue } from "@/lib/app/jobs/lifecycle";
 import { markJobInstalled } from "@/lib/app/jobs/install";
 import { advanceJobLifecycle } from "@/lib/app/jobs/gates";
@@ -104,6 +104,8 @@ export async function markPaidAction(jobId: string, input: MarkPaidInput): Promi
   if (current && (current.finalInvoicePaid || balanceDue(current) <= 0)) {
     return { ok: false, error: "This job is paid in full." };
   }
+  const blocked = current ? manualPaymentBlockedReason(current, validated.kind) : null;
+  if (blocked) return { ok: false, error: blocked };
   const result = await confirmPayment(repo, {
     jobId,
     kind: validated.kind,
