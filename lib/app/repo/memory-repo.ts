@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PublicInvoice, PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
+import type { PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { buildPayContext } from "@/lib/app/pay/context";
@@ -11,25 +11,6 @@ function toPublicQuote(quote: MemoryQuoteRecord): PublicQuote {
     customerName: quote.customerName,
     customerAddress: quote.customerAddress,
     message: quote.message,
-    scopeOfWork: quote.scopeOfWork,
-    discount: quote.discount,
-    subtotal: quote.subtotal,
-    total: quote.total,
-    lineItems: quote.lineItems.map((item) => ({
-      name: item.name,
-      description: item.description,
-      qty: item.qty,
-      unitPrice: item.unitPrice,
-    })),
-  };
-}
-
-function toPublicInvoice(quote: MemoryQuoteRecord): PublicInvoice {
-  return {
-    invoiceNumber: `INV-${quote.number}`,
-    quoteNumber: quote.number,
-    customerName: quote.customerName,
-    customerAddress: quote.customerAddress,
     scopeOfWork: quote.scopeOfWork,
     discount: quote.discount,
     subtotal: quote.subtotal,
@@ -129,7 +110,6 @@ export const memoryRepo: Repo = {
   async sendJobContract(id, terms) {
     const record = memoryStore.jobs.find((j) => j.id === id);
     if (!record || record.contractStatus === "SIGNED") return null;
-    record.paymentType = terms.paymentType;
     record.depositRequired = terms.depositRequired;
     record.depositAmount = terms.depositAmount;
     record.contractStatus = "SENT";
@@ -170,12 +150,6 @@ export const memoryRepo: Repo = {
   async getQuoteByPublicToken(token) {
     const quote = memoryStore.quotes.find((q) => q.publicToken === token);
     return quote ? toPublicQuote(quote) : null;
-  },
-
-  async getInvoiceByPublicToken(token) {
-    const quote = memoryStore.quotes.find((q) => q.publicToken === token);
-    if (!quote || quote.status !== "ACCEPTED") return null;
-    return toPublicInvoice(quote);
   },
 
   async saveQuote(input) {
@@ -285,7 +259,6 @@ export const memoryRepo: Repo = {
       id: randomUUID(),
       status: "UNSCHEDULED",
       quoteId: id,
-      paymentType: null,
       depositRequired: false,
       depositAmount: null,
       contractStatus: "NONE",

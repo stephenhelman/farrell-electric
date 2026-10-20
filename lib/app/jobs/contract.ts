@@ -1,11 +1,8 @@
 import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
-import type { JobDealTermsInput, PaymentType, QuoteCustomerInput, RepoQuoteDetail } from "@/lib/app/repo/types";
-
-export const PAYMENT_TYPES: readonly PaymentType[] = ["CARD", "CHECK", "CASH", "ZELLE", "FINANCING", "OTHER"];
+import type { JobDealTermsInput, QuoteCustomerInput, RepoQuoteDetail } from "@/lib/app/repo/types";
 
 /** What the Generate Contract modal submits. Untrusted — the server re-validates everything. */
 export interface GenerateContractInput {
-  paymentType: string;
   depositRequired: boolean;
   /** Dollars; ignored unless depositRequired. */
   depositAmount: number | null;
@@ -21,10 +18,6 @@ export type ValidatedContractInput =
 
 /** `revenue` caps the deposit — a deposit larger than the job makes no sense. */
 export function validateContractInput(input: GenerateContractInput, revenue: number): ValidatedContractInput {
-  if (!PAYMENT_TYPES.includes(input.paymentType as PaymentType)) {
-    return { ok: false, error: "Choose a payment type." };
-  }
-
   let depositAmount: number | null = null;
   if (input.depositRequired) {
     const amount = input.depositAmount;
@@ -51,7 +44,7 @@ export function validateContractInput(input: GenerateContractInput, revenue: num
 
   return {
     ok: true,
-    terms: { paymentType: input.paymentType as PaymentType, depositRequired: input.depositRequired, depositAmount },
+    terms: { depositRequired: input.depositRequired, depositAmount },
     customer,
   };
 }

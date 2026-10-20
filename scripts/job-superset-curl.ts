@@ -64,7 +64,7 @@ async function main() {
   const jobId = made.jobId;
 
   // job.contract_sent (deposit required)
-  const withTerms = (await repo.sendJobContract(jobId, { paymentType: "CHECK", depositRequired: true, depositAmount: 1000 }))!;
+  const withTerms = (await repo.sendJobContract(jobId, { depositRequired: true, depositAmount: 1000 }))!;
   await dispatchJobContractSent(withTerms, (await repo.getQuote(saved.id))!);
 
   // job.deposit_requested

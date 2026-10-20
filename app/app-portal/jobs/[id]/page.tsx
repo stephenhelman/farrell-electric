@@ -45,7 +45,7 @@ export default async function JobPage({
   if (!job) notFound();
 
   const quote = await repo.getQuote(job.quoteId);
-  const termsSet = job.paymentType !== null;
+  const termsSet = job.contractStatus !== "NONE";
   const remaining = balanceDue(job);
   const payments = await repo.listPaymentsForJob(job.id);
   const depositReceived = payments.filter((p) => p.kind === "DEPOSIT").reduce((sum, p) => sum + p.amount, 0);
@@ -116,7 +116,6 @@ export default async function JobPage({
         <div className={styles.sectionTitle}>Deal terms</div>
         {termsSet ? (
           <>
-            <Field label="Payment type">{titleCase(job.paymentType ?? "")}</Field>
             <Field label="Deposit">
               {job.depositRequired ? formatMoney(job.depositAmount ?? 0) : "Not required"}
             </Field>
@@ -135,7 +134,6 @@ export default async function JobPage({
           jobId={job.id}
           contractStatus={job.contractStatus}
           initial={{
-            paymentType: job.paymentType ?? "",
             depositRequired: job.depositRequired,
             depositAmount: job.depositAmount,
             customerName: job.customerName,

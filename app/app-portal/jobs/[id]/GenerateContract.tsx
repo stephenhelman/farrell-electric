@@ -3,7 +3,6 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { generateContractAction } from "../actions";
-import { PAYMENT_TYPES } from "@/lib/app/jobs/contract";
 import styles from "./GenerateContract.module.css";
 
 interface Props {
@@ -11,7 +10,6 @@ interface Props {
   contractStatus: "NONE" | "SENT" | "SIGNED";
   /** Pre-filled from the stored job; blank on a first contract. */
   initial: {
-    paymentType: string;
     depositRequired: boolean;
     depositAmount: number | null;
     customerName: string;
@@ -23,17 +21,12 @@ interface Props {
   scopeOfWork: string;
 }
 
-function titleCase(value: string): string {
-  return value.charAt(0) + value.slice(1).toLowerCase();
-}
-
 export function GenerateContract({ jobId, contractStatus, initial, scopeOfWork }: Props) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [paymentType, setPaymentType] = useState(initial.paymentType);
   const [depositRequired, setDepositRequired] = useState(initial.depositRequired);
   const [depositAmount, setDepositAmount] = useState(
     initial.depositAmount === null ? "" : String(initial.depositAmount),
@@ -62,7 +55,6 @@ export function GenerateContract({ jobId, contractStatus, initial, scopeOfWork }
 
     startTransition(async () => {
       const result = await generateContractAction(jobId, {
-        paymentType,
         depositRequired,
         depositAmount: amount,
         customerName,
@@ -91,26 +83,6 @@ export function GenerateContract({ jobId, contractStatus, initial, scopeOfWork }
           <h2 id="contract-title" className={styles.title}>
             {label}
           </h2>
-
-          <div className={styles.field}>
-            <label htmlFor="c-payment">Payment type</label>
-            <select
-              id="c-payment"
-              value={paymentType}
-              onChange={(event) => setPaymentType(event.target.value)}
-              required
-              disabled={isPending}
-            >
-              <option value="" disabled>
-                Select…
-              </option>
-              {PAYMENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {titleCase(type)}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <fieldset className={styles.fieldset} disabled={isPending}>
             <legend>Deposit</legend>

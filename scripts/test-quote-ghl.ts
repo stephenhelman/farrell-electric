@@ -339,7 +339,7 @@ async function main() {
       const q = await mk("SENT", price);
       await acceptQuote(q.id, "rep"); take();
       const j = (await repo.ensureJobForQuote(q.id))!.id;
-      await repo.sendJobContract(j, { paymentType: "CHECK", ...terms });
+      await repo.sendJobContract(j, { ...terms });
       take();
       return { q, jobId: j };
     };
@@ -448,7 +448,7 @@ async function main() {
       const q = await mk("SENT", 1000);
       await acceptQuote(q.id, "rep");
       const id = (await repo.ensureJobForQuote(q.id))!.id;
-      await repo.sendJobContract(id, { paymentType: "CHECK", ...terms });
+      await repo.sendJobContract(id, { ...terms });
       take();
       return id;
     };
@@ -493,7 +493,7 @@ async function main() {
     const pq = await mk("SENT", 1000);
     await acceptQuote(pq.id, "rep"); take();
     const jobId = (await repo.ensureJobForQuote(pq.id))!.id;
-    await repo.sendJobContract(jobId, { paymentType: "ZELLE", depositRequired: true, depositAmount: 300 });
+    await repo.sendJobContract(jobId, { depositRequired: true, depositAmount: 300 });
     await repo.updateJob(jobId, { contractStatus: "SIGNED", contractSignedAt: new Date(), installedDate: new Date() });
     take();
 
@@ -548,7 +548,7 @@ async function main() {
     const sq = await mk("SENT", 1000);
     await acceptQuote(sq.id, "rep"); take();
     const sJob = (await repo.ensureJobForQuote(sq.id))!.id;
-    await repo.sendJobContract(sJob, { paymentType: "CHECK", depositRequired: true, depositAmount: 300 });
+    await repo.sendJobContract(sJob, { depositRequired: true, depositAmount: 300 });
     await repo.updateJob(sJob, { contractStatus: "SIGNED", contractSignedAt: new Date() });
     take();
     const part = { jobId: sJob, kind: "DEPOSIT" as const, method: "CHECK" as const, reference: null, recordedBy: "rep-1" };

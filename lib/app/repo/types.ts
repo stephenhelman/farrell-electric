@@ -131,7 +131,6 @@ export interface RepoJob {
   amountPaid: number;
 
   // Deal terms — null/false until the Generate Contract modal sets them.
-  paymentType: PaymentType | null;
   depositRequired: boolean;
   depositAmount: number | null;
 
@@ -207,7 +206,6 @@ export interface QuoteCustomerInput {
 
 /** The deal terms captured by the Generate Contract modal. */
 export interface JobDealTermsInput {
-  paymentType: PaymentType;
   depositRequired: boolean;
   /** Must be null when depositRequired is false. */
   depositAmount: number | null;
@@ -220,7 +218,6 @@ export interface JobDealTermsInput {
  */
 export interface JobUpdateInput {
   status?: JobStatus;
-  paymentType?: PaymentType | null;
   depositRequired?: boolean;
   depositAmount?: number | null;
   contractStatus?: ContractStatus;
@@ -364,25 +361,6 @@ export interface LeadGhlIdsInput {
 }
 
 /**
- * Task 10: the invoice is a derived document, not a stored entity — the
- * sprint's locked §2 schema has no Invoice model, and everything it needs
- * (line items, totals) is already final and immutable once a quote is
- * ACCEPTED. Same public-payload discipline as PublicQuote: no cost/profit/
- * margin, no catalogItemId, no contact info beyond name/address.
- */
-export interface PublicInvoice {
-  invoiceNumber: string;
-  quoteNumber: number;
-  customerName: string;
-  customerAddress: string;
-  scopeOfWork: string;
-  discount: number;
-  subtotal: number;
-  total: number;
-  lineItems: PublicQuoteLineItem[];
-}
-
-/**
  * Everything (and ONLY everything) the public /pay/[token] page may show: no
  * revenue/cost/margin, no ids beyond the quote number, no payment references.
  */
@@ -467,8 +445,6 @@ export interface Repo {
   sumPaymentsForJob(jobId: string): Promise<number>;
   getQuote(id: string): Promise<RepoQuoteDetail | null>;
   getQuoteByPublicToken(token: string): Promise<PublicQuote | null>;
-  /** Returns null for a token whose quote isn't ACCEPTED yet — no invoice before acceptance. */
-  getInvoiceByPublicToken(token: string): Promise<PublicInvoice | null>;
   saveQuote(input: SaveQuoteInput): Promise<RepoQuoteDetail>;
   /** The internal SOW blob URL for the job behind a quote's public token, or null (unknown token / not generated). */
   getSowBlobUrlByQuoteToken(token: string): Promise<string | null>;

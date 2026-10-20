@@ -243,8 +243,7 @@ model Job {
   status  JobStatus @default(UNSCHEDULED)
 
   // Deal terms — runtime inputs captured by the Generate Contract modal.
-  paymentType     PaymentType?
-  depositRequired Boolean      @default(false)
+  depositRequired Boolean  @default(false)
   depositAmount   Decimal?
 
   // Contract

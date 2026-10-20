@@ -57,7 +57,6 @@ function mapJob(job: JobWithQuote): RepoJob {
     total: Number(job.quote.total),
     leadId: job.quote.leadId,
     amountPaid: sumCents(job.payments.map((payment) => Number(payment.amount))),
-    paymentType: job.paymentType,
     depositRequired: job.depositRequired,
     depositAmount: job.depositAmount === null ? null : Number(job.depositAmount),
     contractStatus: job.contractStatus,
@@ -252,7 +251,6 @@ export const prismaRepo: Repo = {
     const { count } = await prisma.job.updateMany({
       where: { id, contractStatus: { not: "SIGNED" } },
       data: {
-        paymentType: terms.paymentType,
         depositRequired: terms.depositRequired,
         depositAmount: terms.depositAmount,
         contractStatus: "SENT",
@@ -327,28 +325,6 @@ export const prismaRepo: Repo = {
       customerName: quote.customerName,
       customerAddress: quote.customerAddress,
       message: quote.message ?? "",
-      scopeOfWork: quote.scopeOfWork ?? "",
-      discount: Number(quote.discount),
-      subtotal: Number(quote.subtotal),
-      total: Number(quote.total),
-      lineItems: quote.lineItems.map((item) => ({
-        name: item.name,
-        description: item.description,
-        qty: Number(item.qty),
-        unitPrice: Number(item.unitPrice),
-      })),
-    };
-  },
-
-  async getInvoiceByPublicToken(token) {
-    const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: QUOTE_DETAIL_INCLUDE });
-    if (!quote || quote.status !== "ACCEPTED") return null;
-
-    return {
-      invoiceNumber: `INV-${quote.number}`,
-      quoteNumber: quote.number,
-      customerName: quote.customerName,
-      customerAddress: quote.customerAddress,
       scopeOfWork: quote.scopeOfWork ?? "",
       discount: Number(quote.discount),
       subtotal: Number(quote.subtotal),

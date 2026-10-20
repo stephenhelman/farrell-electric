@@ -128,9 +128,7 @@ export interface QuoteAcceptedPayload {
 /**
  * Fired when a rep generates/regenerates the contract. Carries the stored deal
  * terms and customer-facing data only. Deliberately NOT carried: scopeOfWork (frozen
- * once a quote is accepted and already delivered as job.created's sowUrl) and
- * paymentType (parked — GHL doesn't use it; the /pay page offers every method; it is
- * still stored on the Job) — `total` is the quote's customer-facing
+ * once a quote is accepted and already delivered as job.created's sowUrl) — `total` is the quote's customer-facing
  * total. Never revenue/actualCost/margin, and never pipeline/stage ids. The
  * Operations opportunity id is an identifier, not routing config: it is read
  * through the lead and sent so GHL can find the opp to move.
