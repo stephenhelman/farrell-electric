@@ -289,6 +289,21 @@ async function main() {
     assert.deepEqual(events(), ["job.created"]);
     assert.ok(await repo.getJob(boom.ok ? boom.jobId : ""), "job survives a SOW failure");
 
+    // Regression (Vercel MODULE_NOT_FOUND on pdfkit fonts): a synchronous throw, or an unhandled
+    // rejection fired by render internals, must be contained -> warning, sowUrl null, no crash.
+    for (const [label, render] of [
+      ["sync throw", (() => { throw new Error("sync boom"); }) as () => Promise<Uint8Array>],
+      ["stray rejection", async () => { void Promise.reject(new Error("stray")); await new Promise((r) => setTimeout(r, 20)); return new Uint8Array([1]); }],
+    ] as const) {
+      const rq = await mk("SENT"); await acceptQuote(rq.id, "rep"); take();
+      console.error = () => {};
+      const r = await createJobForQuote(repo, rq.id, { renderSowPdf: render, putDocument: putOk });
+      console.error = origErr;
+      assert.ok(r.ok && r.created && r.warning !== null, label);
+      assert.equal((await repo.getJob(r.ok ? r.jobId : ""))!.sowUrl, null, label);
+      assert.deepEqual(events(), ["job.created"], label);
+    }
+
     // not accepted -> no job, no event
     const uq = await mk("SENT");
     assert.equal((await createJobForQuote(repo, uq.id, { renderSowPdf, putDocument: putOk })).ok, false);

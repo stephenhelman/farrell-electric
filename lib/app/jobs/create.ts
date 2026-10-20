@@ -15,6 +15,28 @@ export interface CreateJobDeps {
 }
 
 /**
+ * Runs the renderer so nothing it does can crash the invocation: synchronous throws and
+ * rejections become a normal rejection for the caller's catch, and an unhandled rejection
+ * raised by the PDF stream internals while rendering is captured instead of exiting the
+ * process (prod incident: MODULE_NOT_FOUND on pdfkit fonts killed the function).
+ */
+export async function renderContained(
+  render: (input: SowInput) => Promise<Uint8Array>,
+  input: SowInput,
+): Promise<Uint8Array> {
+  let stray: unknown;
+  const onStray = (reason: unknown) => { stray = reason; };
+  process.on("unhandledRejection", onStray);
+  try {
+    const pdf = await Promise.resolve().then(() => render(input));
+    if (stray) throw stray;
+    return pdf;
+  } finally {
+    process.off("unhandledRejection", onStray);
+  }
+}
+
+/**
  * The ONLY job-creation path (createJobAction wraps it). Exactly-once: only the
  * call that actually inserted the Job (`created`) generates the SOW and fires
  * job.created; a repeat returns the existing job and does nothing else.
@@ -40,7 +62,7 @@ export async function createJobForQuote(repo: Repo, quoteId: string, deps: Creat
     const input = buildSowInput(quote);
     input.quote.scopeOfWork = resolveScopeOfWork(quote);
 
-    const pdf = await render(input);
+    const pdf = await renderContained(render, input);
     const stored = await put(`sow/quote-${quote.number}.pdf`, pdf, "application/pdf");
     if (stored) {
       await repo.updateJob(ensured.id, { sowUrl: stored.url, sowGeneratedAt: new Date() });
