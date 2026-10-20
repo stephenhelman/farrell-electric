@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
 /**
  * Stub-first document storage. With BLOB_READ_WRITE_TOKEN unset this logs once
@@ -39,5 +39,28 @@ export async function putDocument(
   } catch (error) {
     console.error(`[blob] upload of ${pathPrefix} failed (best-effort, non-fatal)`, error);
     return null;
+  }
+}
+
+/** True for a URL that lives in a Vercel Blob public store — the only kind a render may point at. */
+export function isBlobUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
+/** Best-effort blob removal: unset token or a failure is logged, never thrown (the DB row is the source of truth). */
+export async function deleteDocument(url: string): Promise<boolean> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token || !isBlobUrl(url)) return false;
+  try {
+    await del(url, { token });
+    return true;
+  } catch (error) {
+    console.error(`[blob] delete of ${url} failed (best-effort, non-fatal)`, error);
+    return false;
   }
 }

@@ -22,6 +22,10 @@ function toPublicQuote(quote: MemoryQuoteRecord): PublicQuote {
       qty: item.qty,
       unitPrice: item.unitPrice,
     })),
+    renders: memoryStore.renders
+      .filter((r) => r.quoteId === quote.id)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((r) => ({ url: r.url })),
   };
 }
 
@@ -227,6 +231,34 @@ export const memoryRepo: Repo = {
 
   async findQuoteIdByPublicToken(token) {
     return memoryStore.quotes.find((q) => q.publicToken === token)?.id ?? null;
+  },
+
+  async listQuoteRenders(quoteId) {
+    return memoryStore.renders.filter((r) => r.quoteId === quoteId).sort((a, b) => a.sortOrder - b.sortOrder).map((r) => ({ ...r }));
+  },
+
+  async addQuoteRender(quoteId, url) {
+    if (!memoryStore.quotes.some((q) => q.id === quoteId)) return null;
+    const max = memoryStore.renders.filter((r) => r.quoteId === quoteId).reduce((n, r) => Math.max(n, r.sortOrder), -1);
+    const render = { id: randomUUID(), quoteId, url, sortOrder: max + 1, caption: null };
+    memoryStore.renders.push(render);
+    return { ...render };
+  },
+
+  async reorderQuoteRenders(quoteId, orderedIds) {
+    const mine = memoryStore.renders.filter((r) => r.quoteId === quoteId).sort((a, b) => a.sortOrder - b.sortOrder);
+    const rank = new Map(orderedIds.map((id, i) => [id, i]));
+    const ordered = [...mine].sort((a, b) => (rank.get(a.id) ?? orderedIds.length + a.sortOrder) - (rank.get(b.id) ?? orderedIds.length + b.sortOrder));
+    ordered.forEach((r, i) => {
+      r.sortOrder = i;
+    });
+  },
+
+  async deleteQuoteRender(id) {
+    const i = memoryStore.renders.findIndex((r) => r.id === id);
+    if (i === -1) return null;
+    const [removed] = memoryStore.renders.splice(i, 1);
+    return removed;
   },
 
   async markQuoteSent(id) {

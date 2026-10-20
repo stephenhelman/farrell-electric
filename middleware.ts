@@ -22,6 +22,10 @@ const PUBLIC_PAY_PREFIX = "/pay/";
 // Public, tokenized SOW short link — 302s to the stored PDF. Same posture as /q/.
 const PUBLIC_SOW_PREFIX = "/sow/";
 
+// Rep render-upload token route: self-gated by requireRepSession (it must not be
+// rewritten into the portal namespace, where it would 404).
+const QUOTE_RENDERS_API_PREFIX = "/api/quote-renders/";
+
 function isAppHost(host: string | null): boolean {
   return host === APP_HOST || host === DEV_APP_HOST;
 }
@@ -39,6 +43,10 @@ export async function middleware(request: NextRequest) {
   // under app-portal) and must stay reachable pre-auth — it's how a session
   // gets established in the first place.
   if (pathname.startsWith(AUTH_API_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(QUOTE_RENDERS_API_PREFIX)) {
     return NextResponse.next();
   }
 

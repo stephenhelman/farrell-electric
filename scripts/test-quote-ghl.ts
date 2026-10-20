@@ -89,6 +89,21 @@ async function main() {
     assert.deepEqual(r2, { ok: true, transitioned: false }); assert.deepEqual(take().map((e) => e.event), ["quote.sent"], "re-send re-dispatches");
     assert.ok((await repo.getQuote(s.id))!.publicToken, "publicToken minted on send");
   }
+  {
+    // render gallery: append order, reorder, delete; public shape carries urls only
+    const rq = await saveQuote({ ...base, status: "SENT", lineItems: [item(7)] }); take();
+    const r1 = (await repo.addQuoteRender(rq.id, "https://x.public.blob.vercel-storage.com/a.png"))!;
+    const r2 = (await repo.addQuoteRender(rq.id, "https://x.public.blob.vercel-storage.com/b.png"))!;
+    const r3 = (await repo.addQuoteRender(rq.id, "https://x.public.blob.vercel-storage.com/c.png"))!;
+    assert.deepEqual((await repo.listQuoteRenders(rq.id)).map((r) => r.sortOrder), [0, 1, 2]);
+    await repo.reorderQuoteRenders(rq.id, [r3.id, r1.id, r2.id]);
+    assert.deepEqual((await repo.listQuoteRenders(rq.id)).map((r) => r.id), [r3.id, r1.id, r2.id]);
+    assert.equal((await repo.deleteQuoteRender(r1.id))!.url.endsWith("a.png"), true);
+    assert.deepEqual((await repo.listQuoteRenders(rq.id)).map((r) => r.id), [r3.id, r2.id]);
+    const pub = (await repo.getQuoteByPublicToken((await repo.getQuote(rq.id))!.publicToken!))!;
+    assert.deepEqual(pub.renders, [{ url: r3.url }, { url: r2.url }], "public quote carries ordered urls only");
+    assert.equal(await repo.addQuoteRender("no-such-quote", "https://x"), null);
+  }
   await saveQuote({ ...base, id: draft.id, status: "DRAFT", lineItems: [item(999)] });
   assert.deepEqual(events(), [], "draft total edit is silent");
   await saveQuote({ ...base, id: draft.id, status: "SENT", lineItems: [item(999)] });

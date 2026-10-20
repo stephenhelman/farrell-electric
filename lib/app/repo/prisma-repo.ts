@@ -333,6 +333,7 @@ export const prismaRepo: Repo = {
   async getQuoteByPublicToken(token) {
     const quote = await prisma.quote.findUnique({ where: { publicToken: token }, include: QUOTE_DETAIL_INCLUDE });
     if (!quote) return null;
+    const renders = await prisma.quoteRender.findMany({ where: { quoteId: quote.id }, orderBy: { sortOrder: "asc" }, select: { url: true } });
 
     return {
       number: quote.number,
@@ -350,6 +351,7 @@ export const prismaRepo: Repo = {
         qty: Number(item.qty),
         unitPrice: Number(item.unitPrice),
       })),
+      renders: renders.map((r) => ({ url: r.url })),
     };
   },
 
@@ -437,6 +439,32 @@ export const prismaRepo: Repo = {
   async findQuoteIdByPublicToken(token) {
     const quote = await prisma.quote.findUnique({ where: { publicToken: token }, select: { id: true } });
     return quote?.id ?? null;
+  },
+
+  async listQuoteRenders(quoteId) {
+    return prisma.quoteRender.findMany({ where: { quoteId }, orderBy: { sortOrder: "asc" } });
+  },
+
+  async addQuoteRender(quoteId, url) {
+    if (!(await prisma.quote.findUnique({ where: { id: quoteId }, select: { id: true } }))) return null;
+    const last = await prisma.quoteRender.aggregate({ where: { quoteId }, _max: { sortOrder: true } });
+    return prisma.quoteRender.create({ data: { quoteId, url, sortOrder: (last._max.sortOrder ?? -1) + 1 } });
+  },
+
+  async reorderQuoteRenders(quoteId, orderedIds) {
+    const mine = await prisma.quoteRender.findMany({ where: { quoteId }, orderBy: { sortOrder: "asc" }, select: { id: true } });
+    const rank = new Map(orderedIds.map((id, i) => [id, i]));
+    const ordered = mine
+      .map((r, i) => ({ id: r.id, key: rank.get(r.id) ?? orderedIds.length + i }))
+      .sort((a, b) => a.key - b.key);
+    await prisma.$transaction(ordered.map((r, i) => prisma.quoteRender.update({ where: { id: r.id }, data: { sortOrder: i } })));
+  },
+
+  async deleteQuoteRender(id) {
+    const row = await prisma.quoteRender.findUnique({ where: { id } });
+    if (!row) return null;
+    await prisma.quoteRender.deleteMany({ where: { id } });
+    return row;
   },
 
   async markQuoteSent(id) {

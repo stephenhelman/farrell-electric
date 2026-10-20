@@ -335,6 +335,19 @@ export interface PublicQuoteLineItem {
   unitPrice: number;
 }
 
+/** A customer-facing render image: URL only, in display order. */
+export interface PublicQuoteRender {
+  url: string;
+}
+
+export interface RepoQuoteRender {
+  id: string;
+  quoteId: string;
+  url: string;
+  sortOrder: number;
+  caption: string | null;
+}
+
 export interface PublicQuote {
   number: number;
   status: QuoteStatus;
@@ -346,6 +359,8 @@ export interface PublicQuote {
   subtotal: number;
   total: number;
   lineItems: PublicQuoteLineItem[];
+  /** Render gallery, ordered by sortOrder. */
+  renders: PublicQuoteRender[];
 }
 
 /**
@@ -470,6 +485,14 @@ export interface Repo {
   acceptQuote(id: string, source: QuoteAcceptanceSource): Promise<boolean>;
   /** Atomic DRAFT → SENT (mints the publicToken if missing); true only for the call that made the transition. A SENT quote returns false. */
   markQuoteSent(id: string): Promise<boolean>;
+  /** Renders in display order. */
+  listQuoteRenders(quoteId: string): Promise<RepoQuoteRender[]>;
+  /** Appends at the end (max sortOrder + 1). Null if the quote doesn't exist. */
+  addQuoteRender(quoteId: string, url: string): Promise<RepoQuoteRender | null>;
+  /** Re-sequences the quote's renders to the given id order (ids not belonging to the quote are ignored; unlisted ones keep their relative order after). */
+  reorderQuoteRenders(quoteId: string, orderedIds: string[]): Promise<void>;
+  /** Deletes the row and returns it (so the caller can remove the blob); null if absent. */
+  deleteQuoteRender(id: string): Promise<RepoQuoteRender | null>;
   /**
    * Idempotent. The Job for an ACCEPTED quote (created if missing); null if the
    * quote isn't ACCEPTED. `created` is true for exactly the one call that

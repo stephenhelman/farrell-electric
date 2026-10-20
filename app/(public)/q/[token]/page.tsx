@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRepo } from "@/lib/app/repo";
 import { PublicLineItems } from "@/components/public/PublicLineItems";
+import { RenderGallery } from "./RenderGallery";
 import { QuoteResponse } from "./QuoteResponse";
 import styles from "./page.module.css";
 
@@ -35,6 +36,8 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
             <p className={styles.scopeBody}>{quote.scopeOfWork}</p>
           </div>
         ) : null}
+
+        {quote.renders.length > 0 ? <RenderGallery urls={quote.renders.map((r) => r.url)} /> : null}
 
         <QuoteResponse token={token} status={quote.status} />
       </div>

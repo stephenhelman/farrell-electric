@@ -205,10 +205,25 @@ model Quote {
   leadId              String?
 
   lineItems QuoteLineItem[]
+  renders   QuoteRender[]
   job       Job?
   // Restrict: a lead with quotes can't be deleted, so a quote can never be orphaned
   // by its lead going away. New quotes must carry a leadId (enforced server-side).
   lead      Lead?           @relation(fields: [leadId], references: [id], onDelete: Restrict)
+}
+
+// Customer-facing render images attached to a quote (public Blob URLs, shown on /q/[token]).
+model QuoteRender {
+  id        String   @id @default(cuid())
+  quoteId   String
+  url       String
+  sortOrder Int
+  caption   String?
+  createdAt DateTime @default(now())
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
 }
 
 model QuoteLineItem {

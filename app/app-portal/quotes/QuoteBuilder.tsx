@@ -2,13 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { RepoCatalogItem, RepoQuoteDetail } from "@/lib/app/repo/types";
+import type { RepoCatalogItem, RepoQuoteDetail, RepoQuoteRender } from "@/lib/app/repo/types";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { generateScopeOfWork } from "@/lib/app/quotes/scope-of-work";
 import { formatMoney } from "@/lib/app/format";
 import { NotifyCustomerDialog } from "@/components/app/NotifyCustomerDialog";
 import { CatalogPicker } from "./CatalogPicker";
 import { QuoteDecision } from "./QuoteDecision";
+import { QuoteRenders } from "./QuoteRenders";
 import { QuoteSendButton } from "./QuoteSendButton";
 import { saveQuoteAction } from "./actions";
 import { useLeadSync } from "./useLeadSync";
@@ -54,6 +55,7 @@ export function QuoteBuilder({
   leadPrefill,
   leadSync,
   quoteSyncEnabled = false,
+  initialRenders = [],
 }: {
   catalogItems: RepoCatalogItem[];
   initialQuote: RepoQuoteDetail | null;
@@ -67,6 +69,8 @@ export function QuoteBuilder({
   leadSync?: LeadSyncInfo | null;
   /** True when the GHL quote webhook is configured: Send then waits for ghlCustomObjectId. False in stub mode. */
   quoteSyncEnabled?: boolean;
+  /** Saved render gallery for an existing quote. */
+  initialRenders?: RepoQuoteRender[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -486,6 +490,8 @@ export function QuoteBuilder({
           </button>
         </div>
       ) : null}
+
+      {initialQuote && !isLocked ? <QuoteRenders quoteId={initialQuote.id} initialRenders={initialRenders} /> : null}
 
       {!isLocked ? (
         <div className={styles.footerActions}>
