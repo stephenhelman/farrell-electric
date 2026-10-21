@@ -60,7 +60,7 @@ export type MemoryJobRecord = Omit<
 /** Quote fields owned by the quote; the sales opp id is joined in from the lead on read. */
 export type MemoryQuoteRecord = Omit<RepoQuoteDetail, "ghlSalesOpportunityId">;
 
-export const memoryStore = {
+const createMemoryStore = () => ({
   users: seedAdminUser(),
   catalogItems,
   options: seedOptions(catalogItems),
@@ -72,7 +72,13 @@ export const memoryStore = {
   payments: [] as RepoPayment[],
   renders: [] as RepoQuoteRender[],
   leads: [] as RepoLead[],
-};
+});
+
+// Next bundles server actions and page renders into separate module graphs, so a
+// plain module-level object would be duplicated and a write in one invisible to
+// the other. Pinning to globalThis keeps one store per process.
+const globalForStore = globalThis as typeof globalThis & { __farrellMemoryStore?: ReturnType<typeof createMemoryStore> };
+export const memoryStore = (globalForStore.__farrellMemoryStore ??= createMemoryStore());
 
 export function nextQuoteNumber(): number {
   const max = memoryStore.quotes.reduce((highest, quote) => Math.max(highest, quote.number), 1000);

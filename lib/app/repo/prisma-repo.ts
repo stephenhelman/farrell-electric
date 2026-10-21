@@ -5,7 +5,56 @@ import { prisma } from "@/lib/app/db/client";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { buildPayContext } from "@/lib/app/pay/context";
 import type { LeadPayload } from "@/lib/leads/types";
-import type { QuoteGhlIdsResult, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
+import type { QuoteGhlIdsResult, Repo, RepoCatalogItem, RepoOption, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
+
+const OPTION_INCLUDE = { components: { include: { catalogItem: true } } } satisfies Prisma.OptionInclude;
+
+function toRepoCatalogItem(item: Prisma.CatalogItemGetPayload<object>): RepoCatalogItem {
+  return {
+    id: item.id,
+    sourceId: item.sourceId,
+    name: item.name,
+    description: item.description,
+    unitOfMeasure: item.unitOfMeasure,
+    calcType: item.calcType,
+    wattage: item.wattage ? Number(item.wattage) : null,
+    price: Number(item.price),
+    cost: Number(item.cost),
+    taxable: item.taxable,
+    active: item.active,
+    isPlaceholder: item.isPlaceholder,
+    isSuspectedDuplicate: item.isSuspectedDuplicate,
+    needsReview: item.needsReview,
+    reviewNotes: item.reviewNotes,
+  };
+}
+
+function toRepoOption(option: Prisma.OptionGetPayload<{ include: typeof OPTION_INCLUDE }>): RepoOption {
+  return {
+    id: option.id,
+    name: option.name,
+    customerDescription: option.customerDescription,
+    inputType: option.inputType,
+    defaultUnitPrice: option.defaultUnitPrice ? Number(option.defaultUnitPrice) : null,
+    laborPerUnit: option.laborPerUnit ? Number(option.laborPerUnit) : null,
+    active: option.active,
+    components: option.components.map((component) => ({
+      id: component.id,
+      catalogItemId: component.catalogItemId,
+      catalogItemName: component.catalogItem.name,
+      catalogItemPrice: Number(component.catalogItem.price),
+      catalogItemCost: Number(component.catalogItem.cost),
+      catalogItemTaxable: component.catalogItem.taxable,
+      catalogItemWattage: component.catalogItem.wattage ? Number(component.catalogItem.wattage) : null,
+      qtyPerUnit: Number(component.qtyPerUnit),
+    })),
+  };
+}
+
+/** Prisma P2025: the row an update targeted doesn't exist. */
+function isRecordNotFound(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { code?: string }).code === "P2025";
+}
 
 // Quotes and jobs are READERS of the GHL ids — the Lead owns them. ghlContactId
 // is read through the lead too (falling back to the quote's own column for
@@ -162,51 +211,59 @@ export const prismaRepo: Repo = {
 
   async listCatalogItems() {
     const items = await prisma.catalogItem.findMany({ orderBy: { sourceId: "asc" } });
-
-    return items.map((item) => ({
-      id: item.id,
-      sourceId: item.sourceId,
-      name: item.name,
-      description: item.description,
-      unitOfMeasure: item.unitOfMeasure,
-      calcType: item.calcType,
-      wattage: item.wattage ? Number(item.wattage) : null,
-      price: Number(item.price),
-      cost: Number(item.cost),
-      taxable: item.taxable,
-      active: item.active,
-      isPlaceholder: item.isPlaceholder,
-      isSuspectedDuplicate: item.isSuspectedDuplicate,
-      needsReview: item.needsReview,
-      reviewNotes: item.reviewNotes,
-    }));
+    return items.map(toRepoCatalogItem);
   },
 
   async listOptions() {
     const options = await prisma.option.findMany({
-      include: { components: { include: { catalogItem: true } } },
+      include: OPTION_INCLUDE,
       orderBy: { name: "asc" },
     });
+    return options.map(toRepoOption);
+  },
 
-    return options.map((option) => ({
-      id: option.id,
-      name: option.name,
-      customerDescription: option.customerDescription,
-      inputType: option.inputType,
-      defaultUnitPrice: option.defaultUnitPrice ? Number(option.defaultUnitPrice) : null,
-      laborPerUnit: option.laborPerUnit ? Number(option.laborPerUnit) : null,
-      active: option.active,
-      components: option.components.map((component) => ({
-        id: component.id,
-        catalogItemId: component.catalogItemId,
-        catalogItemName: component.catalogItem.name,
-        catalogItemPrice: Number(component.catalogItem.price),
-        catalogItemCost: Number(component.catalogItem.cost),
-        catalogItemTaxable: component.catalogItem.taxable,
-        catalogItemWattage: component.catalogItem.wattage ? Number(component.catalogItem.wattage) : null,
-        qtyPerUnit: Number(component.qtyPerUnit),
-      })),
-    }));
+  async createCatalogItem(input) {
+    return toRepoCatalogItem(await prisma.catalogItem.create({ data: input }));
+  },
+
+  async updateCatalogItem(id, input) {
+    try {
+      return toRepoCatalogItem(await prisma.catalogItem.update({ where: { id }, data: input }));
+    } catch (error) {
+      if (isRecordNotFound(error)) return null;
+      throw error;
+    }
+  },
+
+  async setCatalogItemActive(id, active) {
+    try {
+      return toRepoCatalogItem(await prisma.catalogItem.update({ where: { id }, data: { active } }));
+    } catch (error) {
+      if (isRecordNotFound(error)) return null;
+      throw error;
+    }
+  },
+
+  async createOption(input) {
+    return toRepoOption(await prisma.option.create({ data: input, include: OPTION_INCLUDE }));
+  },
+
+  async updateOption(id, input) {
+    try {
+      return toRepoOption(await prisma.option.update({ where: { id }, data: input, include: OPTION_INCLUDE }));
+    } catch (error) {
+      if (isRecordNotFound(error)) return null;
+      throw error;
+    }
+  },
+
+  async setOptionActive(id, active) {
+    try {
+      return toRepoOption(await prisma.option.update({ where: { id }, data: { active }, include: OPTION_INCLUDE }));
+    } catch (error) {
+      if (isRecordNotFound(error)) return null;
+      throw error;
+    }
   },
 
   async listQuotes() {

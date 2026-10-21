@@ -20,7 +20,11 @@ export function EstimatorForm({
   /** The lead this estimate is for — the review step's QuoteBuilder needs it to save. */
   lead: QuoteLeadContext;
 }) {
-  const activeOptions = useMemo(() => options.filter((option) => option.active), [options]);
+  // An option with no components expands to nothing — keep a freshly created one out of the estimator until it's set up.
+  const activeOptions = useMemo(
+    () => options.filter((option) => option.active && option.components.length > 0),
+    [options],
+  );
   const [values, setValues] = useState<Record<string, number>>({});
   const [reviewLineItems, setReviewLineItems] = useState<DraftLineItem[] | null>(null);
 

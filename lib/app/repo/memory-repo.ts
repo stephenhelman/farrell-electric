@@ -1,9 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { generateSowSlug } from "@/lib/app/sow/slug";
-import type { PublicQuote, Repo, RepoJob, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
+import type { PublicQuote, Repo, RepoCatalogItem, RepoJob, RepoOption, RepoLead, RepoPayment, RepoQuoteDetail } from "./types";
 import { memoryStore, nextQuoteNumber, type MemoryJobRecord, type MemoryQuoteRecord } from "./memory-store";
 import { calcQuoteTotals } from "@/lib/app/quotes/calc";
 import { buildPayContext } from "@/lib/app/pay/context";
+
+/** Option components denormalise catalog name/price/cost/etc.; the Prisma path joins them live, so edits here must show through. */
+function syncOptionComponentSnapshots(item: RepoCatalogItem): void {
+  for (const option of memoryStore.options) {
+    for (const component of option.components) {
+      if (component.catalogItemId !== item.id) continue;
+      component.catalogItemName = item.name;
+      component.catalogItemPrice = item.price;
+      component.catalogItemCost = item.cost;
+      component.catalogItemTaxable = item.taxable;
+      component.catalogItemWattage = item.wattage;
+    }
+  }
+}
 
 function toPublicQuote(quote: MemoryQuoteRecord): PublicQuote {
   return {
@@ -83,11 +97,52 @@ export const memoryRepo: Repo = {
   },
 
   async listCatalogItems() {
-    return memoryStore.catalogItems;
+    return memoryStore.catalogItems.map((item) => ({ ...item }));
   },
 
   async listOptions() {
-    return memoryStore.options;
+    return memoryStore.options.map((option) => ({ ...option, components: option.components.map((c) => ({ ...c })) }));
+  },
+
+  async createCatalogItem(input) {
+    const item: RepoCatalogItem = { id: randomUUID(), sourceId: null, active: true, ...input };
+    memoryStore.catalogItems.push(item);
+    return { ...item };
+  },
+
+  async updateCatalogItem(id, input) {
+    const item = memoryStore.catalogItems.find((candidate) => candidate.id === id);
+    if (!item) return null;
+    Object.assign(item, input);
+    syncOptionComponentSnapshots(item);
+    return { ...item };
+  },
+
+  async setCatalogItemActive(id, active) {
+    const item = memoryStore.catalogItems.find((candidate) => candidate.id === id);
+    if (!item) return null;
+    item.active = active;
+    return { ...item };
+  },
+
+  async createOption(input) {
+    const option: RepoOption = { id: randomUUID(), active: true, components: [], ...input };
+    memoryStore.options.push(option);
+    return { ...option };
+  },
+
+  async updateOption(id, input) {
+    const option = memoryStore.options.find((candidate) => candidate.id === id);
+    if (!option) return null;
+    Object.assign(option, input);
+    return { ...option, components: option.components.map((c) => ({ ...c })) };
+  },
+
+  async setOptionActive(id, active) {
+    const option = memoryStore.options.find((candidate) => candidate.id === id);
+    if (!option) return null;
+    option.active = active;
+    return { ...option, components: option.components.map((c) => ({ ...c })) };
   },
 
   async listQuotes() {

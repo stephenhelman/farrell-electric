@@ -59,6 +59,35 @@ export interface RepoOption {
   components: RepoOptionComponent[];
 }
 
+/** Editable catalog fields. `active` is deliberately not here — it moves only through setCatalogItemActive. */
+export interface CatalogItemInput {
+  name: string;
+  description: string | null;
+  unitOfMeasure: UnitOfMeasure;
+  calcType: CalcType;
+  wattage: number | null;
+  price: number;
+  cost: number;
+  taxable: boolean;
+  isPlaceholder: boolean;
+  isSuspectedDuplicate: boolean;
+  needsReview: boolean;
+  reviewNotes: string | null;
+}
+
+export type CatalogItemUpdate = Partial<CatalogItemInput>;
+
+/** Scalar option fields only — components (the catalog-item recipe) are a separate, later task. */
+export interface OptionInput {
+  name: string;
+  customerDescription: string;
+  inputType: OptionInputType;
+  defaultUnitPrice: number | null;
+  laborPerUnit: number | null;
+}
+
+export type OptionUpdate = Partial<OptionInput>;
+
 export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "DECLINED" | "EXPIRED";
 
 export const QUOTE_DECLINE_REASONS = [
@@ -437,6 +466,18 @@ export interface Repo {
   getUserByEmail(email: string): Promise<RepoUser | null>;
   listCatalogItems(): Promise<RepoCatalogItem[]>;
   listOptions(): Promise<RepoOption[]>;
+  /** New items start active with sourceId null. */
+  createCatalogItem(input: CatalogItemInput): Promise<RepoCatalogItem>;
+  /** Partial update; returns the updated item, or null if the id doesn't exist. */
+  updateCatalogItem(id: string, input: CatalogItemUpdate): Promise<RepoCatalogItem | null>;
+  /** Soft deactivate/reactivate (never a delete — quotes reference catalog rows). Null if the id doesn't exist. */
+  setCatalogItemActive(id: string, active: boolean): Promise<RepoCatalogItem | null>;
+  /** New options start active with no components. */
+  createOption(input: OptionInput): Promise<RepoOption>;
+  /** Partial update; returns the updated option, or null if the id doesn't exist. */
+  updateOption(id: string, input: OptionUpdate): Promise<RepoOption | null>;
+  /** Soft deactivate/reactivate. Null if the id doesn't exist. */
+  setOptionActive(id: string, active: boolean): Promise<RepoOption | null>;
   listQuotes(): Promise<RepoQuote[]>;
   listJobs(): Promise<RepoJob[]>;
   getJob(id: string): Promise<RepoJob | null>;
