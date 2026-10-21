@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Oswald, Inter } from "next/font/google";
 import { auth } from "@/lib/app/auth";
 import { SessionProviderWrapper } from "@/components/app/SessionProviderWrapper";
@@ -19,6 +19,13 @@ const textFace = Inter({
 export const metadata: Metadata = {
   title: "Farrell Electric — App",
   robots: { index: false, follow: false },
+  manifest: "/app-portal/manifest.webmanifest",
+  icons: { apple: "/brand/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Farrell", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f1013",
 };
 
 export default async function AppLayout({

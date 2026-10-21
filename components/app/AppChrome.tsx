@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "./SignOutButton";
+import { PwaInstall } from "./PwaInstall";
 import styles from "./AppChrome.module.css";
 
 const NAV_ITEMS = [
@@ -103,6 +104,8 @@ export function AppChrome({
           <SignOutButton />
         </div>
       </div>
+
+      <PwaInstall />
 
       <main className={styles.content}>{children}</main>
     </div>
