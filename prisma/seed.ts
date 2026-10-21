@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { normalizedCatalogSeed } from "../lib/app/catalog/normalized-seed";
+import { getDefaultDocuments } from "../lib/content/store/defaults";
 import { normalizedOptionSeed } from "../lib/app/options/normalized-seed";
 
 const prisma = new PrismaClient();
@@ -108,10 +109,41 @@ async function seedOptions() {
   console.log(`[seed] Options ensured: ${normalizedOptionSeed.length} options.`);
 }
 
+/**
+ * Additive only: inserts documents and fields that are missing and never
+ * touches an existing row, so re-running can't clobber copy edited in the studio.
+ */
+async function seedContent() {
+  let created = 0;
+  for (const def of getDefaultDocuments()) {
+    const doc = await prisma.contentDocument.upsert({
+      where: { type_slug: { type: def.type, slug: def.slug } },
+      update: {},
+      create: { type: def.type, slug: def.slug, title: def.title },
+    });
+    const result = await prisma.contentField.createMany({
+      data: def.fields.map((field) => ({ documentId: doc.id, key: field.key, value: field.value, order: field.order })),
+      skipDuplicates: true,
+    });
+    created += result.count;
+  }
+  console.log(`[seed] Content store ensured: ${getDefaultDocuments().length} documents, ${created} new fields.`);
+}
+
+/**
+ * `prisma db seed -- --only=content` seeds just the content store. The catalog
+ * and option seeds upsert over existing rows, so they must not be re-run
+ * against a database whose prices have since been edited in the price book.
+ */
 async function main() {
+  if (process.argv.includes("--only=content")) {
+    await seedContent();
+    return;
+  }
   await seedAdminUser();
   await seedCatalog();
   await seedOptions();
+  await seedContent();
 }
 
 main()

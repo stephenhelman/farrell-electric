@@ -354,3 +354,42 @@ model Lead {
 
   quotes Quote[]
 }
+
+// Marketing/legal/settings copy only — scalar, individually addressable fields.
+// Repeating collections (projects, services) stay JSON-backed. Kept entirely
+// separate from the quoting models; read via lib/content/store, never lib/app/repo.
+enum ContentType {
+  SITE_SETTINGS
+  HOME
+  PAGE
+  LEGAL
+  FINANCING
+}
+
+model ContentDocument {
+  id        String         @id @default(cuid())
+  type      ContentType
+  // "" for singleton documents (SITE_SETTINGS, HOME, FINANCING).
+  slug      String         @default("")
+  title     String
+  updatedAt DateTime       @updatedAt
+  fields    ContentField[]
+
+  @@unique([type, slug])
+}
+
+model ContentField {
+  id         String          @id @default(cuid())
+  documentId String
+  // Dotted path mirroring the content JSON, array indices as numeric segments
+  // (e.g. "hero.headline", "navItems.2.label", "sections.0.body.1").
+  key        String
+  value      String
+  order      Int
+  updatedAt  DateTime        @updatedAt
+
+  document ContentDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, key])
+  @@index([documentId, order])
+}
