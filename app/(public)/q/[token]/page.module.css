@@ -160,3 +160,7 @@
 .responseClosed {
   color: var(--color-text-secondary);
 }
+
+.license {
+  margin-top: var(--space-1);
+}

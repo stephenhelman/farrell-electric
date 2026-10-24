@@ -173,3 +173,7 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+.license {
+  margin-top: var(--space-1);
+}

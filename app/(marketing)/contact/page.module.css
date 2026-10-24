@@ -13,3 +13,7 @@
 .phoneLines a:hover {
   color: var(--color-accent);
 }
+
+.license {
+  margin-bottom: var(--space-5);
+}

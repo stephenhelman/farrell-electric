@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { HeroSection } from "@/lib/content";
 import { Button } from "@/components/ui/Button";
+import { expandLicenseToken } from "@/lib/content/credentials";
 import styles from "./Hero.module.css";
 
 /**
@@ -32,7 +33,7 @@ export function Hero({ hero, videoSrc }: { hero: HeroSection; videoSrc?: string 
             {hero.secondaryCta.label}
           </Button>
         </div>
-        <p className={styles.trustLine}>{hero.trustLine}</p>
+        <p className={styles.trustLine}>{expandLicenseToken(hero.trustLine)}</p>
       </div>
     </section>
   );

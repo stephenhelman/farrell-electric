@@ -10,10 +10,10 @@
   object-fit: cover;
 }
 
-.afterLayer {
+.beforeLayer {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  /* Full-size layer revealed by clip-path, so the image never rescales while dragging. */
 }
 
 .divider {
@@ -49,6 +49,7 @@
   margin: 0;
   opacity: 0;
   cursor: ew-resize;
+  touch-action: pan-y;
 }
 
 .label {

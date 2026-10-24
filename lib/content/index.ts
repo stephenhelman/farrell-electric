@@ -68,6 +68,8 @@ export function getServicesByIds(ids: string[]): Service[] {
 
 export type {
   Cta,
+  Credentials,
+  TrustBadge,
   NavItem,
   SiteSettings,
   Home,

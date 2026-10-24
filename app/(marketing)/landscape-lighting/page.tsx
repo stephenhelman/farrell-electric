@@ -22,7 +22,7 @@ export default function LandscapeLightingPage() {
   return (
     <>
       <JsonLd data={services.map((service) => buildServiceJsonLd(service, settings))} />
-      <PageIntro headline={page.headline} body={page.body} cta={page.cta} />
+      <PageIntro showLicense headline={page.headline} body={page.body} cta={page.cta} />
       <ServiceCardGrid services={services} surface="raised" />
       {page.process && page.processHeadline && (
         <ProcessSteps headline={page.processHeadline} steps={page.process} cta={page.secondaryCta} />

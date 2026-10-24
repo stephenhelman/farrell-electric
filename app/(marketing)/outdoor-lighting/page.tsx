@@ -23,7 +23,7 @@ export default function OutdoorLightingPage() {
   return (
     <>
       <JsonLd data={services.map((service) => buildServiceJsonLd(service, settings))} />
-      <PageIntro headline={page.headline} body={page.body} />
+      <PageIntro showLicense headline={page.headline} body={page.body} />
       <DivisionCards cards={divisionCards} />
       <ServiceCardGrid services={services} surface="raised" />
     </>

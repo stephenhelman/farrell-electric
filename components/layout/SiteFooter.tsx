@@ -1,10 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getSiteSettings } from "@/lib/content";
+import { getLicenseNumber } from "@/lib/content/credentials";
 import styles from "./SiteFooter.module.css";
 
 export function SiteFooter() {
   const { navItems, legalLinks, phone, cellPhone, email, serviceAreaLine, logoPath } = getSiteSettings();
+  const license = getLicenseNumber();
   const year = new Date().getFullYear();
 
   return (
@@ -30,7 +32,7 @@ export function SiteFooter() {
       </div>
 
       <div className={styles.bottomBar}>
-        <span>© {year} Farrell Electric, Inc. Serving South Florida since 1993.</span>
+        <span>© {year} Farrell Electric, Inc. Serving South Florida since 1993.{license ? ` FL Electrical Contractor License ${license}.` : ""}</span>
         <nav className={styles.legalLinks}>
           {legalLinks.map((item) => (
             <Link key={item.href} href={item.href}>

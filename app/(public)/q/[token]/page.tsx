@@ -3,6 +3,7 @@ import { getRepo } from "@/lib/app/repo";
 import { PublicLineItems } from "@/components/public/PublicLineItems";
 import { RenderGallery } from "./RenderGallery";
 import { QuoteResponse } from "./QuoteResponse";
+import { LicenseLine } from "@/components/trust/LicenseLine";
 import styles from "./page.module.css";
 
 export default async function PublicQuotePage({ params }: { params: Promise<{ token: string }> }) {
@@ -16,6 +17,7 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
     <main className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>Farrell Electric</div>
+        <LicenseLine className={styles.license} />
         <div className={styles.eyebrow}>Quote #{quote.number}</div>
         <h1 className={styles.heading}>{quote.customerName}</h1>
         {quote.customerAddress ? <p className={styles.address}>{quote.customerAddress}</p> : null}

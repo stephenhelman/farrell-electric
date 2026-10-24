@@ -7,6 +7,16 @@
     "logoPathLight": "/brand/farrell-logo-blue.png",
     "accentBlueHex": "#1C4F9C",
     "serviceAreaLine": "Serving Broward County and Palm Beach County",
+    "credentials": {
+      "licenseNumber": "EC0003027",
+      "licenseLabel": "Licensed FL Electrical Contractor",
+      "licenseVerifyUrl": "https://www.myfloridalicense.com/wl11.asp?mode=0&SID=&brd=&typ=",
+      "badges": [
+        { "id": "licensed", "label": "Licensed", "detail": "FL Electrical Contractor {license}" },
+        { "id": "since", "label": "Since 1993", "detail": "Serving South Florida" },
+        { "id": "area", "label": "Broward & Palm Beach", "detail": "Counties served" }
+      ]
+    },
     "navItems": [
       { "label": "HOME", "href": "/" },
       { "label": "LANDSCAPE LIGHTING", "href": "/landscape-lighting" },
@@ -32,7 +42,7 @@
       "supportingCopy": "Professionally designed outdoor lighting that transforms the way your property looks, feels and functions after dark.",
       "primaryCta": { "label": "GET A FREE LIGHTING ESTIMATE", "href": "/contact?intent=landscape-lighting" },
       "secondaryCta": { "label": "VIEW OUR WORK", "href": "/our-work" },
-      "trustLine": "FARRELL ELECTRIC • SERVING SOUTH FLORIDA SINCE 1993",
+      "trustLine": "LICENSED ELECTRICAL CONTRACTOR • {license} • SERVING BROWARD & PALM BEACH",
       "bgImage": "/images/placeholders/hero-bg.jpg"
     },
     "divisionCards": [

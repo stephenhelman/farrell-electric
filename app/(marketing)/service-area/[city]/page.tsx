@@ -44,6 +44,7 @@ export default async function ServiceAreaCityPage({ params }: { params: Promise<
 
   return (
     <PageIntro
+      showLicense
       headline="PROUDLY SERVING SOUTH FLORIDA."
       body={[
         serviceAreaLine + ".",

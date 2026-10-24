@@ -1,12 +1,16 @@
 import Image from "next/image";
 import type { Project } from "@/lib/content";
+import { ImageInfo } from "./ImageInfo";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import styles from "./ProjectCard.module.css";
+
+const REAL_IMAGE_NOTE = "Real image from a real customer.";
 
 /**
  * isRealProject gates all claim language and representative-image treatment.
  * A placeholder never renders a title/claim implying a completed Farrell job —
- * only the neutral, non-claim caption from content.
+ * its provenance note lives behind the (i) control, and only the neutral,
+ * non-claim caption from content is used.
  */
 export function ProjectCard({ project }: { project: Project }) {
   const hasBeforeAfter = Boolean(project.beforeImage && project.afterImage);
@@ -21,16 +25,12 @@ export function ProjectCard({ project }: { project: Project }) {
             <Image src={project.image} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" />
           </div>
         )}
-        {!project.isRealProject && (
-          <span className={styles.badge}>Representative imagery — actual project photos coming soon</span>
-        )}
       </div>
 
-      {project.isRealProject ? (
-        <h3 className={styles.title}>{project.title}</h3>
-      ) : (
-        <p className={styles.caption}>{project.caption}</p>
-      )}
+      <div className={styles.meta}>
+        {project.isRealProject && <h3 className={styles.title}>{project.title}</h3>}
+        <ImageInfo note={project.isRealProject ? REAL_IMAGE_NOTE : project.caption} />
+      </div>
     </div>
   );
 }

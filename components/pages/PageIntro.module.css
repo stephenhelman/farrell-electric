@@ -20,3 +20,7 @@
   gap: var(--space-3);
   margin-top: var(--space-5);
 }
+
+.license {
+  margin-bottom: var(--space-5);
+}

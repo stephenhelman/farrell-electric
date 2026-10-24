@@ -6,6 +6,7 @@ import { MobileActionBar } from "@/components/layout/MobileActionBar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildLocalBusinessJsonLd } from "@/lib/seo/jsonld";
 import { getSiteSettings } from "@/lib/content";
+import { getLicenseNumber } from "@/lib/content/credentials";
 import "../globals.css";
 import layoutStyles from "./layout.module.css";
 
@@ -20,44 +21,53 @@ const textFace = Inter({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.farrellelectric.com";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.farrellelectric.com";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Farrell Electric | Premium Outdoor Lighting, South Florida",
-    template: "%s | Farrell Electric",
-  },
-  description:
-    "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
-  alternates: {
-    canonical: "/",
-  },
-  icons: {
-    icon: [
-      { url: "/brand/favicon.ico", sizes: "any" },
-      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/brand/favicon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/brand/favicon-180.png", sizes: "180x180", type: "image/png" }],
-  },
-  manifest: "/manifest.webmanifest",
-  openGraph: {
-    title: "Farrell Electric | Premium Outdoor Lighting, South Florida",
+export async function generateMetadata(): Promise<Metadata> {
+  const license = getLicenseNumber();
+  const homeTitle = license
+    ? `Farrell Electric | Licensed Electrician ${license} | South Florida`
+    : "Farrell Electric | Premium Outdoor Lighting, South Florida";
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: homeTitle,
+      template: "%s | Farrell Electric",
+    },
     description:
       "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
-    url: "/",
-    siteName: "Farrell Electric",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Farrell Electric | Premium Outdoor Lighting, South Florida",
-    description:
-      "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
-  },
-};
+    alternates: {
+      canonical: "/",
+    },
+    icons: {
+      icon: [
+        { url: "/brand/favicon.ico", sizes: "any" },
+        { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+        { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/brand/favicon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [
+        { url: "/brand/favicon-180.png", sizes: "180x180", type: "image/png" },
+      ],
+    },
+    manifest: "/manifest.webmanifest",
+    openGraph: {
+      title: homeTitle,
+      description:
+        "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
+      url: "/",
+      siteName: "Farrell Electric",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: homeTitle,
+      description:
+        "Premium landscape and permanent outdoor lighting, backed by electrical experience since 1980. Serving Broward and Palm Beach County.",
+    },
+  };
+}
 
 export default function MarketingLayout({
   children,

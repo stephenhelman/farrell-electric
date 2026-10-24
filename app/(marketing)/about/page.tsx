@@ -12,5 +12,5 @@ export const metadata: Metadata = buildMetadata({
 export default function AboutPage() {
   const page = getPage("about");
 
-  return <PageIntro headline={page.headline} body={page.body} />;
+  return <PageIntro showLicense headline={page.headline} body={page.body} />;
 }

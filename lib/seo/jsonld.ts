@@ -7,6 +7,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.farrellelectri
  * confirmed counties — never expand this without a confirmed service area.
  */
 export function buildLocalBusinessJsonLd(settings: SiteSettings) {
+  const license = settings.credentials.licenseNumber.trim();
   return {
     "@context": "https://schema.org",
     "@type": "Electrician",
@@ -15,6 +16,15 @@ export function buildLocalBusinessJsonLd(settings: SiteSettings) {
     telephone: settings.phone,
     email: settings.email,
     foundingDate: "1993",
+    ...(license && {
+      identifier: license,
+      hasCredential: {
+        "@type": "EducationalOccupationalCredential",
+        credentialCategory: "license",
+        name: `Florida Electrical Contractor License ${license}`,
+        recognizedBy: { "@type": "GovernmentOrganization", name: "Florida Department of Business and Professional Regulation" },
+      },
+    }),
     areaServed: [
       { "@type": "AdministrativeArea", name: "Broward County, FL" },
       { "@type": "AdministrativeArea", name: "Palm Beach County, FL" },

@@ -1,5 +1,6 @@
 import { getHome, getServicesByIds, getProjects } from "@/lib/content";
 import { Hero } from "@/components/home/Hero";
+import { TrustBadgeStrip } from "@/components/trust/TrustBadgeStrip";
 import { DivisionCards } from "@/components/home/DivisionCards";
 import { SoffitLightingBridge } from "@/components/home/SoffitLightingBridge";
 import { ServiceGridSection } from "@/components/home/ServiceGridSection";
@@ -15,6 +16,7 @@ export default function Home() {
   return (
     <>
       <Hero hero={home.hero} />
+      <TrustBadgeStrip />
       <DivisionCards cards={home.divisionCards} />
       <SoffitLightingBridge section={home.soffitLightingBridge} />
       <ServiceGridSection

@@ -8,6 +8,7 @@ import {
   PAY_CARD_ENABLED,
   ZELLE_HANDLE,
 } from "@/lib/app/pay/constants";
+import { LicenseLine } from "@/components/trust/LicenseLine";
 import styles from "./page.module.css";
 
 function titleCase(value: string): string {
@@ -36,6 +37,7 @@ export default async function PayPage({ params }: { params: Promise<{ token: str
     <main className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>Farrell Electric</div>
+        <LicenseLine className={styles.license} />
         <div className={styles.eyebrow}>Payment &middot; Quote #{ref}</div>
         <h1 className={styles.heading}>{pay.customerName}</h1>
 

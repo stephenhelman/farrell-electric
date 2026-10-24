@@ -1,6 +1,7 @@
 import type { Cta } from "@/lib/content";
 import { Section } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
+import { LicenseLine } from "@/components/trust/LicenseLine";
 import styles from "@/components/home/PermanentLighting.module.css";
 
 export function TagsIntro({
@@ -20,6 +21,7 @@ export function TagsIntro({
     <Section surface={surface}>
       <div className={styles.header}>
         <h1 className={styles.headline}>{headline}</h1>
+        <LicenseLine />
         <div className={styles.body}>
           {body.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>

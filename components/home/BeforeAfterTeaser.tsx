@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { BeforeAfterTeaserSection, Project } from "@/lib/content";
 import { Section } from "@/components/ui/Section";
+import { ImageInfo } from "@/components/gallery/ImageInfo";
 import { Button } from "@/components/ui/Button";
 import styles from "./BeforeAfterTeaser.module.css";
 
@@ -32,7 +33,9 @@ export function BeforeAfterTeaser({
               <span className={styles.label}>{teaser.afterLabel}</span>
             </div>
           </div>
-          {!pair.isRealProject && <p className={styles.caption}>{pair.caption}</p>}
+          <div className={styles.info}>
+            <ImageInfo note={pair.isRealProject ? "Real image from a real customer." : pair.caption} />
+          </div>
         </>
       )}
 

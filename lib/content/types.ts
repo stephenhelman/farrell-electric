@@ -14,6 +14,21 @@ export interface NavItem {
   href: string;
 }
 
+export interface TrustBadge {
+  id: string;
+  label: string;
+  /** May contain the `{license}` token; the badge is hidden while the license number is blank. */
+  detail: string;
+}
+
+export interface Credentials {
+  /** Blank hides every license mention on the site. */
+  licenseNumber: string;
+  licenseLabel: string;
+  licenseVerifyUrl: string;
+  badges: TrustBadge[];
+}
+
 export interface SiteSettings {
   /** Office / display line, e.g. "(954) 484-1400". */
   phone: string;
@@ -26,6 +41,7 @@ export interface SiteSettings {
   logoPathLight: string;
   accentBlueHex: string;
   serviceAreaLine: string;
+  credentials: Credentials;
   navItems: NavItem[];
   legalLinks: NavItem[];
   primaryCta: Cta;

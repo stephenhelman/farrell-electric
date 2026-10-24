@@ -4,14 +4,19 @@ import { ContactForm } from "@/components/contact/ContactForm";
 import type { LeadIntent } from "@/lib/leads/types";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { getSiteSettings } from "@/lib/content";
+import { getLicenseNumber } from "@/lib/content/credentials";
+import { LicenseLine } from "@/components/trust/LicenseLine";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Contact",
-  description:
-    "Tell us about your lighting or electrical project and we'll be in touch.",
-  path: "/contact",
-});
+export function generateMetadata(): Metadata {
+  const license = getLicenseNumber();
+  return buildMetadata({
+    title: license ? `Contact | Licensed Electrician ${license}` : "Contact",
+    description:
+      "Tell us about your lighting or electrical project and we'll be in touch.",
+    path: "/contact",
+  });
+}
 
 const VALID_INTENTS: LeadIntent[] = [
   "landscape-lighting",
@@ -44,6 +49,7 @@ export default async function ContactPage({
         </a>
         <a href={`mailto:${email}`}>{email}</a>
       </div>
+      <LicenseLine className={styles.license} />
       <ContactForm
         initialIntent={initialIntent ? initialIntent : "landscape-lighting"}
       />
